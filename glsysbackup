@@ -55,7 +55,7 @@ script_description="Generic Linux System Backup"
 #-------------------------
 
 backup_path="/var/backups/"
-filename="system.`hostname`.bak_${timestamp}.tar.gz"
+filename="system.`hostname`.bak_${script_start_time}.tar.gz"
 full_backup_path="${backup_path}${filename}"
 installed_packages="/root/installed_packages.txt"
 items_to_backup="/etc/ /home/ /root/ /var/lib/mpd/ /usr/local/bin/ /usr/lib/cgi-bin/ /boot/config.txt"
