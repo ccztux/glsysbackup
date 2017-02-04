@@ -6,7 +6,7 @@
 #		2017-02-04
 #
 #  Last Mod:	ccztux
-#		2016-02-04
+#		2017-02-04
 #
 #  Description:	Generic Linux System Backup
 #
@@ -32,8 +32,28 @@
 #########################################################################################################
 
 
+#-----------------------
+# Script info variables:
+#-----------------------
 
-timestamp="`date +%s`"
+script_name="${0##*/}"
+script_version="1.0.0"
+script_argc="$#"
+script_pid="$$"
+script_exit_code="200"
+script_start_time="`date +%s`"
+script_lock_file="/var/lock/${script_name}"
+script_hostname="${HOSTNAME%%.*}"
+script_author="ccztux"
+script_last_mod="2017-02-04"
+script_description="Generic Linux System Backup"
+
+
+
+#-------------------------
+# Configuration variables:
+#-------------------------
+
 backup_path="/var/backups/"
 filename="system.`hostname`.bak_${timestamp}.tar.gz"
 full_backup_path="${backup_path}${filename}"
@@ -43,9 +63,10 @@ items_to_exclude=("")
 backup_cmd="tar -cvzf ${full_backup_path} ${items_to_backup}"
 
 
-#--------------------------------------
+
+#-----------
 # Functions:
-#--------------------------------------
+#-----------
 
 checkUID()
 {
@@ -104,6 +125,11 @@ buildExcludeOpts()
 	fi
 }
 
+
+
+#------
+# Main:
+#------
 
 checkUID
 cleanOldBackups
