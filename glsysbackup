@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+
+#########################################################################################################
+#
+#  Author:	ccztux
+#		2017-02-04
+#
+#  Last Mod:	ccztux
+#		2016-02-04
+#
+#  Description:	Generic Linux System Backup
+#
+#  Changelog:	1.0.0 Initial Revision
+#
+#  TODO:	-
+#
+#  License:	GNU GPLv3
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#########################################################################################################
+
+
+
+timestamp="`date +%s`"
+backup_path="/var/backups/"
+filename="system.`hostname`.bak_${timestamp}.tar.gz"
+full_backup_path="${backup_path}${filename}"
+installed_packages="/root/installed_packages.txt"
+items_to_backup="/etc/ /home/ /root/ /var/lib/mpd/ /usr/local/bin/ /usr/lib/cgi-bin/ /boot/config.txt"
+items_to_exclude=("")
+backup_cmd="tar -cvzf ${full_backup_path} ${items_to_backup}"
+
+
+#--------------------------------------
+# Functions:
+#--------------------------------------
+
+checkUID()
+{
+	if [ "$UID" != "0" ] ;then
+		echo "You must run this script as root!"
+		exit 10
+	fi
+}
+
+cleanOldBackups()
+{
+	for backup in ${backup_path}system.`hostname`.bak_*
+	   do
+		if [ "$backup" != "$full_backup_path" ] ;then
+			rm $backup
+		fi
+	   done
+}
+
+checkTrailingSlash()
+{
+	local path="$1"
+	if [[ "$path" =~ ^.*\/$ ]] ;then
+		removeLastChar "$path"
+	fi
+}
+
+removeLastChar()
+{
+	local string="$1"
+	echo "${string:0:$((${#string} - 1))}"
+}
+
+getSysPackageManager()
+{
+	local dpkg="`which dpkg 2> /dev/null`"
+	local rpm="`which rpm 2> /dev/null`"
+	if [ ! -z "$dpkg" ] ;then
+		syspackage_manager="$dpkg"
+		${syspackage_manager} --get-selections > $installed_packages
+	elif [ ! -z "$rpm" ] ;then
+		syspackage_manager="$rpm"
+		${syspackage_manager} -qa > $installed_packages
+	fi
+}
+
+buildExcludeOpts()
+{
+	if [ ! -z "${items_to_exclude[*]}" ] ;then
+		for item in ${items_to_exclude[*]}
+		   do
+			exclude_string="${exclude_string} --exclude='`checkTrailingSlash ${item}`'"
+		   done
+	else
+		return 0
+	fi
+}
+
+
+checkUID
+cleanOldBackups
+getSysPackageManager
+buildExcludeOpts
+
+eval "${backup_cmd} ${exclude_string}"
+
+exit 0
