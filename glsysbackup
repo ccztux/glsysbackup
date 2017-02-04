@@ -37,7 +37,7 @@
 #-----------------------
 
 script_name="${0##*/}"
-script_version="1.0.0"
+script_version="1.0.0.a"
 script_argc="$#"
 script_pid="$$"
 script_exit_code="200"
@@ -55,7 +55,7 @@ script_description="Generic Linux System Backup"
 #-------------------------
 
 backup_path="/var/backups/"
-filename="system.`hostname`.bak_${script_start_time}.tar.gz"
+filename="system.${script_hostname}.bak_${script_start_time}.tar.gz"
 full_backup_path="${backup_path}${filename}"
 installed_packages="/root/installed_packages.txt"
 items_to_backup="/etc/ /home/ /root/ /var/lib/mpd/ /usr/local/bin/ /usr/lib/cgi-bin/ /boot/config.txt"
