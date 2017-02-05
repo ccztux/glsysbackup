@@ -197,10 +197,20 @@ checkLocalFileExists()
 
 cleanOldBackups()
 {
+	local rc=
+	logHandler "Cleaning old backups..."
 	for backup in ${backup_path}system.`hostname`.bak_*
 	   do
 		if [ "$backup" != "$full_backup_path" ] ;then
 			rm "${backup}" 2>&1 | logHandler
+			rc="$?"
+			if [ "$rc" == "0" ] ;then
+				logHandler "Cleaning of old backup: '${backup}' was successful."
+			else
+				logHandler "Cleaning of old backup: '${backup}' was not successful."
+				script_exit_code="50"
+				exit
+			fi
 		fi
 	   done
 }
