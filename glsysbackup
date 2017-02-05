@@ -82,6 +82,15 @@ log_to_stdout="1"
 # Functions:
 #-----------
 
+checkUID()
+{
+	if [ "$UID" != "0" ] ;then
+		logHandler "You must run this script as root, terminating..."
+		script_exit_code="10"
+		exit
+	fi
+}
+
 getUser()
 {
 	logHandler "Get user which starts the script..."
@@ -318,14 +327,6 @@ sigHandler()
 			;;
 		EXIT)
 			logHandler "Caught EXIT, preparing for exiting..."
-			logHandler "Killing child processes..."
-			kill -- -${script_pid} 2>&1 | logHandler
-			rc="${PIPESTATUS[0]}"
-			if [ "$rc" == "0" ] ;then
-				logHandler "Killing child processes was successful."
-			else
-				logHandler "Killing child processes was not successful, but we did this only as a precaution."
-			fi
 			if [ "$another_instance_is_running" != "1" ] ;then
 				removeLock
 			fi
@@ -406,8 +407,9 @@ rotateHandler()
 #------
 
 logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
-getUser
 checkAlreadyRunningInstance
+checkUID
+getUser
 rotateHandler "${full_backup_path}"
 getSysPackageManager
 buildExcludeOpts
