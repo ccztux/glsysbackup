@@ -6,7 +6,7 @@
 #		2017-02-04
 #
 #  Last Mod:	ccztux
-#		2017-02-04
+#		2017-02-05
 #
 #  Description:	Generic Linux System Backup
 #
@@ -32,6 +32,15 @@
 #########################################################################################################
 
 
+trap 'sigHandler SIGTERM' SIGTERM
+trap 'sigHandler SIGINT' SIGINT
+trap 'sigHandler SIGHUP' SIGHUP
+trap 'sigHandler SIGABRT' SIGABRT
+trap 'sigHandler SIGQUIT' SIGQUIT
+trap 'sigHandler ERR ${LINENO} ${BASH_COMMAND}' ERR
+trap 'sigHandler EXIT' EXIT
+
+
 #-----------------------
 # Script info variables:
 #-----------------------
@@ -45,7 +54,7 @@ script_start_time="`date +%s`"
 script_lock_file="/var/lock/${script_name}"
 script_hostname="${HOSTNAME%%.*}"
 script_author="ccztux"
-script_last_mod="2017-02-04"
+script_last_mod="2017-02-05"
 script_description="Generic Linux System Backup"
 
 
@@ -62,17 +71,127 @@ items_to_backup="/etc/ /home/ /root/ /var/lib/mpd/ /usr/local/bin/ /usr/lib/cgi-
 items_to_exclude=("")
 backup_cmd="tar -cvzf ${full_backup_path} ${items_to_backup}"
 
+log_to_syslog="1"
+log_to_file="0"
+log_file="/var/log/${script_name}.log"
+log_to_stdout="1"
 
 
 #-----------
 # Functions:
 #-----------
 
-checkUID()
+getUser()
 {
-	if [ "$UID" != "0" ] ;then
-		echo "You must run this script as root!"
-		exit 10
+	logHandler "Get user which starts the script..."
+	if [ $SUDO_USER ] ;then
+		script_exec_user="$SUDO_USER"
+	else
+		script_exec_user="`whoami`"
+	fi
+	logHandler "${script_name} was started by: '${script_exec_user}'."
+}
+
+checkLock()
+{
+	local rc=
+	logHandler "Check if lock file: '${script_lock_file}' exists."
+	checkLocalFileExists "$script_lock_file"
+	rc="$?"
+	if [ "$rc" == "0" ] ;then
+		logHandler "Lock file: '${script_lock_file}' exist."
+		return 0
+	else
+		logHandler "Lock file: '${script_lock_file}' doesnt exist."
+		return 1
+	fi
+}
+
+setLock()
+{
+	local rc=
+	logHandler "Setting lock..."
+	echo "$script_pid" > "$script_lock_file"
+	rc="$?"
+	if [ "$rc" == "0" ] ;then
+		logHandler "Setting lock was successful."
+	else
+		logHandler "Setting lock was not successful."
+		script_exit_code="10"
+		exit
+	fi
+}
+
+checkAlreadyRunningInstance()
+{
+	logHandler "Check if another instance of: '${script_name}' is already running..."
+	local rc=
+	local running_script_pids="`pgrep $script_name`"
+	running_script_pids="${running_script_pids//${script_pid}/}"
+	running_script_pids="${running_script_pids//$'\n'/, }"
+	checkLock
+	rc="$?"
+	if ([ "$rc" != "0" ] && [ -z "$running_script_pids" ]) ;then
+		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)."
+		setLock
+	elif ([ "$rc" == "0" ] && [ -z "$running_script_pids" ]) ;then
+		logHandler "Another instance of: '${script_name}' seems to be running (Lockfile: '${script_lock_file}' exists and no processes are running). Maybe ${script_name} was terminated abnormally."
+		if [ "$override_lock" == "1" ] ;then
+			overrideLock
+		else
+			logHandler "HINT: You can override the old left over lock by calling ${script_name} with option '-l'."
+			another_instance_is_running="1"
+			script_exit_code="20"
+			exit
+		fi
+	elif ([ "$rc" == "0" ] && [ ! -z "$running_script_pids" ]) ;then
+		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
+		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids}' are running)."
+		another_instance_is_running="1"
+		script_exit_code="21"
+		exit
+	elif ([ "$rc" != "0" ] && [ ! -z "$running_script_pids" ]) ;then
+		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
+		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids}' are running)."
+		another_instance_is_running="1"
+		script_exit_code="22"
+		exit
+	fi
+}
+
+removeLock()
+{
+	local rc=
+	logHandler "Removing lock..."
+	rm "$script_lock_file"
+	rc="$?"
+	if [ "$rc" == "0" ] ;then
+		logHandler "Removing lock was successful."
+	else
+		logHandler "Removing lock was not successful."
+		script_exit_code="30"
+		exit
+	fi
+}
+
+overrideLock()
+{
+	logHandler "Override lock, because you want it..."
+	removeLock
+	setLock
+}
+
+checkLocalFileExists()
+{
+	local file="$1"
+	if [ -f "$file" ] ;then
+		if [ -s "$file" ] ;then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 2
 	fi
 }
 
@@ -81,7 +200,7 @@ cleanOldBackups()
 	for backup in ${backup_path}system.`hostname`.bak_*
 	   do
 		if [ "$backup" != "$full_backup_path" ] ;then
-			rm $backup
+			rm "${backup}" 2>&1 | logHandler
 		fi
 	   done
 }
@@ -125,17 +244,134 @@ buildExcludeOpts()
 	fi
 }
 
+logHandler()
+{
+	local log_message="${1//\`/}"
+	local log_timestamp=
+	local stdin_data_available=
+	if [ -z "$log_message" ] ;then
+		if [ -t 0 ] ;then
+			stdin_data_available="0"
+		else
+			stdin_data_available="1"
+		fi
+		if [ "$stdin_data_available" == "1" ] ;then
+			logHandlerStdinHelper
+		fi
+	else
+		if [ "$log_to_syslog" == "1" ];then
+			logger -t "${script_name}[${script_pid}]" "${log_message}"
+		fi
+		if [ "$log_to_file" == "1" ];then
+			log_timestamp="`date '+%Y-%m-%d %H:%M:%S'`"
+			echo -e "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}" >> ${log_file}
+		fi
+		if [ "$log_to_stdout" == "1" ] ;then
+			if [ -z "$log_timestamp" ] ;then
+				log_timestamp="`date '+%Y-%m-%d %H:%M:%S'`"
+			fi
+			echo -e "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}"
+		fi
+	fi
+}
+
+logHandlerStdinHelper()
+{
+	while read stdin_line
+	   do
+		logHandler "${stdin_line}"
+	   done < "/dev/stdin"
+}
+
+sigHandler()
+{
+	local signal="$1"
+	local lineno="$2"
+	local bash_command="$3"
+	local rc=
+	case "$signal" in
+		SIGTERM)
+			logHandler "Caught SIGTERM, preparing for exiting script..."
+			script_exit_code="40"
+			exit
+			;;
+		SIGINT)
+			logHandler "Caught SIGINT, preparing for exiting script..."
+			script_exit_code="41"
+			exit
+			;;
+		SIGHUP)
+			logHandler "Caught SIGHUP, preparing for exiting script..."
+			script_exit_code="42"
+			exit
+			;;
+		SIGABRT)
+			logHandler "Caught SIGABRT, preparing for exiting script..."
+			script_exit_code="43"
+			exit
+			;;
+		SIGQUIT)
+			logHandler "Caught SIGQUIT, preparing for exiting script..."
+			script_exit_code="44"
+			exit
+			;;
+		ERR)
+			logHandler "Caught ERR, at line number: '${lineno}', command: '${bash_command}'. Preparing for exiting script..."
+			script_exit_code="45"
+			exit
+			;;
+		EXIT)
+			logHandler "Caught EXIT, preparing for exiting..."
+			logHandler "Killing child processes..."
+			kill -- -${script_pid} 2>&1 | logHandler
+			rc="${PIPESTATUS[0]}"
+			if [ "$rc" == "0" ] ;then
+				logHandler "Killing child processes was successful."
+			else
+				logHandler "Killing child processes was not successful, but we did this only as a precaution."
+			fi
+			if [ "$another_instance_is_running" != "1" ] ;then
+				removeLock
+			fi
+			logHandler "Script was running: '${SECONDS}' seconds."
+			logHandler "Bye, bye..."
+			kill 0
+			;;
+		*)
+			logHandler "Signal: '${signal}' received in function: '$FUNCNAME' but dont know what to do..."
+			;;
+	esac
+}
+
+makeBackup()
+{
+	logHandler "Starting backup job..."
+	local rc=
+	eval "${backup_cmd} ${exclude_string} 2>&1" | logHandler
+	rc="${PIPESTATUS[0]}"
+	if [ "$rc" == "0" ] ;then
+		logHandler "Backup job was successful."
+		logHandler "We did a great job, initiating termination..."
+		script_exit_code="0"
+		exit
+	else
+		logHandler "Backup job was not successful."
+	fi
+}
+
 
 
 #------
 # Main:
 #------
 
-checkUID
+logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
+getUser
+checkAlreadyRunningInstance
 cleanOldBackups
 getSysPackageManager
 buildExcludeOpts
+makeBackup
 
-eval "${backup_cmd} ${exclude_string}"
-
-exit 0
+logHandler "Ooops! Something went terribly wrong... Exiting..."
+exit
