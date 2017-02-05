@@ -64,11 +64,11 @@ script_description="Generic Linux System Backup"
 #-------------------------
 
 backup_path="/var/backups/"
-filename="system.${script_hostname}.bak_${script_start_time}.tar.gz"
+filename="${script_name}.${script_hostname}.tar.gz"
 full_backup_path="${backup_path}${filename}"
 installed_packages="/root/installed_packages.txt"
-items_to_backup="/etc/ /home/ /root/ /var/lib/mpd/ /usr/local/bin/ /usr/lib/cgi-bin/ /boot/config.txt"
-items_to_exclude=("")
+items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
+items_to_exclude=("/root/old" "/tmp/var")
 backup_cmd="tar -cvzf ${full_backup_path} ${items_to_backup}"
 
 log_to_syslog="1"
@@ -195,29 +195,13 @@ checkLocalFileExists()
 	fi
 }
 
-cleanOldBackups()
-{
-	local rc=
-	logHandler "Cleaning old backups..."
-	for backup in ${backup_path}system.`hostname`.bak_*
-	   do
-		if [ "$backup" != "$full_backup_path" ] ;then
-			rm "${backup}" 2>&1 | logHandler
-			rc="${PIPESTATUS[0]}"
-			if [ "$rc" == "0" ] ;then
-				logHandler "Cleaning of old backup: '${backup}' was successful."
-			else
-				logHandler "Cleaning of old backup: '${backup}' was not successful."
-			fi
-		fi
-	   done
-}
-
 checkTrailingSlash()
 {
 	local path="$1"
 	if [[ "$path" =~ ^.*\/$ ]] ;then
 		removeLastChar "$path"
+	else
+		echo "$path"
 	fi
 }
 
@@ -243,10 +227,13 @@ getSysPackageManager()
 buildExcludeOpts()
 {
 	if [ ! -z "${items_to_exclude[*]}" ] ;then
+		logHandler "Building exclude options..."
+		exclude_string=()
 		for item in ${items_to_exclude[*]}
 		   do
-			exclude_string="${exclude_string} --exclude='`checkTrailingSlash ${item}`'"
+			exclude_string+=("--exclude='`checkTrailingSlash \"${item}\"`'")
 		   done
+		logHandler "We build the following exclude options: '${exclude_string[*]}'."
 	else
 		return 0
 	fi
@@ -369,6 +356,48 @@ makeBackup()
 	fi
 }
 
+rotateHandler()
+{
+	logHandler "Rotating backup files..."
+	local file="$1"
+	local files_to_keep="$2"
+	local rc=
+	if [ -z "$files_to_keep" ] ;then
+		local files_to_keep="5"
+	fi
+	files_to_keep=$(($files_to_keep - 1))
+	while [ "$files_to_keep" -gt "0" ]
+	   do
+		local file_helper=$(($files_to_keep - 1))
+		if [ "$files_to_keep" != "1" ] ;then
+			checkLocalFileExists "${file}.${file_helper}"
+			rc="$?"
+			if [ "$rc" == "0" ] ;then
+				mv ${file}.${file_helper} ${file}.${files_to_keep}
+				rc="$?"
+				if [ "$rc" == "0" ] ;then
+					logHandler "Rotating file: '${file}.${file_helper}' ==> '${file}.${files_to_keep}' was successful."
+				else
+					logHandler "Rotating file: '${file}.${file_helper}' ==> '${file}.${files_to_keep}' was not successful."
+				fi
+			fi
+		else
+			checkLocalFileExists "${file}"
+			rc="$?"
+			if [ "$rc" == "0" ] ;then
+				mv ${file} ${file}.${files_to_keep}
+				rc="$?"
+				if [ "$rc" == "0" ] ;then
+					logHandler "Rotating file: '${file}' ==> '${file}.${files_to_keep}' was successful."
+				else
+					logHandler "Rotating file: '${file}' ==> '${file}.${files_to_keep}' was not successful."
+				fi
+			fi
+		fi
+		files_to_keep=$(($files_to_keep - 1))
+	   done
+}
+
 
 
 #------
@@ -378,7 +407,7 @@ makeBackup()
 logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
 getUser
 checkAlreadyRunningInstance
-cleanOldBackups
+rotateHandler "${full_backup_path}"
 getSysPackageManager
 buildExcludeOpts
 makeBackup
