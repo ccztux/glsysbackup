@@ -54,7 +54,7 @@ script_description="Generic Linux System Backup"
 script_start_time="`date +%s`"
 script_argc="$#"
 script_pid="$$"
-script_exit_code="200"
+script_exit_code="255"
 script_lock_file="/var/lock/${script_name}"
 script_hostname="${HOSTNAME%%.*}"
 script_major_bashversion="${BASH_VERSINFO[0]}"
@@ -109,7 +109,7 @@ checkBashVersion()
 					;;
 				*)
 					logHandler "Bash version: '${script_major_bashversion}' doenst meets requirements, terminating..."
-					script_exit_code="12"
+					script_exit_code="20"
 					exit
 					;;
 	esac
@@ -151,7 +151,7 @@ setLock()
 		logHandler "Setting lock was successful."
 	else
 		logHandler "Setting lock was not successful."
-		script_exit_code="10"
+		script_exit_code="30"
 		exit
 	fi
 }
@@ -175,20 +175,20 @@ checkAlreadyRunningInstance()
 		else
 			logHandler "HINT: You can override the old left over lock by calling ${script_name} with option '-l'."
 			another_instance_is_running="1"
-			script_exit_code="20"
+			script_exit_code="40"
 			exit
 		fi
 	elif ([ "$rc" == "0" ] && [ ! -z "$running_script_pids" ]) ;then
 		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids}' are running)."
 		another_instance_is_running="1"
-		script_exit_code="21"
+		script_exit_code="41"
 		exit
 	elif ([ "$rc" != "0" ] && [ ! -z "$running_script_pids" ]) ;then
 		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids}' are running)."
 		another_instance_is_running="1"
-		script_exit_code="22"
+		script_exit_code="42"
 		exit
 	fi
 }
@@ -203,7 +203,7 @@ removeLock()
 		logHandler "Removing lock was successful."
 	else
 		logHandler "Removing lock was not successful."
-		script_exit_code="30"
+		script_exit_code="50"
 		exit
 	fi
 }
@@ -367,32 +367,32 @@ sigHandler()
 	case "$signal" in
 		SIGTERM)
 			logHandler "Caught SIGTERM, preparing for exiting script..."
-			script_exit_code="40"
+			script_exit_code="60"
 			exit
 			;;
 		SIGINT)
 			logHandler "Caught SIGINT, preparing for exiting script..."
-			script_exit_code="41"
+			script_exit_code="61"
 			exit
 			;;
 		SIGHUP)
 			logHandler "Caught SIGHUP, preparing for exiting script..."
-			script_exit_code="42"
+			script_exit_code="62"
 			exit
 			;;
 		SIGABRT)
 			logHandler "Caught SIGABRT, preparing for exiting script..."
-			script_exit_code="43"
+			script_exit_code="63"
 			exit
 			;;
 		SIGQUIT)
 			logHandler "Caught SIGQUIT, preparing for exiting script..."
-			script_exit_code="44"
+			script_exit_code="64"
 			exit
 			;;
 		ERR)
 			logHandler "Caught ERR, at line number: '${lineno}', command: '${bash_command}'. Preparing for exiting script..."
-			script_exit_code="45"
+			script_exit_code="65"
 			exit
 			;;
 		EXIT)
@@ -427,7 +427,7 @@ makeBackup()
 		fi
 	else
 		logHandler "Backup job was not successful."
-		script_exit_code="60"
+		script_exit_code="70"
 		exit
 	fi
 }
@@ -444,7 +444,7 @@ encryptBackup()
 		delUnencryptedBackupFile
 	else
 		logHandler "Encrypting job was not successful."
-		script_exit_code="70"
+		script_exit_code="80"
 		exit
 	fi
 }
@@ -462,7 +462,7 @@ delUnencryptedBackupFile()
 		exit
 	else
 		logHandler "Deleting of unencrypted backup file: '${full_backup_path}' was not successful."
-		script_exit_code="70"
+		script_exit_code="90"
 		exit
 	fi
 }
