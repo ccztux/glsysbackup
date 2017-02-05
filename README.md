@@ -11,7 +11,8 @@ Description:
 Features:
 - Lock function. Only one instance can run.
 - Verbose logging to stdout and/or system logfile and/or individual logfile.
+- Backupfile encrypting with openssl
 
 
 Future:
-- Backup encryption
+- use multiple config files
