@@ -10,7 +10,7 @@ Description:
 
 Features:
 - Lock function. Only one instance can run.
-- Verbose logging
+- Verbose logging to stdout and/or system logfile and/or individual logfile.
 
 
 Future:
