@@ -48,15 +48,17 @@ trap 'sigHandler EXIT' EXIT
 
 script_name="${0##*/}"
 script_version="1.0.0.a"
-script_argc="$#"
-script_pid="$$"
-script_exit_code="200"
-script_start_time="`date +%s`"
-script_lock_file="/var/lock/${script_name}"
-script_hostname="${HOSTNAME%%.*}"
 script_author="ccztux"
 script_last_mod="2017-02-05"
 script_description="Generic Linux System Backup"
+script_start_time="`date +%s`"
+script_argc="$#"
+script_pid="$$"
+script_exit_code="200"
+script_lock_file="/var/lock/${script_name}"
+script_hostname="${HOSTNAME%%.*}"
+script_major_bashversion="${BASH_VERSINFO[0]}"
+
 
 
 
@@ -84,11 +86,30 @@ log_to_stdout="1"
 
 checkUID()
 {
+	logHandler "Checking privileges..."
 	if [ "$UID" != "0" ] ;then
 		logHandler "You must run this script as root, terminating..."
 		script_exit_code="10"
 		exit
 	fi
+}
+
+checkBashVersion()
+{
+	logHandler "Checking bash version..."
+	case "$script_major_bashversion" in
+				3)
+					logHandler "Bash version: '${script_major_bashversion}' meets requirements..."
+					;;
+				4)
+					logHandler "Bash version: '${script_major_bashversion}' meets requirements..."
+					;;
+				*)
+					logHandler "Bash version: '${script_major_bashversion}' doenst meets requirements, terminating..."
+					script_exit_code="12"
+					exit
+					;;
+	esac
 }
 
 getUser()
@@ -410,6 +431,7 @@ logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
 checkAlreadyRunningInstance
 checkUID
 getUser
+checkBashVersion
 rotateHandler "${full_backup_path}"
 getSysPackageManager
 buildExcludeOpts
