@@ -203,7 +203,7 @@ cleanOldBackups()
 	   do
 		if [ "$backup" != "$full_backup_path" ] ;then
 			rm "${backup}" 2>&1 | logHandler
-			rc="$?"
+			rc="${PIPESTATUS[0]}"
 			if [ "$rc" == "0" ] ;then
 				logHandler "Cleaning of old backup: '${backup}' was successful."
 			else
@@ -357,7 +357,7 @@ makeBackup()
 {
 	logHandler "Starting backup job..."
 	local rc=
-	eval "${backup_cmd} ${exclude_string} 2>&1" | logHandler
+	eval "ttt${backup_cmd} ${exclude_string} 2>&1" | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Backup job was successful."
@@ -366,6 +366,8 @@ makeBackup()
 		exit
 	else
 		logHandler "Backup job was not successful."
+		script_exit_code="60"
+		exit
 	fi
 }
 
