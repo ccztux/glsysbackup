@@ -3,7 +3,7 @@ Generic Linux System Backup is an advanced backup tool written in bash.
 
 
 Description:
-- Cleaning old backup files
+- Rotating old backup files
 - Creating installed packages file (dpkg, rpm)
 - Creating tar.gz backup with files/folders you want and installed packages file. Optionally you can define excluded items.
 
@@ -14,5 +14,4 @@ Features:
 
 
 Future:
-- Backup rotating
 - Backup encryption
