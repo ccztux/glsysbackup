@@ -208,8 +208,6 @@ cleanOldBackups()
 				logHandler "Cleaning of old backup: '${backup}' was successful."
 			else
 				logHandler "Cleaning of old backup: '${backup}' was not successful."
-				script_exit_code="50"
-				exit
 			fi
 		fi
 	   done
@@ -345,7 +343,7 @@ sigHandler()
 			fi
 			logHandler "Script was running: '${SECONDS}' seconds."
 			logHandler "Bye, bye..."
-			kill 0
+			exit $script_exit_code
 			;;
 		*)
 			logHandler "Signal: '${signal}' received in function: '$FUNCNAME' but dont know what to do..."
@@ -357,7 +355,7 @@ makeBackup()
 {
 	logHandler "Starting backup job..."
 	local rc=
-	eval "ttt${backup_cmd} ${exclude_string} 2>&1" | logHandler
+	eval "${backup_cmd} ${exclude_string} 2>&1" | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Backup job was successful."
