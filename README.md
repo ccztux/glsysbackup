@@ -16,3 +16,4 @@ Features:
 
 Future:
 - use multiple config files
+- add cli options and arguments
