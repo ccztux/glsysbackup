@@ -9,7 +9,7 @@ Description:
 
 
 Features:
-- Lock function. Only one instance can run.
+- Lock function. Only one instance is possible to run.
 - Verbose logging to stdout and/or system logfile and/or individual logfile.
 - Backupfile encrypting with openssl
 
@@ -17,3 +17,4 @@ Features:
 Future:
 - use multiple config files
 - add cli options and arguments
+- add sendEmail functionality
