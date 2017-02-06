@@ -294,8 +294,8 @@ rotateHandler()
 			checkLocalFileExists "${file}.${file_helper}"
 			rc="$?"
 			if [ "$rc" == "0" ] ;then
-				mv ${file}.${file_helper} ${file}.${files_to_keep}
-				rc="$?"
+				mv ${file}.${file_helper} ${file}.${files_to_keep} 2>&1 | logHandler
+				rc="${PIPESTATUS[0]}"
 				if [ "$rc" == "0" ] ;then
 					logHandler "Rotating file: '${file}.${file_helper}' ==> '${file}.${files_to_keep}' was successful."
 				else
@@ -306,8 +306,8 @@ rotateHandler()
 			checkLocalFileExists "${file}"
 			rc="$?"
 			if [ "$rc" == "0" ] ;then
-				mv ${file} ${file}.${files_to_keep}
-				rc="$?"
+				mv ${file} ${file}.${files_to_keep} 2>&1 | logHandler
+				rc="${PIPESTATUS[0]}"
 				if [ "$rc" == "0" ] ;then
 					logHandler "Rotating file: '${file}' ==> '${file}.${files_to_keep}' was successful."
 				else
