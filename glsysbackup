@@ -2,16 +2,17 @@
 
 #########################################################################################################
 #
-#  Author:	ccztux
+#  Author:	Christian Zettel (ccztux)
 #		2017-02-04
-#		Copyright © 2017 cczux, all rights reserved
+#		Copyright © 2017 Christian Zettel (cczux), all rights reserved
+#		http://linuxinside.at
 #
-#  Last Mod:	ccztux
-#		2017-02-05
+#  Last Mod:	Christian Zettel (ccztux)
+#		2017-02-06
 #
 #  Description:	Generic Linux System Backup
 #
-#  Changelog:	1.0.0.a Initial revision
+#  Changelog:	1.0.0.b Initial revision
 #
 #  TODO:	-
 #
@@ -47,9 +48,9 @@ trap 'sigHandler EXIT' EXIT
 #-----------------------
 
 script_name="${0##*/}"
-script_version="1.0.0.a"
+script_version="1.0.0.b"
 script_author="ccztux"
-script_last_mod="2017-02-05"
+script_last_mod="2017-02-06"
 script_description="Generic Linux System Backup"
 script_start_time="`date +%s`"
 script_argc="$#"

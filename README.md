@@ -22,6 +22,6 @@ Features:
 
 
 Future:
-- use multiple config files
+- use config files for multiple jobs
 - add cli options and arguments
 - add sendEmail functionality
