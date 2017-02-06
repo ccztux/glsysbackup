@@ -25,3 +25,6 @@ Future:
 - use multiple config files
 - add cli options and arguments
 - add sendEmail functionality
+
+Actual version:
+- 1.0.0.a (alpha)
