@@ -325,7 +325,7 @@ logHandler()
 	local log_timestamp=
 	local stdin_data_available=
 	if [ -z "$log_message" ] ;then
-		if [ -t 0 ] ;then
+		if [ -t "0" ] ;then
 			stdin_data_available="0"
 		else
 			stdin_data_available="1"
