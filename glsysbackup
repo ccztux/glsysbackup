@@ -197,8 +197,8 @@ removeLock()
 {
 	local rc=
 	logHandler "Removing lock..."
-	rm "$script_lock_file"
-	rc="$?"
+	rm "$script_lock_file" 2>&1 | logHandler
+	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Removing lock was successful."
 	else
