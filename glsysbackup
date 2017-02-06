@@ -233,23 +233,15 @@ checkLocalFileExists()
 checkBin()
 {
 	local binary="$1"
+	local _bin=
 	local rc=
-	if [ -z "$binary" ] ;then
-		logHandler "Function: '${FUNCNAME}' called without required argument, nothing to do, exiting..."
-		script_exit_code="112"
-		exit
+	_bin="`which \"${binary}\" 2>&1`"
+	rc="$?"
+	if [ "$rc" == "0" ] ;then
+		export ${binary}_bin="$_bin"
+		return 0
 	else
-		logHandler "Check if binary '${binary}' exists."
-		export ${binary}_bin="`which \"${binary}\" 2>&1`"
-		rc="$?"
-		if [ "$rc" == "0" ] ;then
-			logHandler "Binary: '${binary}' found."
-			return 0
-		else
-			logHandler "Binary: '${binary}' not found, exiting..."
-			script_exit_code="111"
-			exit
-		fi
+		return 1
 	fi
 }
 
@@ -271,26 +263,48 @@ removeLastChar()
 
 getSysPackageManager()
 {
+	logHandler "Getting system package manager..."
 	local supported_syspackage_managers=("rpm" "dpkg")
 	local available_syspackage_managers=()
+	local rc=
 	for syspackman in ${supported_syspackage_managers[*]}
 	   do
-		available_syspackage_managers+=("`checkBin \"$syspackman\"`")
+		checkBin "$syspackman"
+		rc="$?"
+		if [ "$rc" == "0" ] ;then
+			available_syspackage_managers+=("$syspackman")
+		fi
 	   done
 	if [ "${#available_syspackage_managers[*]}" -gt "1" ] ;then
 		logHandler "More than one supported syspackage managers found: '${available_syspackage_managers[*]}', dont know what to do..."
 		return 1
 	else
-		case "${available_syspackage_managers}" in
-							rpm)
-								${rpm_bin} -qa > $installed_packages
-								;;
-							dpkg)
-								${dpkg_bin} --get-selections > $installed_packages
-								;;
-							*)
-								;;
-		esac
+		createInstalledPackagesFile
+	fi
+}
+
+createInstalledPackagesFile()
+{
+	logHandler "Creating installed packages file: '${installed_packages}'..."
+	local rc=
+	case "${available_syspackage_managers}" in
+						rpm)
+							${rpm_bin} -qa > $installed_packages
+							rc="$?"
+							;;
+						dpkg)
+							${dpkg_bin} --get-selections > $installed_packages
+							rc="$?"
+							;;
+						*)
+							;;
+	esac
+	if [ "$rc" == "0" ] ;then
+		logHandler "Creating installed packages file was successful."
+	else
+		logHandler "Creating installed packages file was not successful."
+		script_exit_code="113"
+		exit
 	fi
 }
 
