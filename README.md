@@ -1,4 +1,4 @@
-# glsysbackup
+# glsysbackup 1.0.0.a (alpha)
 Generic Linux System Backup is an advanced backup tool written in bash. It uses the following programs:
 - tar to create the backup
 - openssl to encrypt the backup files if you want
@@ -25,6 +25,3 @@ Future:
 - use multiple config files
 - add cli options and arguments
 - add sendEmail functionality
-
-Actual version:
-- 1.0.0.a (alpha)
