@@ -388,14 +388,6 @@ logHandler()
 	local log_timestamp=
 	local stdin_data_available=
 	local rc=
-	if [ -z "$logger_bin" ] ;then
-		checkBin "logger"
-		rc="$?"
-		if [ "$rc" != "0" ] ;then
-			script_exit_code="115"
-			exit
-		fi
-	fi
 	if [ -z "$log_message" ] ;then
 		if [ -t "0" ] ;then
 			stdin_data_available="0"
@@ -407,6 +399,14 @@ logHandler()
 		fi
 	else
 		if [ "$log_to_syslog" == "1" ];then
+			if [ -z "$logger_bin" ] ;then
+				checkBin "logger"
+				rc="$?"
+				if [ "$rc" != "0" ] ;then
+					script_exit_code="115"
+					exit
+				fi
+			fi
 			${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 		fi
 		if [ "$log_to_file" == "1" ];then
