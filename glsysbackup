@@ -62,7 +62,6 @@ script_major_bashversion="${BASH_VERSINFO[0]}"
 
 
 
-
 #-------------------------
 # Configuration variables:
 #-------------------------
@@ -74,6 +73,7 @@ installed_packages="/root/installed_packages.txt"
 items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
 items_to_exclude=("/root/old" "/tmp/var")
 backup_cmd="tar -cvzf ${full_backup_path} ${items_to_backup}"
+
 encrypt_backup="1"
 backup_password="test1234"
 encrypted_backup_filename="${full_backup_path//tar.gz/aes.tar.gz}"
@@ -82,6 +82,7 @@ log_to_syslog="1"
 log_to_file="0"
 log_file="/var/log/${script_name}.log"
 log_to_stdout="1"
+
 
 
 #-----------
@@ -230,6 +231,16 @@ checkLocalFileExists()
 	fi
 }
 
+checkLocalDirectoryExists()
+{
+	local directory="$1"
+	if [ -d "$directory" ] ;then
+		return 0
+	else
+		return 1
+	fi
+}
+
 checkBin()
 {
 	local binary="$1"
@@ -277,8 +288,10 @@ getSysPackageManager()
 	   done
 	if [ "${#available_syspackage_managers[*]}" -gt "1" ] ;then
 		logHandler "More than one supported syspackage managers found: '${available_syspackage_managers[*]}', dont know what to do..."
-		return 1
+		script_exit_code="115"
+		exit
 	else
+		logHandler "Supported system package manager we found is: '${available_syspackage_managers[*]}'."
 		createInstalledPackagesFile
 	fi
 }
@@ -374,6 +387,15 @@ logHandler()
 	local log_message="${1//\`/}"
 	local log_timestamp=
 	local stdin_data_available=
+	local rc=
+	if [ -z "$logger_bin" ] ;then
+		checkBin "logger"
+		rc="$?"
+		if [ "$rc" != "0" ] ;then
+			script_exit_code="115"
+			exit
+		fi
+	fi
 	if [ -z "$log_message" ] ;then
 		if [ -t "0" ] ;then
 			stdin_data_available="0"
@@ -385,7 +407,7 @@ logHandler()
 		fi
 	else
 		if [ "$log_to_syslog" == "1" ];then
-			logger -t "${script_name}[${script_pid}]" "${log_message}"
+			${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 		fi
 		if [ "$log_to_file" == "1" ];then
 			log_timestamp="`date '+%Y-%m-%d %H:%M:%S'`"
@@ -464,6 +486,12 @@ makeBackup()
 {
 	logHandler "Starting backup job..."
 	local rc=
+	checkLocalDirectoryExists "$backup_path"
+	if [ "$rc" == "0" ] ;then
+		logHandler "Backup directory: '${backup_path}' exists."
+	else
+		logHandler "Backup directory: '${backup_path}' doesnt exist."
+	fi
 	eval "${backup_cmd} ${exclude_string} 2>&1" | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
@@ -524,9 +552,9 @@ delUnencryptedBackupFile()
 #------
 
 logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
-checkAlreadyRunningInstance
 checkUID
 getUser
+checkAlreadyRunningInstance
 checkBashVersion
 rotateHandler
 getSysPackageManager
