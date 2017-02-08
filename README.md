@@ -1,7 +1,11 @@
 glsysbackup 1.0.0.b (beta)
 ============================
-Generic Linux System Backup is an advanced backup tool written in bash. It uses the following programs:
--------------------------------------------------------------------------------------------------------
+Generic Linux System Backup is an advanced backup tool written in bash. It requries the following binaries:
+-----------------------------------------------------------------------------------------------------------
+- rm to delete files
+- mv to move files
+- pgrep to check if an instance is already running
+- date for logging purposes
 - tar to create the backup
 - openssl to encrypt the backup files if you want
 - logger to log to system log
