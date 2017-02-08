@@ -99,11 +99,22 @@ checkUID()
 
 getUser()
 {
+	local script_exec_user=
+	local rc=
 	logHandler "Get user which starts the script..."
+	checkBin "whoami"
+	rc="$?"
+	if [ "$rc" == "0" ] ;then
+		logHandler "Required binary: 'whoami' found."
+	else
+		logHandler "Required binary: 'whoami' not found, exiting..."
+		script_exit_code="200"
+		exit
+	fi
 	if [ $SUDO_USER ] ;then
 		script_exec_user="$SUDO_USER"
 	else
-		script_exec_user="`whoami`"
+		script_exec_user="`${whoami_bin}`"
 	fi
 	logHandler "${script_name} was started by: '${script_exec_user}'."
 }
@@ -128,7 +139,7 @@ checkBashVersion()
 					logHandler "Bash version: '${script_major_bashversion}' meets requirements..."
 					;;
 				*)
-					logHandler "Bash version: '${script_major_bashversion}' doenst meets requirements, terminating..."
+					logHandler "Bash version: '${script_major_bashversion}' doesnt meets requirements, terminating..."
 					script_exit_code="20"
 					exit
 					;;
@@ -137,9 +148,18 @@ checkBashVersion()
 
 checkAlreadyRunningInstance()
 {
-	logHandler "Check if another instance of: '${script_name}' is already running..."
 	local rc=
-	local running_script_pids="`pgrep $script_name`"
+	logHandler "Check if another instance of: '${script_name}' is already running..."
+	checkBin "pgrep"
+	rc="$?"
+	if [ "$rc" == "0" ] ;then
+		logHandler "Required binary: 'pgrep' found."
+	else
+		logHandler "Required binary: 'pgrep' not found, exiting..."
+		script_exit_code="201"
+		exit
+	fi
+	local running_script_pids="`${pgrep_bin} $script_name`"
 	running_script_pids="${running_script_pids//${script_pid}/}"
 	running_script_pids="${running_script_pids//$'\n'/, }"
 	checkLock
@@ -281,10 +301,10 @@ removeLastChar()
 
 getSysPackageManager()
 {
-	logHandler "Getting system package manager..."
 	local supported_syspackage_managers=("rpm" "dpkg")
 	local available_syspackage_managers=()
 	local rc=
+	logHandler "Getting system package manager..."
 	for syspackman in ${supported_syspackage_managers[*]}
 	   do
 		checkBin "$syspackman"
@@ -305,8 +325,8 @@ getSysPackageManager()
 
 createInstalledPackagesFile()
 {
-	logHandler "Creating installed packages file: '${installed_packages}'..."
 	local rc=
+	logHandler "Creating installed packages file: '${installed_packages}'..."
 	case "${available_syspackage_managers}" in
 						rpm)
 							${rpm_bin} -qa > $installed_packages
@@ -345,9 +365,9 @@ buildExcludeOpts()
 
 rotateHandler()
 {
-	logHandler "Rotating backup files..."
 	local rc=
 	local files_to_keep="$1"
+	logHandler "Rotating backup files..."
 	if [ -z "$files_to_keep" ] ;then
 		local files_to_keep="5"
 	fi
@@ -491,9 +511,9 @@ sigHandler()
 
 makeBackup()
 {
-	logHandler "Starting backup job..."
 	local rc=
 	local backup_cmd="tar -cvzf ${full_backup_path} ${items_to_backup}"
+	logHandler "Starting backup job..."
 	checkLocalDirectoryExists "$backup_path"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Backup directory: '${backup_path}' exists."
@@ -520,9 +540,9 @@ makeBackup()
 
 encryptBackup()
 {
+	local rc=
 	logHandler "Encrypting backup file: '${full_backup_path}'..."
 	logHandler "HINT: You can use the following command, to decrypt your backup: 'openssl aes-256-cbc -d -salt -in ${encrypted_backup_filename} -out ${full_backup_path}'."
-	local rc=
 	openssl aes-256-cbc -salt -in ${full_backup_path} -out ${encrypted_backup_filename} -k ${backup_password} 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
@@ -537,8 +557,8 @@ encryptBackup()
 
 delUnencryptedBackupFile()
 {
-	logHandler "Deleting unencrypted backup file: '${full_backup_path}'..."
 	local rc=
+	logHandler "Deleting unencrypted backup file: '${full_backup_path}'..."
 	rm "${full_backup_path}" 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
