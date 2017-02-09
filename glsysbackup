@@ -8,11 +8,11 @@
 #		http://linuxinside.at
 #
 #  Last Mod:	Christian Zettel (ccztux)
-#		2017-02-08
+#		2017-02-09
 #
 #  Description:	Generic Linux System Backup
 #
-#  Changelog:	1.0.0.b Initial revision
+#  Changelog:	1.0.0 Initial revision
 #
 #  TODO:	-
 #
@@ -48,9 +48,9 @@ trap 'sigHandler EXIT' EXIT
 #-----------------------
 
 script_name="${0##*/}"
-script_version="1.0.0.b"
+script_version="1.0.0"
 script_author="ccztux"
-script_last_mod="2017-02-06"
+script_last_mod="2017-02-09"
 script_description="Generic Linux System Backup"
 script_argc="$#"
 script_pid="$$"
@@ -65,16 +65,16 @@ script_major_bashversion="${BASH_VERSINFO[0]}"
 # Configuration variables:
 #-------------------------
 
-backup_path="/var/backups/"
-filename="${script_name}.${script_hostname}.tar.gz"
-full_backup_path="${backup_path}${filename}"
+backup_destination_path="/var/backups/"
+backup_filename="${script_name}.${script_hostname}.tar.gz"
+backup_full_path="${backup_destination_path}${backup_filename}"
 installed_packages="/root/installed_packages.txt"
 items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
 items_to_exclude=("/root/old" "/tmp/var")
 
 encrypt_backup="1"
 backup_password="test1234"
-encrypted_backup_filename="${full_backup_path//tar.gz/aes.tar.gz}"
+encrypted_backup_filename="${backup_full_path//tar.gz/aes.tar.gz}"
 
 log_to_syslog="1"
 log_to_file="0"
@@ -374,7 +374,7 @@ rotateHandler()
 	if [ "$encrypt_backup" == "1" ] ;then
 		file="$encrypted_backup_filename"
 	else
-		file="$full_backup_path"
+		file="$backup_full_path"
 	fi
 	files_to_keep=$(($files_to_keep - 1))
 	while [ "$files_to_keep" -gt "0" ]
@@ -512,13 +512,13 @@ sigHandler()
 makeBackup()
 {
 	local rc=
-	local backup_cmd="tar -cvzf ${full_backup_path} ${items_to_backup}"
+	local backup_cmd="tar -cvzf ${backup_full_path} ${items_to_backup}"
 	logHandler "Starting backup job..."
-	checkLocalDirectoryExists "$backup_path"
+	checkLocalDirectoryExists "$backup_destination_path"
 	if [ "$rc" == "0" ] ;then
-		logHandler "Backup directory: '${backup_path}' exists."
+		logHandler "Backup directory: '${backup_destination_path}' exists."
 	else
-		logHandler "Backup directory: '${backup_path}' doesnt exist."
+		logHandler "Backup directory: '${backup_destination_path}' doesnt exist."
 	fi
 	eval "${backup_cmd} ${exclude_string} 2>&1" | logHandler
 	rc="${PIPESTATUS[0]}"
@@ -541,9 +541,9 @@ makeBackup()
 encryptBackup()
 {
 	local rc=
-	logHandler "Encrypting backup file: '${full_backup_path}'..."
-	logHandler "HINT: You can use the following command, to decrypt your backup: 'openssl aes-256-cbc -d -salt -in ${encrypted_backup_filename} -out ${full_backup_path}'."
-	openssl aes-256-cbc -salt -in ${full_backup_path} -out ${encrypted_backup_filename} -k ${backup_password} 2>&1 | logHandler
+	logHandler "Encrypting backup file: '${backup_full_path}'..."
+	logHandler "HINT: You can use the following command, to decrypt your backup: 'openssl aes-256-cbc -d -salt -in ${encrypted_backup_filename} -out ${backup_full_path}'."
+	openssl aes-256-cbc -salt -in ${backup_full_path} -out ${encrypted_backup_filename} -k ${backup_password} 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Encrypting job was successful."
@@ -558,16 +558,16 @@ encryptBackup()
 delUnencryptedBackupFile()
 {
 	local rc=
-	logHandler "Deleting unencrypted backup file: '${full_backup_path}'..."
-	rm "${full_backup_path}" 2>&1 | logHandler
+	logHandler "Deleting unencrypted backup file: '${backup_full_path}'..."
+	rm "${backup_full_path}" 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
-		logHandler "Deleting of unencrypted backup file: '${full_backup_path}' was successful."
+		logHandler "Deleting of unencrypted backup file: '${backup_full_path}' was successful."
 		logHandler "We did a great job, initiating termination..."
 		script_exit_code="0"
 		exit
 	else
-		logHandler "Deleting of unencrypted backup file: '${full_backup_path}' was not successful."
+		logHandler "Deleting of unencrypted backup file: '${backup_full_path}' was not successful."
 		script_exit_code="90"
 		exit
 	fi
