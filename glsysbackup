@@ -71,11 +71,13 @@ root_privileges_required="1"
 backup_destination_path="/var/backups/"
 backup_filename="${script_name}.${script_hostname}.tar.gz"
 backup_full_path="${backup_destination_path}${backup_filename}"
-backup_installed_packages_file="/root/backup_installed_packages_file.txt"
 items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
 items_to_exclude=("/root/old" "/tmp/var")
 
-encrypt_backup="1"
+installed_packages_required="1"
+installed_packages_filename="/root/installed_packages_filename.txt"
+
+encrypt_backup_required="1"
 encrypt_backup_password="test1234"
 encrypt_backup_filename="${backup_full_path//tar.gz/aes.tar.gz}"
 
@@ -90,16 +92,17 @@ log_to_stdout="1"
 # Functions:
 #-----------
 
-checkUID()
+checkRootPrivileges()
 {
 	if [ "$root_privileges_required" == "1" ] ;then
-		logHandler "Checking privileges..."
+		logHandler "Root privileges required, checking privileges..."
 		if [ "$UID" != "0" ] ;then
 			logHandler "You must run this script as root, terminating..."
 			script_exit_code="10"
 			exit
 		fi
 	else
+		logHandler "Root privileges not required."
 		return 0
 	fi
 }
@@ -321,37 +324,41 @@ getSysPackageManager()
 	local supported_syspackage_managers=("rpm" "dpkg")
 	local available_syspackage_managers=()
 	local rc=
-	logHandler "Getting system package manager..."
-	for syspackman in ${supported_syspackage_managers[*]}
-	   do
-		checkBin "$syspackman"
-		rc="$?"
-		if [ "$rc" == "0" ] ;then
-			available_syspackage_managers+=("$syspackman")
+	if [ "$installed_packages_reuiqred" == "1" ] ;then
+		logHandler "Installed packages required..."
+		logHandler "Getting system package manager..."
+		for syspackman in ${supported_syspackage_managers[*]}
+		   do
+			checkBin "$syspackman"
+			rc="$?"
+			if [ "$rc" == "0" ] ;then
+				available_syspackage_managers+=("$syspackman")
+			fi
+		   done
+		if [ "${#available_syspackage_managers[*]}" -gt "1" ] ;then
+			logHandler "More than one supported syspackage managers found: '${available_syspackage_managers[*]}', dont know what to do..."
+			script_exit_code="115"
+			exit
+		else
+			logHandler "Supported system package manager we found is: '${available_syspackage_managers[*]}'."
+			createInstalledPackagesFile
 		fi
-	   done
-	if [ "${#available_syspackage_managers[*]}" -gt "1" ] ;then
-		logHandler "More than one supported syspackage managers found: '${available_syspackage_managers[*]}', dont know what to do..."
-		script_exit_code="115"
-		exit
 	else
-		logHandler "Supported system package manager we found is: '${available_syspackage_managers[*]}'."
-		createInstalledPackagesFile
+		logHandler "Installed packages not required."
+		return 0
 	fi
 }
 
 createInstalledPackagesFile()
 {
 	local rc=
-	logHandler "Creating installed packages file: '${backup_installed_packages_file}'..."
+	logHandler "Creating installed packages file: '${installed_packages_filename}'..."
 	case "${available_syspackage_managers}" in
 						rpm)
-							${rpm_bin} -qa > ${backup_installed_packages_file} | logHandler
-							rc="${PIPESTATUS[0]}"
+							${rpm_bin} -qa > ${installed_packages_filename}
 							;;
 						dpkg)
-							${dpkg_bin} --get-selections > ${backup_installed_packages_file} | logHandler
-							rc="${PIPESTATUS[0]}"
+							${dpkg_bin} --get-selections > ${installed_packages_filename}
 							;;
 						*)
 							logHandler "Ooop! Someting went terribly wrong in function: '${FUNCNAME}', exiting..."
@@ -359,6 +366,7 @@ createInstalledPackagesFile()
 							exit
 							;;
 	esac
+	rc="$?"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Creating installed packages file was successful."
 	else
@@ -391,7 +399,7 @@ rotateHandler()
 	if [ -z "$files_to_keep" ] ;then
 		local files_to_keep="5"
 	fi
-	if [ "$encrypt_backup" == "1" ] ;then
+	if [ "$encrypt_backup_required" == "1" ] ;then
 		file="$encrypt_backup_filename"
 	else
 		file="$backup_full_path"
@@ -558,7 +566,7 @@ makeBackup()
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Backup job was successful."
-		if [ "$encrypt_backup" == "1" ] ;then
+		if [ "$encrypt_backup_required" == "1" ] ;then
 			encryptBackup
 		else
 			logHandler "We did a great job, initiating termination..."
@@ -622,7 +630,7 @@ delUnencryptedBackupFile()
 #------
 
 logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
-checkUID
+checkRootPrivileges
 getUser
 checkRequiredBinaries "${script_common_required_binaries[*]}"
 checkAlreadyRunningInstance
