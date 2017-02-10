@@ -39,7 +39,7 @@ trap 'sigHandler SIGINT' SIGINT
 trap 'sigHandler SIGHUP' SIGHUP
 trap 'sigHandler SIGABRT' SIGABRT
 trap 'sigHandler SIGQUIT' SIGQUIT
-trap 'sigHandler ERR ${LINENO} ${BASH_COMMAND}' ERR
+trap 'sigHandler ERR ${LINENO} ${BASH_COMMAND} ${FUNCNAME}' ERR
 trap 'sigHandler EXIT' EXIT
 
 
@@ -58,6 +58,7 @@ script_exit_code="255"
 script_lock_file="/var/lock/${script_name}"
 script_hostname="${HOSTNAME%%.*}"
 script_major_bashversion="${BASH_VERSINFO[0]}"
+script_common_required_binaries=("rm" "mv")
 
 
 
@@ -65,16 +66,18 @@ script_major_bashversion="${BASH_VERSINFO[0]}"
 # Configuration variables:
 #-------------------------
 
+root_privileges_required="1"
+
 backup_destination_path="/var/backups/"
 backup_filename="${script_name}.${script_hostname}.tar.gz"
 backup_full_path="${backup_destination_path}${backup_filename}"
-installed_packages="/root/installed_packages.txt"
+backup_installed_packages_file="/root/backup_installed_packages_file.txt"
 items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
 items_to_exclude=("/root/old" "/tmp/var")
 
 encrypt_backup="1"
-backup_password="test1234"
-encrypted_backup_filename="${backup_full_path//tar.gz/aes.tar.gz}"
+encrypt_backup_password="test1234"
+encrypt_backup_filename="${backup_full_path//tar.gz/aes.tar.gz}"
 
 log_to_syslog="1"
 log_to_file="0"
@@ -89,11 +92,15 @@ log_to_stdout="1"
 
 checkUID()
 {
-	logHandler "Checking privileges..."
-	if [ "$UID" != "0" ] ;then
-		logHandler "You must run this script as root, terminating..."
-		script_exit_code="10"
-		exit
+	if [ "$root_privileges_required" == "1" ] ;then
+		logHandler "Checking privileges..."
+		if [ "$UID" != "0" ] ;then
+			logHandler "You must run this script as root, terminating..."
+			script_exit_code="10"
+			exit
+		fi
+	else
+		return 0
 	fi
 }
 
@@ -121,10 +128,20 @@ getUser()
 
 checkRequiredBinaries()
 {
+	local rc=
 	local required_binaries=("$1")
+	logHandler "Check if common required binaries: '${required_binaries[*]// /, }' exists..."
 	for bin in ${required_binaries[*]}
 	   do
 		checkBin "$bin"
+		rc="$?"
+		if [ "$rc" == "0" ] ;then
+			logHandler "Required binary: '${bin}' found."
+		else
+			logHandler "Required binary: '${bin}' not found, exiting..."
+			script_exit_code="217"
+			exit
+		fi
 	   done
 }
 
@@ -139,7 +156,7 @@ checkBashVersion()
 					logHandler "Bash version: '${script_major_bashversion}' meets requirements..."
 					;;
 				*)
-					logHandler "Bash version: '${script_major_bashversion}' doesnt meets requirements, terminating..."
+					logHandler "Bash version: '${script_major_bashversion}' doesnt meet requirements, terminating..."
 					script_exit_code="20"
 					exit
 					;;
@@ -326,17 +343,20 @@ getSysPackageManager()
 createInstalledPackagesFile()
 {
 	local rc=
-	logHandler "Creating installed packages file: '${installed_packages}'..."
+	logHandler "Creating installed packages file: '${backup_installed_packages_file}'..."
 	case "${available_syspackage_managers}" in
 						rpm)
-							${rpm_bin} -qa > $installed_packages
-							rc="$?"
+							${rpm_bin} -qa > ${backup_installed_packages_file} | logHandler
+							rc="${PIPESTATUS[0]}"
 							;;
 						dpkg)
-							${dpkg_bin} --get-selections > $installed_packages
-							rc="$?"
+							${dpkg_bin} --get-selections > ${backup_installed_packages_file} | logHandler
+							rc="${PIPESTATUS[0]}"
 							;;
 						*)
+							logHandler "Ooop! Someting went terribly wrong in function: '${FUNCNAME}', exiting..."
+							script_exit_code="117"
+							exit
 							;;
 	esac
 	if [ "$rc" == "0" ] ;then
@@ -372,7 +392,7 @@ rotateHandler()
 		local files_to_keep="5"
 	fi
 	if [ "$encrypt_backup" == "1" ] ;then
-		file="$encrypted_backup_filename"
+		file="$encrypt_backup_filename"
 	else
 		file="$backup_full_path"
 	fi
@@ -460,8 +480,9 @@ logHandlerStdinHelper()
 sigHandler()
 {
 	local signal="$1"
-	local lineno="$2"
+	local bash_lineno="$2"
 	local bash_command="$3"
+	local bash_function="$4"
 	local rc=
 	case "$signal" in
 		SIGTERM)
@@ -490,7 +511,11 @@ sigHandler()
 			exit
 			;;
 		ERR)
-			logHandler "Caught ERR, at line number: '${lineno}', command: '${bash_command}'. Preparing for exiting script..."
+			if [ -z "$bash_function" ] ;then
+				logHandler "Caught ERR, at line number: '${bash_lineno}', command: '${bash_command}'. Preparing for exiting script..."
+			else
+				logHandler "Caught ERR, in function: '${bash_function}', at line number: '${bash_lineno}', command: '${bash_command}'. Preparing for exiting script..."
+			fi
 			script_exit_code="65"
 			exit
 			;;
@@ -512,7 +537,16 @@ sigHandler()
 makeBackup()
 {
 	local rc=
-	local backup_cmd="tar -cvzf ${backup_full_path} ${items_to_backup}"
+	checkBin "tar"
+	rc="$?"
+	if [ "$rc" == "0" ] ;then
+		logHandler "Required binary: 'tar' found."
+	else
+		logHandler "Required binary: 'tar' not found, exiting..."
+		script_exit_code="203"
+		exit
+	fi
+	local backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${items_to_backup}"
 	logHandler "Starting backup job..."
 	checkLocalDirectoryExists "$backup_destination_path"
 	if [ "$rc" == "0" ] ;then
@@ -542,11 +576,19 @@ encryptBackup()
 {
 	local rc=
 	logHandler "Encrypting backup file: '${backup_full_path}'..."
-	logHandler "HINT: You can use the following command, to decrypt your backup: 'openssl aes-256-cbc -d -salt -in ${encrypted_backup_filename} -out ${backup_full_path}'."
-	openssl aes-256-cbc -salt -in ${backup_full_path} -out ${encrypted_backup_filename} -k ${backup_password} 2>&1 | logHandler
+	checkBin "openssl"
+	rc="$?"
+	if [ "$rc" == "0" ] ;then
+		logHandler "Required binary: 'openssl' found."
+	else
+		logHandler "Required binary: 'openssl' not found, exiting..."
+		delUnencryptedBackupFile
+	fi
+	${openssl_bin} aes-256-cbc -salt -in ${backup_full_path} -out ${encrypt_backup_filename} -k ${encrypt_backup_password} 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Encrypting job was successful."
+		logHandler "HINT: You can use the following command, to decrypt your backup: 'openssl aes-256-cbc -d -salt -in ${encrypt_backup_filename} -out ${backup_full_path}'."
 		delUnencryptedBackupFile
 	else
 		logHandler "Encrypting job was not successful."
@@ -582,6 +624,7 @@ delUnencryptedBackupFile()
 logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
 checkUID
 getUser
+checkRequiredBinaries "${script_common_required_binaries[*]}"
 checkAlreadyRunningInstance
 checkBashVersion
 rotateHandler
