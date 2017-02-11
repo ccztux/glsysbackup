@@ -51,6 +51,7 @@ script_name="${0##*/}"
 script_version="1.0.0.a"
 script_author="ccztux"
 script_last_mod="2017-02-11"
+script_license="GNU GPLv3"
 script_description="Generic Linux System Backup"
 script_argc="$#"
 script_pid="$$"
@@ -93,6 +94,44 @@ log_to_stdout="1"
 #-----------
 # Functions:
 #-----------
+
+usage()
+{
+	if [ "$log_to_stdout" == "1" ] ;then
+		echo
+	fi
+echo -e "Usage: "$0" OPTIONS
+
+Author:                 "${script_author}"
+Last modification:      "${script_last_mod}"
+Version:                "${script_version}"
+License:                "${script_license}"
+
+Description:            "${script_description}"
+
+OPTIONS:
+   -h        Shows this help.
+   -v        Shows script version."
+	if [ "$log_to_stdout" == "1" ] ;then
+		echo
+	fi
+}
+
+printScriptInfos()
+{
+	if [ "$log_to_stdout" == "1" ] ;then
+		echo
+	fi
+echo -e "Author:                 "${script_author}"
+Last modification:      "${script_last_mod}"
+Version:                "${script_version}"
+License:                "${script_license}"
+
+Description:            "$script_description""
+	if [ "$log_to_stdout" == "1" ] ;then
+		echo
+	fi
+}
 
 checkRootPrivileges()
 {
@@ -353,7 +392,7 @@ getSysPackageManager()
 			createInstalledPackagesFile
 		fi
 	else
-		logHandler "Installed packages not required."
+		logHandler "Installed packages are not required."
 	fi
 }
 
@@ -490,7 +529,7 @@ logHandler()
 					exit
 				fi
 			fi
-			log_timestamp="`${date_bin}'+%Y-%m-%d %H:%M:%S'`"
+			log_timestamp="`${date_bin} '+%Y-%m-%d %H:%M:%S'`"
 			echo -e "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}" >> ${log_file}
 		fi
 		if [ "$log_to_stdout" == "1" ] ;then
@@ -504,7 +543,7 @@ logHandler()
 						exit
 					fi
 				fi
-				log_timestamp="`${date_bin}'+%Y-%m-%d %H:%M:%S'`"
+				log_timestamp="`${date_bin} '+%Y-%m-%d %H:%M:%S'`"
 			fi
 			echo -e "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}"
 		fi
@@ -661,6 +700,33 @@ delUnencryptedBackupFile()
 		exit
 	fi
 }
+
+
+
+#-------------
+# Get options:
+#-------------
+
+while getopts "h.v." OPTION
+do
+     case "$OPTION" in
+         h)
+             usage
+             script_exit_code="160"
+             exit
+             ;;
+         v)
+             printScriptInfos
+             script_exit_code="161"
+             exit
+             ;;
+         ?)
+             usage
+             script_exit_code="162"
+             exit
+             ;;
+     esac
+done
 
 
 
