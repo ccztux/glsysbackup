@@ -46,3 +46,4 @@ Future plans:
 - use config files for multiple jobs
 - add cli options and arguments
 - add sendEmail functionality
+- add incremental backup feature
