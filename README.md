@@ -6,7 +6,7 @@ Generic Linux System Backup is an advanced backup tool written in bash.
 
 It requries the following binaries:
 -----------------------------------
-- bash 3||4
+- bash 3 || 4
 - which to get full path to binaries and check if they are available through $PATH
 - pgrep to check if an instance of glsysbackup is already running
 - whois to check the user who executes glsysbackup

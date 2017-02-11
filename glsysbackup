@@ -8,7 +8,7 @@
 #		http://linuxinside.at
 #
 #  Last Mod:	Christian Zettel (ccztux)
-#		2017-02-10
+#		2017-02-11
 #
 #  Description:	Generic Linux System Backup
 #
@@ -50,7 +50,7 @@ trap 'sigHandler EXIT' EXIT
 script_name="${0##*/}"
 script_version="1.0.0.a"
 script_author="ccztux"
-script_last_mod="2017-02-10"
+script_last_mod="2017-02-11"
 script_description="Generic Linux System Backup"
 script_argc="$#"
 script_pid="$$"
@@ -77,9 +77,9 @@ items_to_exclude=("/root/old" "/tmp/var")
 installed_packages_required="1"
 installed_packages_filename="/root/installed_packages_filename.txt"
 
-encrypt_backup_required="1"
-encrypt_backup_password="test1234"
-encrypt_backup_filename="${backup_full_path//tar.gz/aes.tar.gz}"
+backup_encryption_required="1"
+backup_encryption_password="test1234"
+backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
 
 log_to_syslog="1"
 log_to_file="0"
@@ -94,15 +94,16 @@ log_to_stdout="1"
 
 checkRootPrivileges()
 {
+	logHandler "Check if root priviliges are required..."
 	if [ "$root_privileges_required" == "1" ] ;then
-		logHandler "Root privileges required, checking privileges..."
+		logHandler "Root privileges are required, checking privileges..."
 		if [ "$UID" != "0" ] ;then
 			logHandler "You must run this script as root, terminating..."
 			script_exit_code="10"
 			exit
 		fi
 	else
-		logHandler "Root privileges not required."
+		logHandler "Root privileges are not required..."
 		return 0
 	fi
 }
@@ -127,6 +128,7 @@ getUser()
 		script_exec_user="`${whoami_bin}`"
 	fi
 	logHandler "${script_name} was started by: '${script_exec_user}'."
+	return 0
 }
 
 checkRequiredBinaries()
@@ -146,6 +148,7 @@ checkRequiredBinaries()
 			exit
 		fi
 	   done
+	return 0
 }
 
 checkBashVersion()
@@ -154,9 +157,11 @@ checkBashVersion()
 	case "$script_major_bashversion" in
 				3)
 					logHandler "Bash version: '${script_major_bashversion}' meets requirements..."
+					return 0
 					;;
 				4)
 					logHandler "Bash version: '${script_major_bashversion}' meets requirements..."
+					return 0
 					;;
 				*)
 					logHandler "Bash version: '${script_major_bashversion}' doesnt meet requirements, terminating..."
@@ -235,6 +240,7 @@ setLock()
 	rc="$?"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Setting lock was successful."
+		return 0
 	else
 		logHandler "Setting lock was not successful."
 		script_exit_code="30"
@@ -246,10 +252,11 @@ removeLock()
 {
 	local rc=
 	logHandler "Removing lock..."
-	rm "$script_lock_file" 2>&1 | logHandler
+	${rm_bin}"$script_lock_file" 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Removing lock was successful."
+		return 0
 	else
 		logHandler "Removing lock was not successful."
 		script_exit_code="50"
@@ -262,6 +269,7 @@ overrideLock()
 	logHandler "Override lock, because you want it..."
 	removeLock
 	setLock
+	return 0
 }
 
 checkLocalFileExists()
@@ -311,12 +319,14 @@ checkTrailingSlash()
 	else
 		echo "$path"
 	fi
+	return 0
 }
 
 removeLastChar()
 {
 	local string="$1"
 	echo "${string:0:$((${#string} - 1))}"
+	return 0
 }
 
 getSysPackageManager()
@@ -324,8 +334,9 @@ getSysPackageManager()
 	local supported_syspackage_managers=("rpm" "dpkg")
 	local available_syspackage_managers=()
 	local rc=
+	logHandler "Check if installed packages are required..."
 	if [ "$installed_packages_reuiqred" == "1" ] ;then
-		logHandler "Installed packages required..."
+		logHandler "Installed packages are required..."
 		logHandler "Getting system package manager..."
 		for syspackman in ${supported_syspackage_managers[*]}
 		   do
@@ -342,6 +353,7 @@ getSysPackageManager()
 		else
 			logHandler "Supported system package manager we found is: '${available_syspackage_managers[*]}'."
 			createInstalledPackagesFile
+			return 0
 		fi
 	else
 		logHandler "Installed packages not required."
@@ -369,6 +381,7 @@ createInstalledPackagesFile()
 	rc="$?"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Creating installed packages file was successful."
+		return 0
 	else
 		logHandler "Creating installed packages file was not successful."
 		script_exit_code="113"
@@ -378,16 +391,19 @@ createInstalledPackagesFile()
 
 buildExcludeOpts()
 {
+	logHandler "Check if we need to build excluding options..."
 	if [ ! -z "${items_to_exclude[*]}" ] ;then
-		logHandler "Building exclude options..."
+		logHandler "Building of excluding options are required..."
 		exclude_string=()
 		for item in ${items_to_exclude[*]}
 		   do
 			exclude_string+=("--exclude='`checkTrailingSlash \"${item}\"`'")
 		   done
-		logHandler "We build the following exclude options: '${exclude_string[*]}'."
-	else
+		logHandler "We build the following excluding options: '${exclude_string[*]}'."
 		return 0
+	else
+		logHandler "We dont have to build excluding options..."
+		return 1
 	fi
 }
 
@@ -399,8 +415,8 @@ rotateHandler()
 	if [ -z "$files_to_keep" ] ;then
 		local files_to_keep="5"
 	fi
-	if [ "$encrypt_backup_required" == "1" ] ;then
-		file="$encrypt_backup_filename"
+	if [ "$backup_encryption_required" == "1" ] ;then
+		file="$backup_encryption_filename"
 	else
 		file="$backup_full_path"
 	fi
@@ -412,7 +428,7 @@ rotateHandler()
 			checkLocalFileExists "${file}.${file_helper}"
 			rc="$?"
 			if [ "$rc" == "0" ] ;then
-				mv ${file}.${file_helper} ${file}.${files_to_keep} 2>&1 | logHandler
+				${mv_bin}${file}.${file_helper} ${file}.${files_to_keep} 2>&1 | logHandler
 				rc="${PIPESTATUS[0]}"
 				if [ "$rc" == "0" ] ;then
 					logHandler "Rotating file: '${file}.${file_helper}' ==> '${file}.${files_to_keep}' was successful."
@@ -424,7 +440,7 @@ rotateHandler()
 			checkLocalFileExists "${file}"
 			rc="$?"
 			if [ "$rc" == "0" ] ;then
-				mv ${file} ${file}.${files_to_keep} 2>&1 | logHandler
+				${mv_bin}${file} ${file}.${files_to_keep} 2>&1 | logHandler
 				rc="${PIPESTATUS[0]}"
 				if [ "$rc" == "0" ] ;then
 					logHandler "Rotating file: '${file}' ==> '${file}.${files_to_keep}' was successful."
@@ -435,6 +451,7 @@ rotateHandler()
 		fi
 		files_to_keep=$(($files_to_keep - 1))
 	   done
+	return 0
 }
 
 logHandler()
@@ -458,6 +475,7 @@ logHandler()
 				checkBin "logger"
 				rc="$?"
 				if [ "$rc" != "0" ] ;then
+					echo "Required binary: 'logger' not found, exiting..."
 					script_exit_code="115"
 					exit
 				fi
@@ -465,16 +483,35 @@ logHandler()
 			${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 		fi
 		if [ "$log_to_file" == "1" ];then
-			log_timestamp="`date '+%Y-%m-%d %H:%M:%S'`"
+			if [ -z "$date_bin" ] ;then
+				checkBin "date"
+				rc="$?"
+				if [ "$rc" != "0" ] ;then
+					echo "Required binary: 'date' not found, exiting..."
+					script_exit_code="115"
+					exit
+				fi
+			fi
+			log_timestamp="`${date_bin}'+%Y-%m-%d %H:%M:%S'`"
 			echo -e "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}" >> ${log_file}
 		fi
 		if [ "$log_to_stdout" == "1" ] ;then
 			if [ -z "$log_timestamp" ] ;then
-				log_timestamp="`date '+%Y-%m-%d %H:%M:%S'`"
+				if [ -z "$date_bin" ] ;then
+					checkBin "date"
+					rc="$?"
+					if [ "$rc" != "0" ] ;then
+						echo "Required binary: 'date' not found, exiting..."
+						script_exit_code="115"
+						exit
+					fi
+				fi
+				log_timestamp="`${date_bin}'+%Y-%m-%d %H:%M:%S'`"
 			fi
 			echo -e "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}"
 		fi
 	fi
+	return 0
 }
 
 logHandlerStdinHelper()
@@ -483,6 +520,7 @@ logHandlerStdinHelper()
 	   do
 		logHandler "${stdin_line}"
 	   done < "/dev/stdin"
+	return 0
 }
 
 sigHandler()
@@ -538,6 +576,7 @@ sigHandler()
 			;;
 		*)
 			logHandler "Signal: '${signal}' received in function: '$FUNCNAME' but dont know what to do..."
+			return 1
 			;;
 	esac
 }
@@ -566,7 +605,7 @@ makeBackup()
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Backup job was successful."
-		if [ "$encrypt_backup_required" == "1" ] ;then
+		if [ "$backup_encryption_required" == "1" ] ;then
 			encryptBackup
 		else
 			logHandler "We did a great job, initiating termination..."
@@ -592,11 +631,11 @@ encryptBackup()
 		logHandler "Required binary: 'openssl' not found, exiting..."
 		delUnencryptedBackupFile
 	fi
-	${openssl_bin} aes-256-cbc -salt -in ${backup_full_path} -out ${encrypt_backup_filename} -k ${encrypt_backup_password} 2>&1 | logHandler
+	${openssl_bin} aes-256-cbc -salt -in ${backup_full_path} -out ${backup_encryption_filename} -k ${backup_encryption_password} 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Encrypting job was successful."
-		logHandler "HINT: You can use the following command, to decrypt your backup: 'openssl aes-256-cbc -d -salt -in ${encrypt_backup_filename} -out ${backup_full_path}'."
+		logHandler "HINT: You can use the following command, to decrypt your backup: 'openssl aes-256-cbc -d -salt -in ${backup_encryption_filename} -out ${backup_full_path}'."
 		delUnencryptedBackupFile
 	else
 		logHandler "Encrypting job was not successful."
@@ -609,7 +648,7 @@ delUnencryptedBackupFile()
 {
 	local rc=
 	logHandler "Deleting unencrypted backup file: '${backup_full_path}'..."
-	rm "${backup_full_path}" 2>&1 | logHandler
+	${rm_bin}"${backup_full_path}" 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Deleting of unencrypted backup file: '${backup_full_path}' was successful."
