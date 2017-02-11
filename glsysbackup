@@ -220,8 +220,10 @@ checkLock()
 	rc="$?"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Lock file: '${script_lock_file}' exist."
+		return 0
 	else
 		logHandler "Lock file: '${script_lock_file}' doesnt exist."
+		return 1
 	fi
 }
 
@@ -548,7 +550,11 @@ sigHandler()
 		EXIT)
 			logHandler "Caught EXIT, preparing for exiting..."
 			if [ "$another_instance_is_running" != "1" ] ;then
-				removeLock
+				checkLock
+				rc="$?"
+				if [ "$rc" == "0" ] ;then
+					removeLock
+				fi
 			fi
 			logHandler "Script was running: '${SECONDS}' seconds."
 			logHandler "Bye, bye..."
