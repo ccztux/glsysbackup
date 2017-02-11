@@ -121,7 +121,7 @@ getUser()
 		script_exit_code="20"
 		exit
 	fi
-	if [ $SUDO_USER ] ;then
+	if [ ! -z "$SUDO_USER" ] ;then
 		script_exec_user="$SUDO_USER"
 	else
 		script_exec_user="`${whoami_bin}`"
@@ -331,7 +331,7 @@ getSysPackageManager()
 	local available_syspackage_managers=()
 	local rc=
 	logHandler "Check if installed packages are required..."
-	if [ "$installed_packages_reuiqred" == "1" ] ;then
+	if [ "$installed_packages_required" == "1" ] ;then
 		logHandler "Installed packages are required..."
 		logHandler "Getting system package manager..."
 		for syspackman in ${supported_syspackage_managers[*]}
@@ -627,7 +627,7 @@ encryptBackup()
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Encrypting job was successful."
-		logHandler "HINT: You can use the following command, to decrypt your backup: 'openssl aes-256-cbc -d -salt -in ${backup_encryption_filename} -out ${backup_full_path}'."
+		logHandler "HINT: You can use the following command, to decrypt your backup: '${openssl_bin} aes-256-cbc -d -salt -in ${backup_encryption_filename} -out ${backup_full_path}'."
 		delUnencryptedBackupFile
 	else
 		logHandler "Encrypting job was not successful."
