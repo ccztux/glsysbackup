@@ -151,19 +151,25 @@ checkRequiredBinaries()
 checkBashVersion()
 {
 	logHandler "Checking bash version..."
-	case "$script_major_bashversion" in
-				3)
-					logHandler "Bash version: '${script_major_bashversion}' meets requirements..."
-					;;
-				4)
-					logHandler "Bash version: '${script_major_bashversion}' meets requirements..."
-					;;
-				*)
-					logHandler "Bash version: '${script_major_bashversion}' doesnt meet requirements, terminating..."
-					script_exit_code="40"
-					exit
-					;;
-	esac
+	if [ -z "$script_major_bashversion" ] ;then
+		logHandler "Could not determine bash version, exiting..."
+		script_exit_code="40"
+		exit
+	else
+		case "$script_major_bashversion" in
+					3)
+						logHandler "Bash version: '${script_major_bashversion}' meets requirements..."
+						;;
+					4)
+						logHandler "Bash version: '${script_major_bashversion}' meets requirements..."
+						;;
+					*)
+						logHandler "Bash version: '${script_major_bashversion}' doesnt meet requirements, terminating..."
+						script_exit_code="41"
+						exit
+						;;
+		esac
+	fi
 }
 
 checkAlreadyRunningInstance()
