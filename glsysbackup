@@ -567,32 +567,32 @@ sigHandler()
 	case "$signal" in
 		SIGTERM)
 			logHandler "Caught SIGTERM, preparing for exiting script..."
-			script_exit_code="120"
+			script_exit_code="143"
 			exit
 			;;
 		SIGINT)
 			logHandler "Caught SIGINT, preparing for exiting script..."
-			script_exit_code="121"
+			script_exit_code="130"
 			exit
 			;;
 		SIGHUP)
 			logHandler "Caught SIGHUP, preparing for exiting script..."
-			script_exit_code="122"
+			script_exit_code="129"
 			exit
 			;;
 		SIGABRT)
 			logHandler "Caught SIGABRT, preparing for exiting script..."
-			script_exit_code="123"
+			script_exit_code="134"
 			exit
 			;;
 		SIGQUIT)
 			logHandler "Caught SIGQUIT, preparing for exiting script..."
-			script_exit_code="124"
+			script_exit_code="129"
 			exit
 			;;
 		ERR)
 			logHandler "Caught ERR, at line number: '${bash_lineno}', command: '${bash_command}'. Preparing for exiting script..."
-			script_exit_code="125"
+			script_exit_code="1"
 			exit
 			;;
 		EXIT)
@@ -609,7 +609,7 @@ sigHandler()
 			exit $script_exit_code
 			;;
 		*)
-			logHandler "Signal: '${signal}' received in function: '$FUNCNAME' but dont know what to do..."
+			logHandler "Signal: '${signal}' received in function: '${FUNCNAME}' but dont know what to do..."
 			return 1
 			;;
 	esac
