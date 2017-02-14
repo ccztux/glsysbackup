@@ -8,7 +8,7 @@
 #		http://linuxinside.at
 #
 #  Last Mod:	Christian Zettel (ccztux)
-#		2017-02-11
+#		2017-02-14
 #
 #  Description:	Generic Linux System Backup
 #
@@ -39,7 +39,7 @@ trap 'sigHandler SIGINT' SIGINT
 trap 'sigHandler SIGHUP' SIGHUP
 trap 'sigHandler SIGABRT' SIGABRT
 trap 'sigHandler SIGQUIT' SIGQUIT
-trap 'sigHandler ERR ${LINENO} ${BASH_COMMAND} ${FUNCNAME}' ERR
+trap 'sigHandler ERR "${LINENO}" "${BASH_COMMAND}"' ERR
 trap 'sigHandler EXIT' EXIT
 
 
@@ -50,7 +50,7 @@ trap 'sigHandler EXIT' EXIT
 script_name="${0##*/}"
 script_version="1.0.0.a"
 script_author="ccztux"
-script_last_mod="2017-02-11"
+script_last_mod="2017-02-14"
 script_license="GNU GPLv3"
 script_description="Generic Linux System Backup"
 script_argc="$#"
@@ -563,7 +563,6 @@ sigHandler()
 	local signal="$1"
 	local bash_lineno="$2"
 	local bash_command="$3"
-	local bash_function="$4"
 	local rc=
 	case "$signal" in
 		SIGTERM)
@@ -592,11 +591,7 @@ sigHandler()
 			exit
 			;;
 		ERR)
-			if [ -z "$bash_function" ] ;then
-				logHandler "Caught ERR, at line number: '${bash_lineno}', command: '${bash_command}'. Preparing for exiting script..."
-			else
-				logHandler "Caught ERR, in function: '${bash_function}', at line number: '${bash_lineno}', command: '${bash_command}'. Preparing for exiting script..."
-			fi
+			logHandler "Caught ERR, at line number: '${bash_lineno}', command: '${bash_command}'. Preparing for exiting script..."
 			script_exit_code="125"
 			exit
 			;;
