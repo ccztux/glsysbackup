@@ -159,7 +159,7 @@ getUser()
 		logHandler "Required binary: 'whoami' found."
 	else
 		logHandler "Required binary: 'whoami' not found, exiting..."
-		script_exit_code="20"
+		script_exit_code="127"
 		exit
 	fi
 	if [ ! -z "$SUDO_USER" ] ;then
@@ -183,7 +183,7 @@ checkRequiredBinaries()
 			logHandler "Required binary: '${bin}' found."
 		else
 			logHandler "Required binary: '${bin}' not found, exiting..."
-			script_exit_code="30"
+			script_exit_code="127"
 			exit
 		fi
 	   done
@@ -223,7 +223,7 @@ checkAlreadyRunningInstance()
 		logHandler "Required binary: 'pgrep' found."
 	else
 		logHandler "Required binary: 'pgrep' not found, exiting..."
-		script_exit_code="50"
+		script_exit_code="127"
 		exit
 	fi
 	local running_script_pids="`${pgrep_bin} $script_name`"
@@ -513,7 +513,7 @@ logHandler()
 				rc="$?"
 				if [ "$rc" != "0" ] ;then
 					echo "Required binary: 'logger' not found, exiting..."
-					script_exit_code="110"
+					script_exit_code="127"
 					exit
 				fi
 			fi
@@ -525,7 +525,7 @@ logHandler()
 				rc="$?"
 				if [ "$rc" != "0" ] ;then
 					echo "Required binary: 'date' not found, exiting..."
-					script_exit_code="111"
+					script_exit_code="127"
 					exit
 				fi
 			fi
@@ -539,7 +539,7 @@ logHandler()
 					rc="$?"
 					if [ "$rc" != "0" ] ;then
 						echo "Required binary: 'date' not found, exiting..."
-						script_exit_code="112"
+						script_exit_code="127"
 						exit
 					fi
 				fi
@@ -624,7 +624,7 @@ makeBackup()
 		logHandler "Required binary: 'tar' found."
 	else
 		logHandler "Required binary: 'tar' not found, exiting..."
-		script_exit_code="130"
+		script_exit_code="127"
 		exit
 	fi
 	local backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${items_to_backup}"
@@ -663,6 +663,7 @@ encryptBackup()
 		logHandler "Required binary: 'openssl' found."
 	else
 		logHandler "Required binary: 'openssl' not found, exiting..."
+		script_exit_code="127"
 		delUnencryptedBackupFile
 	fi
 	${openssl_bin} aes-256-cbc -salt -in ${backup_full_path} -out ${backup_encryption_filename} -k ${backup_encryption_password} 2>&1 | logHandler
@@ -687,7 +688,9 @@ delUnencryptedBackupFile()
 	if [ "$rc" == "0" ] ;then
 		logHandler "Deleting of unencrypted backup file: '${backup_full_path}' was successful."
 		logHandler "We did a great job, initiating termination..."
-		script_exit_code="0"
+		if [ "$script_exit_code" != "127" ] ;then
+			script_exit_code="0"
+		fi
 		exit
 	else
 		logHandler "Deleting of unencrypted backup file: '${backup_full_path}' was not successful."
