@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #########################################################################################################
 #
@@ -8,7 +8,7 @@
 #		http://linuxinside.at
 #
 #  Last Mod:	Christian Zettel (ccztux)
-#		2017-02-14
+#		2017-02-15
 #
 #  Description:	Generic Linux System Backup
 #
@@ -50,7 +50,7 @@ trap 'sigHandler EXIT' EXIT
 script_name="${0##*/}"
 script_version="1.0.0.a"
 script_author="ccztux"
-script_last_mod="2017-02-14"
+script_last_mod="2017-02-15"
 script_license="GNU GPLv3"
 script_description="Generic Linux System Backup"
 script_argc="$#"
