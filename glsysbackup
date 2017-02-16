@@ -352,7 +352,7 @@ checkBin()
 checkTrailingSlash()
 {
 	local path="$1"
-	if [[ "$path" =~ ^.*\/$ ]] ;then
+	if [[ "$path" =~ ^(.*)\/$ ]] ;then
 		removeLastChar "$path"
 	else
 		echo "$path"
