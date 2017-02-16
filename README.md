@@ -1,6 +1,8 @@
 # glsysbackup 1.0.1.a (alpha)
 ## Generic Linux System Backup is an advanced backup tool written in bash.
 
+
+
 ### It requries the following binaries:
 - bash 3 || 4
 - which to get full path to binaries and check if they are available through $PATH
@@ -12,10 +14,12 @@
 - mv to move files
 
 
+
 ### Optionally used binaries:
 - logger to log to system log
 - rpm/dpkg to create a file with installed packages
 - openssl to encrypt the backup files
+
 
 
 ### Description:
@@ -25,6 +29,7 @@
 - Encryption of backup file with openssl if you want it
 
 
+
 ### Features:
 - Lock function. Only one instance is possible to run.
 - Verbose logging to stdout and/or system logfile and/or individual logfile.
@@ -32,6 +37,7 @@
 - Backupfile rotating
 - Creates a file with installed packages (rpm/dpkg)
 - Encryption with openssl
+
 
 
 ### Future plans:
