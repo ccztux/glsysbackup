@@ -165,7 +165,7 @@ getUser()
 	if [ ! -z "$SUDO_USER" ] ;then
 		script_exec_user="$SUDO_USER"
 	else
-		script_exec_user="`${whoami_bin}`"
+		script_exec_user="$(${whoami_bin})"
 	fi
 	logHandler "${script_name} was started by: '${script_exec_user}'."
 }
@@ -226,7 +226,7 @@ checkAlreadyRunningInstance()
 		script_exit_code="127"
 		exit
 	fi
-	local running_script_pids="`${pgrep_bin} $script_name`"
+	local running_script_pids="$(${pgrep_bin} $script_name)"
 	running_script_pids="${running_script_pids//${script_pid}/}"
 	running_script_pids="${running_script_pids//$'\n'/, }"
 	checkLock
@@ -340,7 +340,7 @@ checkBin()
 	local binary="$1"
 	local _bin=
 	local rc=
-	_bin="`which \"${binary}\" 2>&1`"
+	_bin="$(which \"${binary}\" 2>&1)"
 	rc="$?"
 	if [ "$rc" == "0" ] ;then
 		export ${binary}_bin="$_bin"
@@ -431,7 +431,7 @@ buildExcludeOpts()
 		exclude_string=()
 		for item in ${items_to_exclude[*]}
 		   do
-			exclude_string+=("--exclude='`checkTrailingSlash \"${item}\"`'")
+			exclude_string+=("--exclude='$(checkTrailingSlash \"${item}\")'")
 		   done
 		logHandler "We build the following excluding options: '${exclude_string[*]}'."
 	else
@@ -529,7 +529,7 @@ logHandler()
 					exit
 				fi
 			fi
-			log_timestamp="`${date_bin} '+%Y-%m-%d %H:%M:%S'`"
+			log_timestamp="$(${date_bin} '+%Y-%m-%d %H:%M:%S')"
 			echo -e "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}" >> ${log_file}
 		fi
 		if [ "$log_to_stdout" == "1" ] ;then
@@ -543,7 +543,7 @@ logHandler()
 						exit
 					fi
 				fi
-				log_timestamp="`${date_bin} '+%Y-%m-%d %H:%M:%S'`"
+				log_timestamp="$(${date_bin} '+%Y-%m-%d %H:%M:%S')"
 			fi
 			echo -e "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}"
 		fi
