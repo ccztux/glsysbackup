@@ -10,7 +10,7 @@ addons:
     - shellcheck
 
 script:
- - bash -c 'shopt -s globstar; shellcheck **/*.{sh,bash}'
+ - bash -c 'shopt -s globstar; shellcheck **/glsysbackup'
 
 matrix:
   fast_finish: true
