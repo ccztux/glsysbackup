@@ -75,6 +75,7 @@ items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
 items_to_exclude=("/root/old" "/tmp/var")
 
 backup_rotating_required="1"
+backup_rotating_files_to_keep="5"
 
 installed_packages_required="1"
 installed_packages_filename="/root/installed_packages_filename.txt"
@@ -431,7 +432,7 @@ buildExcludeOpts()
 		exclude_string=()
 		for item in ${items_to_exclude[*]}
 		   do
-			exclude_string+=("--exclude='$(checkTrailingSlash \"${item}\")'")
+			exclude_string+=("--exclude='$(checkTrailingSlash "${item}")'")
 		   done
 		logHandler "We build the following excluding options: '${exclude_string[*]}'."
 	else
@@ -445,46 +446,42 @@ rotateHandler()
 	if [ "$backup_rotating_required" == "1" ] ;then
 		logHandler "Backup rotating is required..."
 		local rc=
-		local files_to_keep="$1"
 		logHandler "Rotating backup files..."
-		if [ -z "$files_to_keep" ] ;then
-			local files_to_keep="5"
-		fi
 		if [ "$backup_encryption_required" == "1" ] ;then
 			file="$backup_encryption_filename"
 		else
 			file="$backup_full_path"
 		fi
-		files_to_keep=$((files_to_keep - 1))
-		while [ "$files_to_keep" -gt "0" ]
+		backup_rotating_files_to_keep=$((backup_rotating_files_to_keep - 1))
+		while [ "$backup_rotating_files_to_keep" -gt "0" ]
 		   do
-			local file_helper=$((files_to_keep - 1))
-			if [ "$files_to_keep" != "1" ] ;then
+			local file_helper=$((backup_rotating_files_to_keep - 1))
+			if [ "$backup_rotating_files_to_keep" != "1" ] ;then
 				checkLocalFileExists "${file}.${file_helper}"
 				rc="$?"
 				if [ "$rc" == "0" ] ;then
-					${mv_bin} "${file}.${file_helper}" "${file}.${files_to_keep}" 2>&1 | logHandler
+					${mv_bin} "${file}.${file_helper}" "${file}.${backup_rotating_files_to_keep}" 2>&1 | logHandler
 					rc="${PIPESTATUS[0]}"
 					if [ "$rc" == "0" ] ;then
-						logHandler "Rotating file: '${file}.${file_helper}' ==> '${file}.${files_to_keep}' was successful."
+						logHandler "Rotating file: '${file}.${file_helper}' ==> '${file}.${backup_rotating_files_to_keep}' was successful."
 					else
-						logHandler "Rotating file: '${file}.${file_helper}' ==> '${file}.${files_to_keep}' was not successful."
+						logHandler "Rotating file: '${file}.${file_helper}' ==> '${file}.${backup_rotating_files_to_keep}' was not successful."
 					fi
 				fi
 			else
 				checkLocalFileExists "${file}"
 				rc="$?"
 				if [ "$rc" == "0" ] ;then
-					${mv_bin} "${file}" "${file}.${files_to_keep}" 2>&1 | logHandler
+					${mv_bin} "${file}" "${file}.${backup_rotating_files_to_keep}" 2>&1 | logHandler
 					rc="${PIPESTATUS[0]}"
 					if [ "$rc" == "0" ] ;then
-						logHandler "Rotating file: '${file}' ==> '${file}.${files_to_keep}' was successful."
+						logHandler "Rotating file: '${file}' ==> '${file}.${backup_rotating_files_to_keep}' was successful."
 					else
-						logHandler "Rotating file: '${file}' ==> '${file}.${files_to_keep}' was not successful."
+						logHandler "Rotating file: '${file}' ==> '${file}.${backup_rotating_files_to_keep}' was not successful."
 					fi
 				fi
 			fi
-			files_to_keep=$((files_to_keep - 1))
+			backup_rotating_files_to_keep=$((backup_rotating_files_to_keep - 1))
 		   done
 	else
 		logHandler "Backup rotating is not required..."
@@ -635,7 +632,7 @@ makeBackup()
 	else
 		logHandler "Backup directory: '${backup_destination_path}' doesnt exist."
 	fi
-	eval "${backup_cmd} ${exclude_string} 2>&1" | logHandler
+	eval "${backup_cmd} ${exclude_string[*]} 2>&1" | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Backup job was successful."
