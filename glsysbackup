@@ -9,7 +9,7 @@
 #			https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-02-16
+#			2017-02-18
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -49,7 +49,7 @@ trap 'sigHandler EXIT' EXIT
 script_name="${0##*/}"
 script_version="1.0.0.a"
 script_author="ccztux"
-script_last_modification_date="2017-02-16"
+script_last_modification_date="2017-02-18"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_argc="$#"
