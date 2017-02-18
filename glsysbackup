@@ -340,7 +340,7 @@ checkBin()
 	local binary="$1"
 	local _bin=
 	local rc=
-	_bin="$(which \"${binary}\" 2>&1)"
+	_bin="$(which "${binary}" 2>&1)"
 	rc="$?"
 	if [ "$rc" == "0" ] ;then
 		export ${binary}_bin="$_bin"
