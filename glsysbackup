@@ -227,7 +227,7 @@ checkAlreadyRunningInstance()
 		script_exit_code="127"
 		exit
 	fi
-	local running_script_pids="$(${pgrep_bin} $script_name)"
+	local running_script_pids="$(${pgrep_bin} "$script_name")"
 	running_script_pids="${running_script_pids//${script_pid}/}"
 	running_script_pids="${running_script_pids//$'\n'/, }"
 	checkLock
