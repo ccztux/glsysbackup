@@ -110,6 +110,7 @@ Description:            "${script_description}"
 
 OPTIONS:
    -h        Shows this help.
+   -o	     Override lock in case ${script_name} was terminated abnormally.
    -v        Shows script version."
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
@@ -238,7 +239,7 @@ checkAlreadyRunningInstance()
 		if [ "$override_lock" == "1" ] ;then
 			overrideLock
 		else
-			logHandler "HINT: You can override the old left over lock by calling ${script_name} with option '-l'."
+			logHandler "HINT: You can override the old left over lock by calling ${script_name} with option '-o'."
 			another_instance_is_running="1"
 			script_exit_code="51"
 			exit
@@ -704,13 +705,16 @@ delUnencryptedBackupFile()
 # Get options:
 #-------------
 
-while getopts "h.v." OPTION
+while getopts "h.o:v." OPTION
    do
 	case "$OPTION" in
 			h)
 				usage
 				script_exit_code="160"
 				exit
+				;;
+			o)
+				override_lock="1"
 				;;
 			v)
 				printScriptInfos
