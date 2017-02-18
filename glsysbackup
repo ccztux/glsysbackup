@@ -552,7 +552,7 @@ logHandler()
 
 logHandlerStdinHelper()
 {
-	while read stdin_line
+	while read -r stdin_line
 	   do
 		logHandler "${stdin_line}"
 	   done < "/dev/stdin"
