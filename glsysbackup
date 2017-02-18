@@ -402,10 +402,10 @@ createInstalledPackagesFile()
 	logHandler "Creating installed packages file: '${installed_packages_filename}'..."
 	case "${available_syspackage_managers}" in
 						rpm)
-							${rpm_bin} -qa > ${installed_packages_filename}
+							${rpm_bin} -qa > "${installed_packages_filename}"
 							;;
 						dpkg)
-							${dpkg_bin} --get-selections > ${installed_packages_filename}
+							${dpkg_bin} --get-selections > "${installed_packages_filename}"
 							;;
 						*)
 							logHandler "Ooop! Someting went terribly wrong in function: '${FUNCNAME}', exiting..."
@@ -463,7 +463,7 @@ rotateHandler()
 				checkLocalFileExists "${file}.${file_helper}"
 				rc="$?"
 				if [ "$rc" == "0" ] ;then
-					${mv_bin} ${file}.${file_helper} ${file}.${files_to_keep} 2>&1 | logHandler
+					${mv_bin} "${file}.${file_helper}" "${file}.${files_to_keep}" 2>&1 | logHandler
 					rc="${PIPESTATUS[0]}"
 					if [ "$rc" == "0" ] ;then
 						logHandler "Rotating file: '${file}.${file_helper}' ==> '${file}.${files_to_keep}' was successful."
@@ -475,7 +475,7 @@ rotateHandler()
 				checkLocalFileExists "${file}"
 				rc="$?"
 				if [ "$rc" == "0" ] ;then
-					${mv_bin} ${file} ${file}.${files_to_keep} 2>&1 | logHandler
+					${mv_bin} "${file}" "${file}.${files_to_keep}" 2>&1 | logHandler
 					rc="${PIPESTATUS[0]}"
 					if [ "$rc" == "0" ] ;then
 						logHandler "Rotating file: '${file}' ==> '${file}.${files_to_keep}' was successful."
@@ -530,7 +530,7 @@ logHandler()
 				fi
 			fi
 			log_timestamp="$(${date_bin} '+%Y-%m-%d %H:%M:%S')"
-			echo -e "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}" >> ${log_file}
+			echo -e "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}" >> "${log_file}"
 		fi
 		if [ "$log_to_stdout" == "1" ] ;then
 			if [ -z "$log_timestamp" ] ;then
@@ -666,7 +666,7 @@ encryptBackup()
 		script_exit_code="127"
 		delUnencryptedBackupFile
 	fi
-	${openssl_bin} aes-256-cbc -salt -in ${backup_full_path} -out ${backup_encryption_filename} -k ${backup_encryption_password} 2>&1 | logHandler
+	${openssl_bin} aes-256-cbc -salt -in "${backup_full_path}" -out "${backup_encryption_filename}" -k "${backup_encryption_password}" 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Encrypting job was successful."
