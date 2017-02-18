@@ -2,6 +2,9 @@
 ## Generic Linux System Backup is an advanced backup tool written in bash.
 
 
+.. image:: https://travis-ci.org/ccztux/glsysbackup.svg?branch=devel
+    :target: https://travis-ci.org/ccztux/glsysbackup
+
 
 ### It requries the following binaries:
 - bash 3 || 4
