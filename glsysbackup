@@ -99,14 +99,14 @@ usage()
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
 	fi
-echo -e "Usage: "$0" OPTIONS
+echo "Usage: ${script_name} OPTIONS
 
-Author:                 "${script_author}"
-Last modification:      "${script_last_modification_date}"
-Version:                "${script_version}"
-License:                "${script_license}"
+Author:                 ${script_author}
+Last modification:      ${script_last_modification_date}
+Version:                ${script_version}
+License:                ${script_license}
 
-Description:            "${script_description}"
+Description:            ${script_description}
 
 OPTIONS:
    -h        Shows this help.
@@ -122,12 +122,12 @@ printScriptInfos()
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
 	fi
-echo -e "Author:                 "${script_author}"
-Last modification:      "${script_last_modification_date}"
-Version:                "${script_version}"
-License:                "${script_license}"
+echo "Author:                 ${script_author}
+Last modification:      ${script_last_modification_date}
+Version:                ${script_version}
+License:                ${script_license}
 
-Description:            "$script_description""
+Description:            $script_description"
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
 	fi
