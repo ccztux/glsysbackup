@@ -217,6 +217,7 @@ checkBashVersion()
 checkAlreadyRunningInstance()
 {
 	local rc=
+	local running_script_pids=
 	logHandler "Check if another instance of: '${script_name}' is already running..."
 	checkBin "pgrep"
 	rc="$?"
@@ -227,7 +228,7 @@ checkAlreadyRunningInstance()
 		script_exit_code="127"
 		exit
 	fi
-	local running_script_pids="$(${pgrep_bin} "$script_name")"
+	running_script_pids="$(${pgrep_bin} "$script_name")"
 	running_script_pids="${running_script_pids//${script_pid}/}"
 	running_script_pids="${running_script_pids//$'\n'/, }"
 	checkLock
