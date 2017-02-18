@@ -454,10 +454,10 @@ rotateHandler()
 		else
 			file="$backup_full_path"
 		fi
-		files_to_keep=$(($files_to_keep - 1))
+		files_to_keep=$((files_to_keep - 1))
 		while [ "$files_to_keep" -gt "0" ]
 		   do
-			local file_helper=$(($files_to_keep - 1))
+			local file_helper=$((files_to_keep - 1))
 			if [ "$files_to_keep" != "1" ] ;then
 				checkLocalFileExists "${file}.${file_helper}"
 				rc="$?"
@@ -483,7 +483,7 @@ rotateHandler()
 					fi
 				fi
 			fi
-			files_to_keep=$(($files_to_keep - 1))
+			files_to_keep=$((files_to_keep - 1))
 		   done
 	else
 		logHandler "Backup rotating is not required..."
