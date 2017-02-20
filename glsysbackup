@@ -9,7 +9,7 @@
 #			https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-02-18
+#			2017-02-20
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -33,6 +33,12 @@
 #########################################################################################################
 
 
+set -e
+set -u
+set -o noclobber
+set -o pipefail
+
+
 trap 'sigHandler SIGTERM' SIGTERM
 trap 'sigHandler SIGINT' SIGINT
 trap 'sigHandler SIGHUP' SIGHUP
@@ -49,7 +55,7 @@ trap 'sigHandler EXIT' EXIT
 script_name="${0##*/}"
 script_version="1.0.0.a"
 script_author="ccztux"
-script_last_modification_date="2017-02-18"
+script_last_modification_date="2017-02-20"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_argc="$#"
@@ -132,6 +138,12 @@ Description:            $script_description"
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
 	fi
+}
+
+setDefaultValues()
+{
+	# already not in use
+	return
 }
 
 checkRootPrivileges()
@@ -393,6 +405,7 @@ getSysPackageManager()
 			script_exit_code="80"
 			exit
 		else
+			syspackage_manager="${available_syspackage_managers[*]}"
 			logHandler "Supported system package manager we found is: '${available_syspackage_managers[*]}'."
 			createInstalledPackagesFile
 		fi
@@ -405,12 +418,12 @@ createInstalledPackagesFile()
 {
 	local rc=
 	logHandler "Creating installed packages file: '${installed_packages_filename}'..."
-	case "${available_syspackage_managers}" in
+	case "${syspackage_manager}" in
 						rpm)
-							${rpm_bin} -qa > "${installed_packages_filename}"
+							${syspackage_manager} -qa > "${installed_packages_filename}"
 							;;
 						dpkg)
-							${dpkg_bin} --get-selections > "${installed_packages_filename}"
+							${syspackage_manager} --get-selections > "${installed_packages_filename}"
 							;;
 						*)
 							logHandler "Ooop! Someting went terribly wrong in function: '${FUNCNAME[0]}', exiting..."
@@ -741,6 +754,7 @@ while getopts "h.o:v." OPTION
 # Main:
 #------
 
+setDefaultValues
 logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
 checkRootPrivileges
 getUser
