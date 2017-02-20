@@ -95,7 +95,7 @@ log_to_stdout="1"
 # Functions:
 #-----------
 
-usage()
+printUsage()
 {
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
@@ -533,7 +533,7 @@ logHandler()
 				fi
 			fi
 			log_timestamp="$(${date_bin} '+%Y-%m-%d %H:%M:%S')"
-			echo -e "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}" >> "${log_file}"
+			echo "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}" >> "${log_file}"
 		fi
 		if [ "$log_to_stdout" == "1" ] ;then
 			if [ -z "$log_timestamp" ] ;then
@@ -548,7 +548,7 @@ logHandler()
 				fi
 				log_timestamp="$(${date_bin} '+%Y-%m-%d %H:%M:%S')"
 			fi
-			echo -e "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}"
+			echo "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}"
 		fi
 	fi
 }
@@ -715,7 +715,7 @@ while getopts "h.o:v." OPTION
    do
 	case "$OPTION" in
 			h)
-				usage
+				printUsage
 				script_exit_code="160"
 				exit
 				;;
@@ -728,7 +728,7 @@ while getopts "h.o:v." OPTION
 				exit
 				;;
 			?)
-				usage
+				printUsage
 				script_exit_code="162"
 				exit
 				;;
