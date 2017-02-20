@@ -299,7 +299,7 @@ setLock()
 	if [ "$rc" == "0" ] ;then
 		logHandler "Setting lock was successful."
 	else
-		logHandler "Setting lock was not successful."
+		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock."
 		script_exit_code="60"
 		exit
 	fi
