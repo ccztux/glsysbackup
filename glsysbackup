@@ -33,8 +33,6 @@
 #########################################################################################################
 
 
-set -e
-set -u
 set -o noclobber
 set -o pipefail
 
@@ -754,8 +752,8 @@ while getopts "h.o:v." OPTION
 # Main:
 #------
 
-setDefaultValues
 logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
+setDefaultValues
 checkRootPrivileges
 getUser
 checkRequiredBinaries "${script_common_required_binaries[*]}"
