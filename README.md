@@ -1,8 +1,11 @@
 # glsysbackup 1.0.1.a (alpha)
 ## Generic Linux System Backup is an advanced backup tool written in bash.
 
+| Branch: | Shellcheck state: |
+| ------------- | ------------- |
+| Master | [![Build Status](https://travis-ci.org/ccztux/glsysbackup.svg?branch=master)](https://travis-ci.org/ccztux/glsysbackup) |
+| Devel  | [![Build Status](https://travis-ci.org/ccztux/glsysbackup.svg?branch=devel)](https://travis-ci.org/ccztux/glsysbackup) |
 
-[![Build Status](https://travis-ci.org/ccztux/glsysbackup.svg?branch=master)](https://travis-ci.org/ccztux/glsysbackup)
 
 
 ### It requries the following binaries:
