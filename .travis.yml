@@ -9,7 +9,7 @@ before_install:
   - docker pull koalaman/shellcheck
 
 script:
- - docker run -v $(pwd):/ koalaman/shellcheck ./
+ - docker run -v $(pwd): koalaman/shellcheck ./
 
 matrix:
   fast_finish: true
