@@ -12,7 +12,7 @@
 - bash 3 || 4
 - which to get full path to binaries and check if they are available through $PATH
 - pgrep to check if an instance of glsysbackup is already running
-- whois to check the user who executes glsysbackup
+- whoami to check the user who executes glsysbackup
 - date for logging purposes
 - tar to create the backup
 - rm to delete files
