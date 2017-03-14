@@ -33,6 +33,9 @@
 #========================================================================================================
 
 
+# shellcheck disable=SC2154
+# shellcheck disable=SC1001
+
 set -o noclobber
 set -o pipefail
 
@@ -160,7 +163,6 @@ checkRootPrivileges()
 
 getUser()
 {
-	# shellcheck disable=SC2154
 
 	local script_exec_user=
 	local rc=
@@ -227,8 +229,6 @@ checkBashVersion()
 
 checkAlreadyRunningInstance()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 	local running_script_pids=
 	logHandler "Check if another instance of: '${script_name}' is already running..."
@@ -306,8 +306,6 @@ setLock()
 
 removeLock()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 	logHandler "Removing lock..."
 	${rm_bin} "$script_lock_file" 2>&1 | logHandler
@@ -369,8 +367,6 @@ checkBin()
 
 checkTrailingSlash()
 {
-	# shellcheck disable=SC1001
-
 	local path="$1"
 	if [[ "$path" =~ ^(.*)\/$ ]] ;then
 		removeLastChar "$path"
@@ -461,8 +457,6 @@ buildExcludeOpts()
 
 rotateHandler()
 {
-	# shellcheck disable=SC2154
-
 	logHandler "Check if backup rotating is required..."
 	if [ "$backup_rotating_required" == "1" ] ;then
 		logHandler "Backup rotating is required..."
@@ -511,8 +505,6 @@ rotateHandler()
 
 logHandler()
 {
-	# shellcheck disable=SC2154
-
 	local log_message="${1//\`/}"
 	local log_timestamp=
 	local stdin_data_available=
@@ -637,8 +629,6 @@ sigHandler()
 
 makeBackup()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 	checkBin "tar"
 	rc="$?"
@@ -677,8 +667,6 @@ makeBackup()
 
 encryptBackup()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 	logHandler "Encrypting backup file: '${backup_full_path}'..."
 	checkBin "openssl"
@@ -705,8 +693,6 @@ encryptBackup()
 
 delUnencryptedBackupFile()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 	logHandler "Deleting unencrypted backup file: '${backup_full_path}'..."
 	${rm_bin} "${backup_full_path}" 2>&1 | logHandler
