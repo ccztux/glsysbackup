@@ -15,7 +15,7 @@
 Usage: glsysbackup OPTIONS
 
 Author:                 ccztux
-Last modification:      2017-02-20
+Last modification:      2017-03-14
 Version:                1.0.0.a
 License:                GNU GPLv3
 
