@@ -11,21 +11,21 @@
 
 
 ### It requries the following binaries:
-- *bash* (Version 3 || 4)
-- *which* to get the full path through environment variable $PATH to the required binaries 
-- *pgrep* to check if an instance of glsysbackup is already running
-- *whoami* to check the user who executes glsysbackup
-- *date* for logging purposes
-- *tar* to create the backup
-- *rm* to delete files
-- *mv* to move files
+- **bash** (Version 3 || 4)
+- **which** to get the full path through environment variable $PATH to the required binaries 
+- **pgrep** to check if an instance of glsysbackup is already running
+- **whoami** to check the user who executes glsysbackup
+- **date** for logging purposes
+- **tar** to create the backup
+- **rm** to delete files
+- **mv** to move files
 
 
 
 ### Optionally used binaries:
-- *logger* to log to the system log
-- *rpm* || *dpkg* to create a file with installed packages
-- *openssl* to encrypt the backup file
+- **logger** to log to the system log
+- **rpm** || **dpkg** to create a file with installed packages
+- **openssl** to encrypt the backup file
 
 
 
