@@ -12,7 +12,7 @@
 
 ### It requries the following binaries:
 - **bash** (Version 3 || 4)
-- **which** to get the full path through environment variable $PATH to the required binaries 
+- **which** to get the full path to the required binaries through environment variable $PATH
 - **pgrep** to check if an instance of glsysbackup is already running
 - **whoami** to check the user who executes glsysbackup
 - **date** for logging purposes
@@ -57,3 +57,22 @@
 - use config files for multiple jobs
 - add sendEmail functionality
 - add incremental backup feature
+
+
+
+### CLI options:
+```bash
+Usage: glsysbackup OPTIONS
+
+Author:                 ccztux
+Last modification:      2017-02-20
+Version:                1.0.0.a
+License:                GNU GPLv3
+
+Description:            glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
+
+OPTIONS:
+   -h        Shows this help.
+   -o	     Override lock in case glsysbackup was terminated abnormally.
+   -v        Shows script version.
+```
