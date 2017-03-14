@@ -10,6 +10,57 @@
 
 
 
+### CLI options:
+```
+Usage: glsysbackup OPTIONS
+
+Author:                 ccztux
+Last modification:      2017-02-20
+Version:                1.0.0.a
+License:                GNU GPLv3
+
+Description:            glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
+
+OPTIONS:
+   -h        Shows this help.
+   -o	     Override lock in case glsysbackup was terminated abnormally.
+   -v        Shows script version.
+```
+
+
+
+### Configuration variables:
+```bash
+#-------------------------
+# Configuration variables:
+#-------------------------
+
+root_privileges_required="1"
+
+backup_destination_path="/var/backups/"
+backup_filename="${script_name}.${script_hostname}.tar.gz"
+backup_full_path="${backup_destination_path}${backup_filename}"
+items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
+items_to_exclude=("/root/old" "/tmp/var")
+
+backup_rotating_required="1"
+backup_rotating_files_to_keep="5"
+
+installed_packages_required="1"
+installed_packages_filename="/root/installed_packages_filename.txt"
+
+backup_encryption_required="1"
+backup_encryption_password="test1234"
+backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
+
+log_to_syslog="1"
+log_to_file="0"
+log_file="/var/log/${script_name}.log"
+log_to_stdout="1"
+```
+
+
+
 ### It requries the following binaries:
 - **bash** (Version 3 || 4)
 - **which** to get the full path to the required binaries through environment variable $PATH
@@ -57,22 +108,3 @@
 - use config files for multiple jobs
 - add sendEmail functionality
 - add incremental backup feature
-
-
-
-### CLI options:
-```bash
-Usage: glsysbackup OPTIONS
-
-Author:                 ccztux
-Last modification:      2017-02-20
-Version:                1.0.0.a
-License:                GNU GPLv3
-
-Description:            glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
-
-OPTIONS:
-   -h        Shows this help.
-   -o	     Override lock in case glsysbackup was terminated abnormally.
-   -v        Shows script version.
-```
