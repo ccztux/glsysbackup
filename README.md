@@ -5,7 +5,7 @@
 
 
 
-# glsysbackup 1.0.1.a (alpha)
+# glsysbackup 1.0.1-alpha2
 ## Generic Linux System Backup is an advanced backup tool written in bash.
 
 
@@ -16,7 +16,7 @@ Usage: glsysbackup OPTIONS
 
 Author:                 ccztux
 Last modification:      2017-03-14
-Version:                1.0.0.a
+Version:                1.0.1-alpha2
 License:                GNU GPLv3
 
 Description:            glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.

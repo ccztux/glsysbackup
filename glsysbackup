@@ -13,7 +13,9 @@
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
-#  Changelog:		1.0.1.a Initial revision
+#  Changelog:		1.0.0		Initial revision
+#			1.0.1.a		First alpha version
+#			1.0.1-alpha2	Second alpha version
 #
 #  License:		GNU GPLv3
 #
@@ -52,7 +54,7 @@ trap 'sigHandler EXIT' EXIT
 #-----------------------
 
 script_name="${0##*/}"
-script_version="1.0.0.a"
+script_version="1.0.1-alpha2"
 script_author="ccztux"
 script_last_modification_date="2017-03-16"
 script_license="GNU GPLv3"
