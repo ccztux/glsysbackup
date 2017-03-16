@@ -35,13 +35,18 @@ OPTIONS:
 # Configuration variables:
 #-------------------------
 
+log_to_syslog="1"
+log_to_file="0"
+log_file="/var/log/${script_name}.log"
+log_to_stdout="1"
+
 root_privileges_required="1"
 
 backup_destination_path="/var/backups/"
 backup_filename="${script_name}.${script_hostname}.tar.gz"
 backup_full_path="${backup_destination_path}${backup_filename}"
 items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
-items_to_exclude=("/root/old" "/tmp/var")
+items_to_exclude=("/root/old" "/tmp/var/")
 
 backup_rotating_required="1"
 backup_rotating_files_to_keep="5"
@@ -53,10 +58,8 @@ backup_encryption_required="1"
 backup_encryption_password="test1234"
 backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
 
-log_to_syslog="1"
-log_to_file="0"
-log_file="/var/log/${script_name}.log"
-log_to_stdout="1"
+pre_backup_script="/home/pi/pre.sh"
+post_backup_script="/home/pi/post.sh"
 ```
 
 
