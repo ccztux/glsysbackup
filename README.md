@@ -83,13 +83,15 @@ log_to_stdout="1"
 ### Description:
 1. Check if glsysbackup will be exectuted with root privileges
 2. Get and log the user, who starts glsysbackup
-3. Check required, common binaries
+3. Check if required, common binaries exists
 4. Check if an instance is already running via lockfile and pgrep
 5. Check if bash version meets requirements
 6. Rotation of old backup files
 7. Get syspackage manager and if it is supported, create file with installed packages
 8. Build excluding options from config array
-9. Make the backup
+9. Execute Prebackup script, if it is defined
+10. Make the backup
+11. Execute Prebackup script, if it is defined
 
 
 
@@ -97,7 +99,7 @@ log_to_stdout="1"
 - Lock functionality. Only one instance is possible to run. (Lock file and check with pgrep)
 - Verbose logging to stdout and/or system logfile and/or individual logfile.
 - Excluding of files
-- Backupfile rotating
+- Backupfile rotation
 - Creates a file with installed packages (rpm || dpkg)
 - Encryption with openssl
 - CLI options and arguments
