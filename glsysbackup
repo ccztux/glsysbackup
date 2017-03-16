@@ -9,7 +9,7 @@
 #			https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-03-14
+#			2017-03-16
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -32,11 +32,9 @@
 #
 #========================================================================================================
 
-
 # shellcheck disable=SC2154
 # shellcheck disable=SC1001
 
-set -o noclobber
 set -o pipefail
 
 
@@ -56,7 +54,7 @@ trap 'sigHandler EXIT' EXIT
 script_name="${0##*/}"
 script_version="1.0.0.a"
 script_author="ccztux"
-script_last_modification_date="2017-03-14"
+script_last_modification_date="2017-03-16"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_pid="$$"
@@ -72,13 +70,18 @@ script_common_required_binaries=("rm" "mv")
 # Configuration variables:
 #-------------------------
 
+log_to_syslog="1"
+log_to_file="0"
+log_file="/var/log/${script_name}.log"
+log_to_stdout="1"
+
 root_privileges_required="1"
 
 backup_destination_path="/var/backups/"
 backup_filename="${script_name}.${script_hostname}.tar.gz"
 backup_full_path="${backup_destination_path}${backup_filename}"
 items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
-items_to_exclude=("/root/old" "/tmp/var")
+items_to_exclude=("/root/old" "/tmp/var/")
 
 backup_rotating_required="1"
 backup_rotating_files_to_keep="5"
@@ -90,11 +93,8 @@ backup_encryption_required="1"
 backup_encryption_password="test1234"
 backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
 
-log_to_syslog="1"
-log_to_file="0"
-log_file="/var/log/${script_name}.log"
-log_to_stdout="1"
-
+pre_backup_script="/home/pi/pre.sh"
+post_backup_script="/home/pi/post.sh"
 
 
 #-----------
@@ -106,19 +106,20 @@ printUsage()
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
 	fi
-echo "Usage: ${script_name} OPTIONS
-
-Author:                 ${script_author}
-Last modification:      ${script_last_modification_date}
-Version:                ${script_version}
-License:                ${script_license}
-
-Description:            ${script_description}
-
-OPTIONS:
-   -h        Shows this help.
-   -o	     Override lock in case ${script_name} was terminated abnormally.
-   -v        Shows script version."
+	echo "Usage: ${script_name} OPTIONS"
+	echo 
+	echo "Author:                 ${script_author}"
+	echo "Last modification:      ${script_last_modification_date}"
+	echo "Version:                ${script_version}"
+	echo "License:                ${script_license}"
+	echo
+	echo "Description:            ${script_description}"
+	echo
+	echo "OPTIONS:"
+	echo "   -h        Shows this help."
+	echo "   -o	     Override lock in case ${script_name} was terminated abnormally."
+	echo
+	echo "   -v        Shows script version."
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
 	fi
@@ -129,12 +130,12 @@ printScriptInfos()
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
 	fi
-echo "Author:                 ${script_author}
-Last modification:      ${script_last_modification_date}
-Version:                ${script_version}
-License:                ${script_license}
-
-Description:            $script_description"
+	echo "Author:                 ${script_author}"
+	echo "Last modification:      ${script_last_modification_date}"
+	echo "Version:                ${script_version}"
+	echo "License:                ${script_license}"
+	echo
+	echo "Description:            $script_description"
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
 	fi
@@ -151,7 +152,9 @@ checkRootPrivileges()
 	logHandler "Check if root priviliges are required..."
 	if [ "$root_privileges_required" == "1" ] ;then
 		logHandler "Root privileges are required, checking privileges..."
-		if [ "$UID" != "0" ] ;then
+		if [ "$UID" == "0" ] ;then
+			logHandler "Hooray, we have root privileges..."
+		else
 			logHandler "You must run this script as root, terminating..."
 			script_exit_code="10"
 			exit
@@ -163,22 +166,21 @@ checkRootPrivileges()
 
 getUser()
 {
-
 	local script_exec_user=
 	local rc=
 	logHandler "Get user which starts the script..."
-	checkBin "whoami"
-	rc="$?"
-	if [ "$rc" == "0" ] ;then
-		logHandler "Required binary: 'whoami' found."
-	else
-		logHandler "Required binary: 'whoami' not found, exiting..."
-		script_exit_code="127"
-		exit
-	fi
 	if [ ! -z "$SUDO_USER" ] ;then
 		script_exec_user="$SUDO_USER"
 	else
+		checkBin "whoami"
+		rc="$?"
+		if [ "$rc" == "0" ] ;then
+			logHandler "Required binary: 'whoami' found."
+		else
+			logHandler "Required binary: 'whoami' not found, exiting..."
+			script_exit_code="127"
+			exit
+		fi
 		script_exec_user="$(${whoami_bin})"
 	fi
 	logHandler "${script_name} was started by: '${script_exec_user}'."
@@ -241,9 +243,10 @@ checkAlreadyRunningInstance()
 		script_exit_code="127"
 		exit
 	fi
-	running_script_pids="$(${pgrep_bin} "$script_name")"
+	running_script_pids="$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_name}(.*)$")"
 	running_script_pids="${running_script_pids//${script_pid}/}"
-	running_script_pids="${running_script_pids//$'\n'/, }"
+	running_script_pids="${running_script_pids//$(${pgrep_bin} -d " " -P "${script_pid}")/}"
+	running_script_pids="${running_script_pids//\ /, }"
 	checkLock
 	rc="$?"
 	if ([ "$rc" != "0" ] && [ -z "$running_script_pids" ]) ;then
@@ -293,8 +296,10 @@ setLock()
 {
 	local rc=
 	logHandler "Setting lock..."
+	set -o noclobber
 	echo "$script_pid" > "$script_lock_file"
 	rc="$?"
+	set +o noclobber
 	if [ "$rc" == "0" ] ;then
 		logHandler "Setting lock was successful."
 	else
@@ -321,7 +326,7 @@ removeLock()
 
 overrideLock()
 {
-	logHandler "Override lock, because you want it..."
+	logHandler "Overriding lock, because you want it..."
 	removeLock
 	setLock
 }
@@ -369,9 +374,9 @@ checkTrailingSlash()
 {
 	local path="$1"
 	if [[ "$path" =~ ^(.*)\/$ ]] ;then
-		removeLastChar "$path"
+		return 1
 	else
-		echo "$path"
+		return 0
 	fi
 }
 
@@ -441,13 +446,20 @@ createInstalledPackagesFile()
 
 buildExcludeOpts()
 {
+	local rc=
 	logHandler "Check if we need to build excluding options..."
 	if [ ! -z "${items_to_exclude[*]}" ] ;then
 		logHandler "Building of excluding options are required..."
 		exclude_string=()
 		for item in ${items_to_exclude[*]}
 		   do
-			exclude_string+=("--exclude='$(checkTrailingSlash "${item}")'")
+			checkTrailingSlash "${item}"
+			rc="$?"
+			if [ "$rc" == "0" ] ;then	
+				exclude_string+=("--exclude='${item}'")
+			else
+				exclude_string+=("--exclude='$(removeLastChar "${item}")'")
+			fi
 		   done
 		logHandler "We build the following excluding options: '${exclude_string[*]}'."
 	else
@@ -711,14 +723,74 @@ delUnencryptedBackupFile()
 	fi
 }
 
+executePreBackupScript()
+{
+	local rc=
+	if [ ! -z "$pre_backup_script" ] ;then
+		logHandler "Pre backup script: '${pre_backup_script}' is defined..."
+		checkLocalFileExists "$pre_backup_script"
+		rc="$?"
+		if [ "$rc" == "0" ] ;then
+			logHandler "Pre backup script: '${pre_backup_script}' exists, we will execute it..."
+			eval "${pre_backup_script}"
+			rc="$?"
+			if [ "$rc" == "0" ] ;then
+				logHandler "Execution of pre backup script seems to be successful. rc: '${rc}'."
+			else
+				logHandler "Execution of pre backup script seems to be unssuccessful. rc: '${rc}'."
+			fi
+		else
+			logHandler "Pre backup script: '${pre_backup_script}' doesnt exist, could not execute it..."
+			return 1
+		fi
+	else
+		logHandler "Pre backup script: '${pre_backup_script}' is not defined..."
+	fi
+}
+
+executePostBackupScript()
+{
+	local rc=
+	if [ ! -z "$post_backup_script" ] ;then
+		logHandler "Post backup script: '${post_backup_script}' is defined..."
+		checkLocalFileExists "$post_backup_script"
+		rc="$?"
+		if [ "$rc" == "0" ] ;then
+			logHandler "Post backup script: '${post_backup_script}' exists, we will execute it..."
+			eval "${post_backup_script}"
+			rc="$?"
+			if [ "$rc" == "0" ] ;then
+				logHandler "Execution of post backup script seems to be successful. rc: '${rc}'."
+			else
+				logHandler "Execution of post backup script seems to be unssuccessful. rc: '${rc}'."
+			fi
+		else
+			logHandler "Post backup script: '${post_backup_script}' doesnt exist, could not execute it..."
+			return 1
+		fi
+	else
+		logHandler "Post backup script: '${post_backup_script}' is not defined..."
+	fi
+}
+
+
+
+#-------
+# Start:
+#-------
+
+logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
+
 
 
 #-------------
 # Get options:
 #-------------
 
-while getopts "h.o:v." OPTION
+OPTERR="0"
+while getopts ":hov" OPTION
    do
+	logHandler "Getting options from cli..."
 	case "$OPTION" in
 			h)
 				printUsage
@@ -733,9 +805,16 @@ while getopts "h.o:v." OPTION
 				script_exit_code="161"
 				exit
 				;;
-			?)
+			\?)
+				logHandler "Invalid option: -${OPTARG}"
 				printUsage
 				script_exit_code="162"
+				exit
+				;;
+			:)
+				logHandler "Option: -${OPTARG} requires an argument."
+				printUsage
+				script_exit_code="163"
 				exit
 				;;
 	esac
@@ -747,7 +826,6 @@ while getopts "h.o:v." OPTION
 # Main:
 #------
 
-logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
 setDefaultValues
 checkRootPrivileges
 getUser
@@ -757,7 +835,15 @@ checkBashVersion
 rotateHandler
 getSysPackageManager
 buildExcludeOpts
+executePreBackupScript
 makeBackup
+executePostBackupScript
+
+
+
+#---------------------
+# Should never happen:
+#---------------------
 
 logHandler "Ooops! Something went terribly wrong... Exiting..."
 exit
