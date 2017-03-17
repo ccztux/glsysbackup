@@ -64,7 +64,7 @@ post_backup_script="/home/pi/post.sh"
 
 
 
-### It requries the following binaries:
+### It requires the following binaries:
 - **bash** (Version 3 || 4)
 - **which** to get the full path to the required binaries through environment variable $PATH
 - **pgrep** to check if an instance of glsysbackup is already running
