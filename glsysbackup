@@ -4,12 +4,12 @@
 #
 #  Author:		Christian Zettel (ccztux)
 #			2017-02-04
-#			Copyright © 2017 Christian Zettel (cczux), all rights reserved
+#			Copyright © 2017 Christian Zettel (ccztux), all rights reserved
 #			http://linuxinside.at
 #			https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-03-16
+#			2017-03-17
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -37,8 +37,17 @@
 # shellcheck disable=SC2154
 # shellcheck disable=SC1001
 
+#--------------
+# Bash options:
+#--------------
+
 set -o pipefail
 
+
+
+#-------
+# Traps:
+#-------
 
 trap 'sigHandler SIGTERM' SIGTERM
 trap 'sigHandler SIGINT' SIGINT
@@ -49,14 +58,15 @@ trap 'sigHandler ERR "${LINENO}" "${BASH_COMMAND}"' ERR
 trap 'sigHandler EXIT' EXIT
 
 
+
 #-----------------------
 # Script info variables:
 #-----------------------
 
 script_name="${0##*/}"
-script_version="1.0.1-alpha2"
+script_version="1.0.0-alpha2"
 script_author="ccztux"
-script_last_modification_date="2017-03-16"
+script_last_modification_date="2017-03-17"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_pid="$$"
@@ -64,7 +74,6 @@ script_exit_code="255"
 script_lock_file="/var/lock/${script_name}"
 script_hostname="${HOSTNAME%%.*}"
 script_major_bashversion="${BASH_VERSINFO[0]}"
-script_common_required_binaries=("rm" "mv")
 
 
 
@@ -99,6 +108,7 @@ pre_backup_script="/home/pi/pre.sh"
 post_backup_script="/home/pi/post.sh"
 
 
+
 #-----------
 # Functions:
 #-----------
@@ -108,6 +118,7 @@ printUsage()
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
 	fi
+
 	echo "Usage: ${script_name} OPTIONS"
 	echo 
 	echo "Author:                 ${script_author}"
@@ -119,9 +130,9 @@ printUsage()
 	echo
 	echo "OPTIONS:"
 	echo "   -h        Shows this help."
-	echo "   -o	     Override lock in case ${script_name} was terminated abnormally."
-	echo
+	echo "   -o        Override lock in case ${script_name} was terminated abnormally."
 	echo "   -v        Shows script version."
+
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
 	fi
@@ -132,12 +143,14 @@ printScriptInfos()
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
 	fi
+
 	echo "Author:                 ${script_author}"
 	echo "Last modification:      ${script_last_modification_date}"
 	echo "Version:                ${script_version}"
 	echo "License:                ${script_license}"
 	echo
 	echo "Description:            $script_description"
+
 	if [ "$log_to_stdout" == "1" ] ;then
 		echo
 	fi
@@ -152,10 +165,11 @@ setDefaultValues()
 checkRootPrivileges()
 {
 	logHandler "Check if root priviliges are required..."
+
 	if [ "$root_privileges_required" == "1" ] ;then
 		logHandler "Root privileges are required, checking privileges..."
 		if [ "$UID" == "0" ] ;then
-			logHandler "Hooray, we have root privileges..."
+			logHandler "HOORAY, we have root privileges... :)"
 		else
 			logHandler "You must run this script as root, terminating..."
 			script_exit_code="10"
@@ -170,36 +184,49 @@ getUser()
 {
 	local script_exec_user=
 	local rc=
+
 	logHandler "Get user which starts the script..."
+
 	if [ ! -z "$SUDO_USER" ] ;then
 		script_exec_user="$SUDO_USER"
 	else
-		checkBin "whoami"
-		rc="$?"
-		if [ "$rc" == "0" ] ;then
-			logHandler "Required binary: 'whoami' found."
-		else
-			logHandler "Required binary: 'whoami' not found, exiting..."
-			script_exit_code="127"
-			exit
-		fi
 		script_exec_user="$(${whoami_bin})"
 	fi
+
 	logHandler "${script_name} was started by: '${script_exec_user}'."
 }
 
 checkRequiredBinaries()
 {
 	local rc=
-	local required_binaries=("$1")
-	logHandler "Check if common required binaries: '${required_binaries[*]// /, }' exists..."
+	local required_binaries=()
+
+	if [ "$log_to_syslog" == "1" ] ;then
+		required_binaries+=("logger")
+	fi
+
+	if ([ "$log_to_file" == "1" ] || [ "$log_to_stdout" == "1" ]) ;then
+		required_binaries+=("datee")
+	fi
+
+	if [ "$backup_rotating_required" == "1" ] ;then
+		required_binaries+=("mv")
+	fi
+
+	if [ "$backup_encryption_required" == "1" ] ;then
+		required_binaries+=("openssl")
+	fi
+
+	required_binaries+=("whoami" "pgrep" "rm" "tar" "mkdir")
+
 	for bin in ${required_binaries[*]}
 	   do
 		checkBin "$bin"
 		rc="$?"
-		if [ "$rc" == "0" ] ;then
-			logHandler "Required binary: '${bin}' found."
-		else
+		if [ "$bin" == "logger" ] ;then
+			logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
+		fi
+		if [ "$rc" != "0" ] ;then
 			logHandler "Required binary: '${bin}' not found, exiting..."
 			script_exit_code="127"
 			exit
@@ -210,6 +237,7 @@ checkRequiredBinaries()
 checkBashVersion()
 {
 	logHandler "Checking bash version..."
+
 	if [ -z "$script_major_bashversion" ] ;then
 		logHandler "Could not determine bash version, exiting..."
 		script_exit_code="40"
@@ -235,20 +263,13 @@ checkAlreadyRunningInstance()
 {
 	local rc=
 	local running_script_pids=
-	logHandler "Check if another instance of: '${script_name}' is already running..."
-	checkBin "pgrep"
-	rc="$?"
-	if [ "$rc" == "0" ] ;then
-		logHandler "Required binary: 'pgrep' found."
-	else
-		logHandler "Required binary: 'pgrep' not found, exiting..."
-		script_exit_code="127"
-		exit
-	fi
 	running_script_pids="$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_name}(.*)$")"
 	running_script_pids="${running_script_pids//${script_pid}/}"
 	running_script_pids="${running_script_pids//$(${pgrep_bin} -d " " -P "${script_pid}")/}"
 	running_script_pids="${running_script_pids//\ /, }"
+	
+	logHandler "Check if another instance of: '${script_name}' is already running..."
+
 	checkLock
 	rc="$?"
 	if ([ "$rc" != "0" ] && [ -z "$running_script_pids" ]) ;then
@@ -282,8 +303,10 @@ checkAlreadyRunningInstance()
 checkLock()
 {
 	local rc=
+
 	logHandler "Check if lock file: '${script_lock_file}' exists."
-	checkLocalFileExists "$script_lock_file"
+
+	checkRegularFileExists "$script_lock_file"
 	rc="$?"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Lock file: '${script_lock_file}' exist."
@@ -297,11 +320,14 @@ checkLock()
 setLock()
 {
 	local rc=
+
 	logHandler "Setting lock..."
+
 	set -o noclobber
 	echo "$script_pid" > "$script_lock_file"
 	rc="$?"
 	set +o noclobber
+
 	if [ "$rc" == "0" ] ;then
 		logHandler "Setting lock was successful."
 	else
@@ -314,7 +340,9 @@ setLock()
 removeLock()
 {
 	local rc=
+
 	logHandler "Removing lock..."
+
 	${rm_bin} "$script_lock_file" 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
@@ -333,17 +361,13 @@ overrideLock()
 	setLock
 }
 
-checkLocalFileExists()
+checkRegularFileExists()
 {
 	local file="$1"
 	if [ -f "$file" ] ;then
-		if [ -s "$file" ] ;then
-			return 0
-		else
-			return 1
-		fi
+		return 0
 	else
-		return 2
+		return 1
 	fi
 }
 
@@ -362,6 +386,7 @@ checkBin()
 	local binary="$1"
 	local _bin=
 	local rc=
+
 	_bin="$(which "${binary}" 2>&1)"
 	rc="$?"
 	if [ "$rc" == "0" ] ;then
@@ -393,7 +418,9 @@ getSysPackageManager()
 	local supported_syspackage_managers=("rpm" "dpkg")
 	local available_syspackage_managers=()
 	local rc=
+
 	logHandler "Check if installed packages are required..."
+
 	if [ "$installed_packages_required" == "1" ] ;then
 		logHandler "Installed packages are required..."
 		logHandler "Getting system package manager..."
@@ -472,6 +499,7 @@ buildExcludeOpts()
 rotateHandler()
 {
 	logHandler "Check if backup rotating is required..."
+
 	if [ "$backup_rotating_required" == "1" ] ;then
 		logHandler "Backup rotating is required..."
 		local rc=
@@ -486,7 +514,7 @@ rotateHandler()
 		   do
 			local file_helper=$((backup_rotating_files_to_keep - 1))
 			if [ "$backup_rotating_files_to_keep" != "1" ] ;then
-				checkLocalFileExists "${file}.${file_helper}"
+				checkRegularFileExists "${file}.${file_helper}"
 				rc="$?"
 				if [ "$rc" == "0" ] ;then
 					${mv_bin} "${file}.${file_helper}" "${file}.${backup_rotating_files_to_keep}" 2>&1 | logHandler
@@ -498,7 +526,7 @@ rotateHandler()
 					fi
 				fi
 			else
-				checkLocalFileExists "${file}"
+				checkRegularFileExists "${file}"
 				rc="$?"
 				if [ "$rc" == "0" ] ;then
 					${mv_bin} "${file}" "${file}.${backup_rotating_files_to_keep}" 2>&1 | logHandler
@@ -521,57 +549,45 @@ logHandler()
 {
 	local log_message="${1//\`/}"
 	local log_timestamp=
+	local log_helper_missing_binary="0"
 	local stdin_data_available=
 	local rc=
+
 	if [ -z "$log_message" ] ;then
 		if [ -t "0" ] ;then
 			stdin_data_available="0"
 		else
 			stdin_data_available="1"
 		fi
+
 		if [ "$stdin_data_available" == "1" ] ;then
 			logHandlerStdinHelper
 		fi
 	else
-		if [ "$log_to_syslog" == "1" ];then
-			if [ -z "$logger_bin" ] ;then
-				checkBin "logger"
-				rc="$?"
-				if [ "$rc" != "0" ] ;then
-					echo "Required binary: 'logger' not found, exiting..."
-					script_exit_code="127"
-					exit
-				fi
-			fi
-			${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
-		fi
-		if [ "$log_to_file" == "1" ];then
-			if [ -z "$date_bin" ] ;then
-				checkBin "date"
-				rc="$?"
-				if [ "$rc" != "0" ] ;then
-					echo "Required binary: 'date' not found, exiting..."
-					script_exit_code="127"
-					exit
-				fi
-			fi
+		if ([ "$log_to_file" == "1" ] || [ "$log_to_stdout" == "1" ] || [ -z "$logger_bin" ] && [ ! -z "$date_bin" ]) ;then
 			log_timestamp="$(${date_bin} '+%Y-%m-%d %H:%M:%S')"
-			echo "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}" >> "${log_file}"
 		fi
-		if [ "$log_to_stdout" == "1" ] ;then
-			if [ -z "$log_timestamp" ] ;then
-				if [ -z "$date_bin" ] ;then
-					checkBin "date"
-					rc="$?"
-					if [ "$rc" != "0" ] ;then
-						echo "Required binary: 'date' not found, exiting..."
-						script_exit_code="127"
-						exit
-					fi
-				fi
-				log_timestamp="$(${date_bin} '+%Y-%m-%d %H:%M:%S')"
-			fi
+
+		if ([ "$log_to_syslog" == "1" ] && [ ! -z "$logger_bin" ]) ;then
+			${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
+		elif ([ "$log_to_syslog" == "1" ] && [ -z "$logger_bin" ] && [ ! -z "$date_bin" ]) ;then
+			log_helper_missing_binary="1"
+			echo "[${log_timestamp}] ${script_name}: [${script_pid}] [Binary: 'logger' not found] ${log_message}"
+		elif ([ "$log_to_syslog" == "1" ] && [ -z "$logger_bin" ] && [ -z "$date_bin" ]) ;then
+			log_helper_missing_binary="1"
+			echo "[Binary: 'date' not found] ${script_name}: [${script_pid}] [Binary: 'logger' not found] ${log_message}"
+		fi
+
+		if ([ "$log_to_file" == "1" ] && [ ! -z "$date_bin" ]) ;then
+			echo "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}" >> "${log_file}"
+		elif ([ "$log_to_file" == "1" ] && [ -z "$date_bin" ]) ;then
+			echo "[Binary: 'date' not found] ${script_name}: [${script_pid}] ${log_message}" >> "${log_file}"
+		fi
+
+		if ([ "$log_to_stdout" == "1" ] && [ ! -z "$date_bin" ] && [ "$log_helper_missing_binary" != "1" ]) ;then
 			echo "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}"
+		elif ([ "$log_to_stdout" == "1" ] && [ -z "$date_bin" ] && [ "$log_helper_missing_binary" != "1" ]) ;then
+			echo "[Binary: 'date' not found] ${script_name}: [${script_pid}] ${log_message}"
 		fi
 	fi
 }
@@ -590,39 +606,42 @@ sigHandler()
 	local bash_lineno="$2"
 	local bash_command="$3"
 	local rc=
+
 	case "$signal" in
 		SIGTERM)
-			logHandler "Caught ${signal}, preparing for exiting script..."
 			script_exit_code="143"
 			exit
 			;;
 		SIGINT)
-			logHandler "Caught ${signal}, preparing for exiting script..."
 			script_exit_code="130"
 			exit
 			;;
 		SIGHUP)
-			logHandler "Caught ${signal}, preparing for exiting script..."
 			script_exit_code="129"
 			exit
 			;;
 		SIGABRT)
-			logHandler "Caught ${signal}, preparing for exiting script..."
 			script_exit_code="134"
 			exit
 			;;
 		SIGQUIT)
-			logHandler "Caught ${signal}, preparing for exiting script..."
 			script_exit_code="129"
 			exit
 			;;
 		ERR)
-			logHandler "Caught ${signal}, at line number: '${bash_lineno}', command: '${bash_command}'. Preparing for exiting script..."
+			logHandler "Caught ${signal}, at line number: '${bash_lineno}', command: '${bash_command}'." 
 			script_exit_code="1"
 			exit
 			;;
 		EXIT)
-			logHandler "Caught ${signal}, preparing for exiting..."
+			logHandler "Caught ${signal}, preparing for exiting script..."
+			if [ "$backup_encryption_required" == "1" ] ;then
+				delUnencryptedBackupFile
+			fi
+			if [ "$script_exit_code" != "127" ] ;then
+				logHandler "We did a great job, initiating termination..."
+				script_exit_code="0"
+			fi
 			if [ "$another_instance_is_running" != "1" ] ;then
 				checkLock
 				rc="$?"
@@ -644,34 +663,30 @@ sigHandler()
 makeBackup()
 {
 	local rc=
-	checkBin "tar"
-	rc="$?"
-	if [ "$rc" == "0" ] ;then
-		logHandler "Required binary: 'tar' found."
-	else
-		logHandler "Required binary: 'tar' not found, exiting..."
-		script_exit_code="127"
-		exit
-	fi
 	local backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${items_to_backup}"
+
 	logHandler "Starting backup job..."
+
 	checkLocalDirectoryExists "$backup_destination_path"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Backup directory: '${backup_destination_path}' exists."
 	else
 		logHandler "Backup directory: '${backup_destination_path}' doesnt exist."
+		${mkdir_bin} "${backup_destination_path}" 2>&1 | logHandler
+		rc="${PIPESTATUS[0]}"
+		if [ "$rc" == "0" ] ;then
+			logHandler "Creating backup directory: '${backup_destination_path}' was successful."
+		else
+			logHandler "Creating backup directory: '${backup_destination_path}' was not successful."
+			script_exit_code="131"
+			exit
+		fi
 	fi
 	eval "${backup_cmd} ${exclude_string[*]} 2>&1" | logHandler
 	rc="${PIPESTATUS[0]}"
 	if [ "$rc" == "0" ] ;then
 		logHandler "Backup job was successful."
-		if [ "$backup_encryption_required" == "1" ] ;then
-			encryptBackup
-		else
-			logHandler "We did a great job, initiating termination..."
-			script_exit_code="131"
-			exit
-		fi
+		script_exit_code="0"
 	else
 		logHandler "Backup job was not successful."
 		script_exit_code="132"
@@ -682,60 +697,59 @@ makeBackup()
 encryptBackup()
 {
 	local rc=
-	logHandler "Encrypting backup file: '${backup_full_path}'..."
-	checkBin "openssl"
-	rc="$?"
-	if [ "$rc" == "0" ] ;then
-		logHandler "Required binary: 'openssl' found."
-	else
-		logHandler "Required binary: 'openssl' not found, exiting..."
-		script_exit_code="127"
-		delUnencryptedBackupFile
-	fi
-	${openssl_bin} aes-256-cbc -salt -in "${backup_full_path}" -out "${backup_encryption_filename}" -k "${backup_encryption_password}" 2>&1 | logHandler
-	rc="${PIPESTATUS[0]}"
-	if [ "$rc" == "0" ] ;then
-		logHandler "Encrypting job was successful."
-		logHandler "HINT: You can use the following command, to decrypt your backup: '${openssl_bin} aes-256-cbc -d -salt -in ${backup_encryption_filename} -out ${backup_full_path}'."
-		delUnencryptedBackupFile
-	else
-		logHandler "Encrypting job was not successful."
-		script_exit_code="140"
-		exit
+
+	if [ "$backup_encryption_required" == "1" ] ;then
+		logHandler "Encrypting backup file: '${backup_full_path}'..."
+		${openssl_bin} aes-256-cbc -salt -in "${backup_full_path}" -out "${backup_encryption_filename}" -k "${backup_encryption_password}" 2>&1 | logHandler
+		rc="${PIPESTATUS[0]}"
+		if [ "$rc" == "0" ] ;then
+			logHandler "Encrypting job was successful."
+			logHandler "HINT: For decrypting use this command: '${openssl_bin} aes-256-cbc -d -salt -in ${backup_encryption_filename} -out ${backup_full_path}'."
+			script_exit_code="0"
+		else
+			logHandler "Encrypting job was not successful."
+			script_exit_code="140"
+			exit
+		fi
 	fi
 }
 
 delUnencryptedBackupFile()
 {
 	local rc=
-	logHandler "Deleting unencrypted backup file: '${backup_full_path}'..."
-	${rm_bin} "${backup_full_path}" 2>&1 | logHandler
-	rc="${PIPESTATUS[0]}"
+
+	logHandler "Check if unencrypted backup file: '${backup_full_path}' exists..."
+
+	checkRegularFileExists "${backup_full_path}"
+	rc="$?"
 	if [ "$rc" == "0" ] ;then
-		logHandler "Deleting of unencrypted backup file: '${backup_full_path}' was successful."
-		logHandler "We did a great job, initiating termination..."
-		if [ "$script_exit_code" != "127" ] ;then
-			script_exit_code="0"
+		logHandler "Unencrypted backup file: '${backup_full_path}' exists..."
+		logHandler "Deleting unencrypted backup file: '${backup_full_path}'..."
+		${rm_bin} "${backup_full_path}" 2>&1 | logHandler
+		rc="${PIPESTATUS[0]}"
+		if [ "$rc" == "0" ] ;then
+			logHandler "Deleting of unencrypted backup file: '${backup_full_path}' was successful."
+		else
+			logHandler "Deleting of unencrypted backup file: '${backup_full_path}' was not successful."
+			script_exit_code="150"
 		fi
-		exit
 	else
-		logHandler "Deleting of unencrypted backup file: '${backup_full_path}' was not successful."
-		script_exit_code="150"
-		exit
+		logHandler "Unencrypted backup file: '${backup_full_path}' doenst exist..."
 	fi
 }
 
 executePreBackupScript()
 {
 	local rc=
+
 	if [ ! -z "$pre_backup_script" ] ;then
 		logHandler "Pre backup script: '${pre_backup_script}' is defined..."
-		checkLocalFileExists "$pre_backup_script"
+		checkRegularFileExists "$pre_backup_script"
 		rc="$?"
 		if [ "$rc" == "0" ] ;then
-			logHandler "Pre backup script: '${pre_backup_script}' exists, we will execute it..."
-			eval "${pre_backup_script}"
-			rc="$?"
+			logHandler "Pre backup script: '${pre_backup_script}' exists, so we will execute it..."
+			eval "${pre_backup_script} 2>&1" | logHandler
+			rc="${PIPESTATUS[0]}"
 			if [ "$rc" == "0" ] ;then
 				logHandler "Execution of pre backup script seems to be successful. rc: '${rc}'."
 			else
@@ -743,7 +757,6 @@ executePreBackupScript()
 			fi
 		else
 			logHandler "Pre backup script: '${pre_backup_script}' doesnt exist, could not execute it..."
-			return 1
 		fi
 	else
 		logHandler "Pre backup script: '${pre_backup_script}' is not defined..."
@@ -753,14 +766,15 @@ executePreBackupScript()
 executePostBackupScript()
 {
 	local rc=
+
 	if [ ! -z "$post_backup_script" ] ;then
 		logHandler "Post backup script: '${post_backup_script}' is defined..."
-		checkLocalFileExists "$post_backup_script"
+		checkRegularFileExists "$post_backup_script"
 		rc="$?"
 		if [ "$rc" == "0" ] ;then
-			logHandler "Post backup script: '${post_backup_script}' exists, we will execute it..."
-			eval "${post_backup_script}"
-			rc="$?"
+			logHandler "Post backup script: '${post_backup_script}' exists, so we will execute it..."
+			eval "${post_backup_script} 2>&1" | logHandler
+			rc="${PIPESTATUS[0]}"
 			if [ "$rc" == "0" ] ;then
 				logHandler "Execution of post backup script seems to be successful. rc: '${rc}'."
 			else
@@ -768,7 +782,6 @@ executePostBackupScript()
 			fi
 		else
 			logHandler "Post backup script: '${post_backup_script}' doesnt exist, could not execute it..."
-			return 1
 		fi
 	else
 		logHandler "Post backup script: '${post_backup_script}' is not defined..."
@@ -781,7 +794,7 @@ executePostBackupScript()
 # Start:
 #-------
 
-logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
+checkRequiredBinaries
 
 
 
@@ -831,7 +844,6 @@ while getopts ":hov" OPTION
 setDefaultValues
 checkRootPrivileges
 getUser
-checkRequiredBinaries "${script_common_required_binaries[*]}"
 checkAlreadyRunningInstance
 checkBashVersion
 rotateHandler
@@ -839,13 +851,14 @@ getSysPackageManager
 buildExcludeOpts
 executePreBackupScript
 makeBackup
+encryptBackup
 executePostBackupScript
 
 
 
-#---------------------
-# Should never happen:
-#---------------------
+#----------------------
+# Should never reached:
+#----------------------
 
 logHandler "Ooops! Something went terribly wrong... Exiting..."
 exit
