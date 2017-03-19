@@ -9,7 +9,7 @@
 #			https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-02-20
+#			2017-03-19
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -35,16 +35,14 @@
 #
 #========================================================================================================
 
-# shellcheck disable=SC2154
-# shellcheck disable=SC1001
 
 #--------------
 # Bash options:
 #--------------
 
-set -o noclobber || { echo "Essential bash option: 'noclobber' can not be set, terminating..." ; exit 245 ; }
-set -o nounset || { echo "Essential bash option: 'nounset' can not be set, terminating..." ; exit 246 ; }
-set -o pipefail || { echo "Essential bash option: 'pipefail' can not be set, terminating..." ; exit 247 ; }
+set -o noclobber || { printf "Essential bash option: 'noclobber' can not be set, terminating...\n" ; exit 245 ; }
+set -o nounset || { printf "Essential bash option: 'nounset' can not be set, terminating...\n" ; exit 246 ; }
+set -o pipefail || { printf "Essential bash option: 'pipefail' can not be set, terminating...\n" ; exit 247 ; }
 
 
 
@@ -52,13 +50,13 @@ set -o pipefail || { echo "Essential bash option: 'pipefail' can not be set, ter
 # Traps:
 #-------
 
-trap 'siggHandler SIGTERM' SIGTERM || { echo "Essential trap for signal: 'SIGTERM' can not be set, terminating..." ; exit 248 ; }
-trap 'sigHandler SIGINT' SIGINT || { echo "Essential trap for signal: 'SIGINT' can not be set, terminating..." ; exit 249 ; }
-trap 'sigHandler SIGHUP' SIGHUP || { echo "Essential trap for signal: 'SIGHUP' can not be set, terminating..." ; exit 250 ; }
-trap 'sigHandler SIGABRT' SIGABRT || { echo "Essential trap for signal: 'SIGABRT' can not be set, terminating..." ; exit 251 ; }
-trap 'sigHandler SIGQUIT' SIGQUIT || { echo "Essential trap for signal: 'SIGQUIT' can not be set, terminating..." ; exit 252 ; }
-trap 'sigHandler ERR "${LINENO}" "${BASH_COMMAND}"' ERR || { echo "Essential trap for signal: 'ERR' can not be set, terminating..." ; exit 253 ; }
-trap 'sigHandler EXIT' EXIT || { echo "Essential trap for signal: 'EXIT' can not be set, terminating..." ; exit 254 ; }
+trap 'siggHandler SIGTERM' SIGTERM || { printf "Essential trap for signal: 'SIGTERM' can not be set, terminating...\n" ; exit 248 ; }
+trap 'sigHandler SIGINT' SIGINT || { printf "Essential trap for signal: 'SIGINT' can not be set, terminating...\n" ; exit 249 ; }
+trap 'sigHandler SIGHUP' SIGHUP || { printf "Essential trap for signal: 'SIGHUP' can not be set, terminating...\n" ; exit 250 ; }
+trap 'sigHandler SIGABRT' SIGABRT || { printf "Essential trap for signal: 'SIGABRT' can not be set, terminating...\n" ; exit 251 ; }
+trap 'sigHandler SIGQUIT' SIGQUIT || { printf "Essential trap for signal: 'SIGQUIT' can not be set, terminating...\n" ; exit 252 ; }
+trap 'sigHandler ERR "${LINENO}" "${BASH_COMMAND}"' ERR || { printf "Essential trap for signal: 'ERR' can not be set, terminating...\n" ; exit 253 ; }
+trap 'sigHandler EXIT' EXIT || { printf "Essential trap for signal: 'EXIT' can not be set, terminating...\n" ; exit 254 ; }
 
 
 
@@ -70,6 +68,7 @@ script_pid="${BASHPID}"
 script_argc="${BASH_ARGC[*]:-}"
 script_argv="${BASH_ARGV[*]:-}"
 script_major_bashversion="${BASH_VERSINFO[0]}"
+script_minor_bashversion="${BASH_VERSINFO[1]}"
 script_name="${0##*/}"
 script_hostname="${HOSTNAME%%.*}"
 script_version="1.0.1-alpha3"
@@ -94,10 +93,10 @@ log_to_file="0"
 log_file="/var/log/${script_name}.log"
 log_to_stdout="1"
 
-re_nice_required="1"
+re_nice_required="0"
 re_nice_priority="19"
 
-re_ionice_required="1"
+re_ionice_required="0"
 re_ionice_scheduling_class="2"
 re_ionice_priority="7"
 
@@ -131,43 +130,39 @@ post_backup_script="/home/pi/post.sh"
 printUsage()
 {
 	if [ "${log_to_stdout}" == "1" ] ;then
-		echo
+		printf "\n"
 	fi
 
-	echo "Usage: ${script_name} OPTIONS"
-	echo 
-	echo "Author:                 ${script_author}"
-	echo "Last modification:      ${script_last_modification_date}"
-	echo "Version:                ${script_version}"
-	echo "License:                ${script_license}"
-	echo
-	echo "Description:            ${script_description}"
-	echo
-	echo "OPTIONS:"
-	echo "   -h        Shows this help."
-	echo "   -o        Override lock in case ${script_name} was terminated abnormally."
-	echo "   -v        Shows script version."
+	printf "Usage: %s OPTIONS\n\n" "${script_name}"
+	printf "Author:\t\t\t%s\n" "${script_author}"
+	printf "Last modification:\t%s\n" "${script_last_modification_date}"
+	printf "Version:\t\t%s\n" "${script_version}"
+	printf "License:\t\t%s\n\n" "${script_license}"
+	printf "Description:\t\t%s\n\n" "${script_description}"
+	printf "OPTIONS:\n"
+	printf "   -h\t\tShows this help.\n"
+	printf "   -o\t\tOverride lock in case %s was terminated abnormally.\n" "${script_name}"
+	printf "   -v\t\tShows script version.\n"
 
 	if [ "${log_to_stdout}" == "1" ] ;then
-		echo
+		printf "\n"
 	fi
 }
 
 printScriptInfos()
 {
 	if [ "${log_to_stdout}" == "1" ] ;then
-		echo
+		printf "\n"
 	fi
 
-	echo "Author:                 ${script_author}"
-	echo "Last modification:      ${script_last_modification_date}"
-	echo "Version:                ${script_version}"
-	echo "License:                ${script_license}"
-	echo
-	echo "Description:            ${script_description}"
+	printf "Author:\t\t\t%s\n" "${script_author}"
+	printf "Last modification:\t%s\n" "${script_last_modification_date}"
+	printf "Version:\t\t%s\n" "${script_version}"
+	printf "License:\t\t%s\n\n" "${script_license}"
+	printf "Description:\t\t%s\n" "${script_description}"
 
 	if [ "${log_to_stdout}" == "1" ] ;then
-		echo
+		printf "\n"
 	fi
 }
 
@@ -182,34 +177,34 @@ reNice()
 {
 	local rc=
 
-	logHandler "Check if reniceing of: '${script_name}' is required..."
+	logHandler "Check if re-niceing is required..."
 
 	if [ "${re_nice_required}" == "1" ] ;then
-		logHandler "Reniceing is required."
+		logHandler "Re-niceing is required."
 		logHandler "Check if renice priority is in range..."
 
 		if ([ "${re_nice_priority}" -gt "20" ] || [ "${re_nice_priority}" -lt "-19" ]) ;then
-			logHandler "Renice priority: '${re_nice_priority}' is out of range."
+			logHandler "Re-nice priority: '${re_nice_priority}' is out of range."
 			logHandler "HINT: Have a look at: 'man renice'."
 			script_exit_code="10"
 			exit
 		else
-			logHandler "Renice priority: '${re_nice_priority}' is in range."
-			logHandler "Reniceing..."
+			logHandler "Re-nice priority: '${re_nice_priority}' is in range."
+			logHandler "Re-niceing..."
 
-			eval "${renice_bin} -n ${re_nice_priority} -p ${script_pid} 2>&1" | logHandler
+			${renice_bin} -n ${re_nice_priority} -p ${script_pid} 2>&1 | logHandler
 			rc="${PIPESTATUS[0]}"
 			
 			if [ "${rc}" == "0" ] ;then
-				logHandler "Reniceing was successful."
+				logHandler "Re-niceing was successful."
 			else
-				logHandler "Reniceing was not successful."
+				logHandler "Re-niceing was not successful."
 				script_exit_code="11"
 				exit
 			fi
 		fi
 	else
-		logHandler "Reniceing is not required."
+		logHandler "Re-niceing is not required."
 	fi
 }
 
@@ -219,7 +214,7 @@ reIONice()
 	local re_ionice_cmd=
 	local re_ionice_priority_required=
 
-	logHandler "Check if re-ioniceing of: '${script_name}' is required..."
+	logHandler "Check if re-ioniceing is required..."
 
 	if [ "${re_ionice_required}" == "1" ] ;then
 		logHandler "Re-ioniceing is required."
@@ -260,7 +255,7 @@ reIONice()
 			re_ionice_cmd="${ionice_bin} -c ${re_ionice_scheduling_class} -p ${script_pid}"
 		fi
 
-		eval "${re_ionice_cmd}  2>&1" | logHandler
+		${re_ionice_cmd}  2>&1 | logHandler
 		rc="${PIPESTATUS[0]}"
 		
 		if [ "${rc}" == "0" ] ;then
@@ -452,16 +447,20 @@ checkLock()
 	checkFilePermissions "${script_lock_file}"
 	rc="$?"
 
-	if ([ "${rc}" == "6" ] || [ "${rc}" == "7" ]) ;then
-		logHandler "Lock file exists and it is read/writeable."
-		return 0
-	elif [ "${rc}" == "10" ] ;then
-		logHandler "Lock file doesnt exist."
-		return 1
-	else
-		logHandler "Lock file exists, but it is not read/writeable."
-		return 2
-	fi
+	case "${rc}" in
+		6|7)
+			logHandler "Lock file exists and it is read/writeable."
+			return 0
+			;;
+		10)
+			logHandler "Lock file doesnt exist."
+			return 1
+			;;
+		*)
+			logHandler "Lock file exists, but it is not read/writeable."
+			return 2
+			;;
+	esac
 }
 
 setLock()
@@ -473,31 +472,35 @@ setLock()
 	checkDirectoryPermissions "${script_lock_directory}"
 	rc="$?"
 
-	if ([ "${rc}" == "3" ] || [ "${rc}" == "7" ]) ;then
-		logHandler "Script lock directory exists and permissions are ok."
-	elif [ "${rc}" == "10" ] ;then
-		logHandler "Script lock directory doesnt exist."
-		logHandler "Creating script lock directory..."
+	case "${rc}" in
+		3|7)
+			logHandler "Script lock directory exists and permissions are ok."
+			;;
+		10)
+			logHandler "Script lock directory doesnt exist."
+			logHandler "Creating script lock directory..."
 
-		eval "${mkdir_bin} '${script_lock_directory}' 2>&1" | logHandler
-		rc="${PIPESTATUS[0]}"
+			${mkdir_bin} "${script_lock_directory}" 2>&1 | logHandler
+			rc="${PIPESTATUS[0]}"
 
-		if [ "${rc}" == "0" ] ;then
-			logHandler "Creating script lock directory was successful."
-		else
-			logHandler "Creating script lock directory was not successful."
-			script_exit_code="40"
+			if [ "${rc}" == "0" ] ;then
+				logHandler "Creating script lock directory was successful."
+			else
+				logHandler "Creating script lock directory was not successful."
+				script_exit_code="40"
+				exit
+			fi
+			;;
+		*)
+			logHandler "Script lock directory exists but permissions are not ok, exiting."
+			script_exit_code="41"
 			exit
-		fi
-	else
-		logHandler "Script lock directory exists but permissions are not ok, exiting."
-		script_exit_code="41"
-		exit
-	fi
+			;;
+	esac
 
 	logHandler "Setting lock..."
 
-	echo "${script_pid}" > "${script_lock_file}"
+	printf "${script_pid}\n" > "${script_lock_file}"
 	rc="$?"
 
 	if [ "${rc}" == "0" ] ;then
@@ -515,7 +518,7 @@ removeLock()
 
 	logHandler "Removing lock..."
 
-	eval "${rm_bin} '${script_lock_file}' 2>&1" | logHandler
+	${rm_bin} "${script_lock_file}" 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 
 	if [ "${rc}" == "0" ] ;then
@@ -654,7 +657,7 @@ checkTrailingSlash()
 removeLastChar()
 {
 	local string="${1:-}"
-	echo "${string:0:$((${#string} - 1))}"
+	printf "${string:0:$((${#string} - 1))}"
 }
 
 createInstalledPackagesFile()
@@ -756,27 +759,32 @@ rotateHandler()
 
 		checkDirectoryPermissions "${backup_destination_path}"
 		rc="$?"
-		if ([ "${rc}" == "3" ] || [ "${rc}" == "7" ]) ;then
-			logHandler "Backup directory exists and permissions are ok."
-		elif [ "${rc}" == "10" ] ;then
-			logHandler "Backup directory doesnt exist."
-			logHandler "Creating backup directory..."
 
-			eval "${mkdir_bin} '${backup_destination_path}' 2>&1" | logHandler
-			rc="${PIPESTATUS[0]}"
+		case "${rc}" in
+			3|7)
+				logHandler "Backup directory exists and permissions are ok."
+				;;
+			10)
+				logHandler "Backup directory doesnt exist."
+				logHandler "Creating backup directory..."
 
-			if [ "${rc}" == "0" ] ;then
-				logHandler "Creating backup directory was successful."
-			else
-				logHandler "Creating backup directory was not successful."
-				script_exit_code="70"
+				${mkdir_bin} "${backup_destination_path}" 2>&1 | logHandler
+				rc="${PIPESTATUS[0]}"
+
+				if [ "${rc}" == "0" ] ;then
+					logHandler "Creating backup directory was successful."
+				else
+					logHandler "Creating backup directory was not successful."
+					script_exit_code="70"
+					exit
+				fi
+				;;
+			*)
+				logHandler "Backup directory exists but permissions are not ok, exiting."
+				script_exit_code="71"
 				exit
-			fi
-		else
-			logHandler "Backup directory exists but permissions are not ok, exiting."
-			script_exit_code="71"
-			exit
-		fi
+				;;
+		esac
 
 		if [ "${backup_encryption_required}" == "1" ] ;then
 			file="${backup_encryption_filename}"
@@ -803,24 +811,28 @@ rotateHandler()
 			checkFilePermissions "${file_to_handle}"
 			rc="$?"
 
-			if ([ "${rc}" == "4" ] || [ "${rc}" == "5" ] || [ "${rc}" == "6" ] || [ "${rc}" == "7" ]) ;then
-				logHandler "File exists and is readable, do rotating..."
+			case "${rc}" in
+				4|5|6|7)
+					logHandler "File exists and is readable, do rotating..."
 
-				eval "${mv_bin} '${file_to_handle}' '${file}.${backup_rotating_files_to_keep}' 2>&1" | logHandler
-				rc="${PIPESTATUS[0]}"
+					${mv_bin} "${file_to_handle}" "${file}.${backup_rotating_files_to_keep}" 2>&1 | logHandler
+					rc="${PIPESTATUS[0]}"
 
-				if [ "${rc}" == "0" ] ;then
-					logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotating_files_to_keep}' was successful."
-				else
-					logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotating_files_to_keep}' was not successful."
-				fi
-			elif [ "${rc}" == "10" ] ;then
-				logHandler "File doesnt exist, nothing to do."
-			else
-				logHandler "File exists but is not readable."
-				script_exit_code="72"
-				exit
-			fi
+					if [ "${rc}" == "0" ] ;then
+						logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotating_files_to_keep}' was successful."
+					else
+						logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotating_files_to_keep}' was not successful."
+					fi
+					;;
+				10)
+					logHandler "File doesnt exist, nothing to do."
+					;;
+				*)
+					logHandler "File exists but is not readable."
+					script_exit_code="72"
+					exit
+					;;
+			esac
 
 			backup_rotating_files_to_keep=$((backup_rotating_files_to_keep - 1))
 
@@ -851,29 +863,33 @@ logHandler()
 		fi
 	else
 		if ([ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ] || [ -z "${logger_bin:-}" ] && [ ! -z "${date_bin:-}" ]) ;then
-			log_timestamp="$(${date_bin} '+%Y-%m-%d %H:%M:%S')"
+			if ([ "${script_major_bashversion}" -ge "4" ] && [ "${script_minor_bashversion}" -ge "2" ]) ;then
+				log_timestamp="$(printf '%(%Y-%m-%d %H:%M:%S)T\n')"
+			else
+				log_timestamp="$(${date_bin} '+%Y-%m-%d %H:%M:%S')"
+			fi
 		fi
 
 		if ([ "${log_to_syslog}" == "1" ] && [ ! -z "${logger_bin:-}" ]) ;then
 			${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 		elif ([ "${log_to_syslog}" == "1" ] && [ -z "${logger_bin:-}" ] && [ ! -z "${date_bin:-}" ]) ;then
 			log_helper_missing_binary="1"
-			echo "[${log_timestamp}] ${script_name}: [${script_pid}] [Binary: 'logger' not found] ${log_message}"
+			printf "[%s] %s}: [%s] [Binary: 'logger' not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 		elif ([ "${log_to_syslog}" == "1" ] && [ -z "${logger_bin:-}" ] && [ -z "${date_bin:-}" ]) ;then
 			log_helper_missing_binary="1"
-			echo "[Binary: 'date' not found] ${script_name}: [${script_pid}] [Binary: 'logger' not found] ${log_message}"
+			printf "[Binary: 'date' not found] %s: [%s] [Binary: 'logger' not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
 		fi
 
 		if ([ "${log_to_file}" == "1" ] && [ ! -z "${date_bin:-}" ]) ;then
-			echo "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}" >> "${log_file}"
+			printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 		elif ([ "${log_to_file}" == "1" ] && [ -z "${date_bin:-}" ]) ;then
-			echo "[Binary: 'date' not found] ${script_name}: [${script_pid}] ${log_message}" >> "${log_file}"
+			printf "[Binary: 'date' not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 		fi
 
 		if ([ "${log_to_stdout}" == "1" ] && [ ! -z "${date_bin:-}" ] && [ "${log_helper_missing_binary}" != "1" ]) ;then
-			echo "[${log_timestamp}] ${script_name}: [${script_pid}] ${log_message}"
+			printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 		elif ([ "${log_to_stdout}" == "1" ] && [ -z "${date_bin:-}" ] && [ "${log_helper_missing_binary}" != "1" ]) ;then
-			echo "[Binary: 'date' not found] ${script_name}: [${script_pid}] ${log_message}"
+			printf "[Binary: 'date' not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}"
 		fi
 	fi
 }
@@ -947,7 +963,7 @@ sigHandler()
 			logHandler "Script was running: '${SECONDS}' seconds."
 			logHandler "Bye, bye..."
 
-			eval "${kill_bin} -s ${signal} ${script_pid}"
+			${kill_bin} -s ${signal} ${script_pid}
 
 			exit ${script_exit_code}
 			;;
@@ -971,7 +987,7 @@ makeBackup()
 
 	logHandler "Starting backup job..."
 
-	eval "${backup_cmd} 2>&1" | logHandler
+	${backup_cmd} 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 
 	if [ "${rc}" == "0" ] ;then
@@ -992,7 +1008,7 @@ encryptBackup()
 		logHandler "Backup encryption is enabled..."
 		logHandler "Encrypting backup file: '${backup_full_path}'..."
 
-		eval "${openssl_bin} aes-256-cbc -salt -in '${backup_full_path}' -out '${backup_encryption_filename}' -k '${backup_encryption_password}' 2>&1" | logHandler
+		${openssl_bin} aes-256-cbc -salt -in "${backup_full_path}" -out "${backup_encryption_filename}" -k "${backup_encryption_password}" 2>&1 | logHandler
 		rc="${PIPESTATUS[0]}"
 
 		if [ "${rc}" == "0" ] ;then
@@ -1020,26 +1036,30 @@ executePreBackupScript()
 		checkFilePermissions "${pre_backup_script}"
 		rc="$?"
 
-		if ([ "${rc}" == "1" ] || [ "${rc}" == "3" ] || [ "${rc}" == "5" ] || [ "${rc}" == "7" ]) ;then
-			logHandler "Pre backup script exists and it is executeable, so we execute it..."
-		elif [ "${rc}" == "10" ] ;then
-			logHandler "Pre backup script doesnt exist, nothing to do."
-			script_exit_code="100"
-			exit
+		case "${rc}" in
+			1|3|5|7)
+				logHandler "Pre backup script exists and it is executeable, so we execute it..."
+				;;
+			10)
+				logHandler "Pre backup script doesnt exist, nothing to do."
+				script_exit_code="100"
+				exit
+				;;
+			*)
+				logHandler "Pre backup script exists, but it is not executeable, nothing to do."
+				script_exit_code="101"
+				exit
+				;;
+		esac
+
+		eval "${pre_backup_script} 2>&1" | logHandler
+		rc="${PIPESTATUS[0]}"
+
+		if [ "${rc}" == "0" ] ;then
+			logHandler "Execution of pre backup script seems to be successful. rc: '${rc}'."
 		else
-			logHandler "Pre backup script exists, but it is not executeable, nothing to do."
-			script_exit_code="101"
-			exit
+			logHandler "Execution of pre backup script seems to be unssuccessful. rc: '${rc}'."
 		fi
-
-			eval "${pre_backup_script} 2>&1" | logHandler
-			rc="${PIPESTATUS[0]}"
-
-			if [ "${rc}" == "0" ] ;then
-				logHandler "Execution of pre backup script seems to be successful. rc: '${rc}'."
-			else
-				logHandler "Execution of pre backup script seems to be unssuccessful. rc: '${rc}'."
-			fi
 	else
 		logHandler "Pre backup script is not defined."
 	fi
@@ -1056,26 +1076,30 @@ executePostBackupScript()
 		checkFilePermissions "${post_backup_script}"
 		rc="$?"
 
-		if ([ "${rc}" == "1" ] || [ "${rc}" == "3" ] || [ "${rc}" == "5" ] || [ "${rc}" == "7" ]) ;then
-			logHandler "Post backup script exists and it is executeable, so we execute it..."
-		elif [ "${rc}" == "10" ] ;then
-			logHandler "Post backup script doesnt exist, nothing to do."
-			script_exit_code="110"
-			exit
+		case "${rc}" in
+			1|3|5|7)
+				logHandler "Post backup script exists and it is executeable, so we execute it..."
+				;;
+			10)
+				logHandler "Post backup script doesnt exist, nothing to do."
+				script_exit_code="110"
+				exit
+				;;
+			*)
+				logHandler "Post backup script exists, but it is not executeable, nothing to do."
+				script_exit_code="111"
+				exit
+				;;
+		esac
+
+		eval "${post_backup_script} 2>&1" | logHandler
+		rc="${PIPESTATUS[0]}"
+
+		if [ "${rc}" == "0" ] ;then
+			logHandler "Execution of post backup script seems to be successful. rc: '${rc}'."
 		else
-			logHandler "Post backup script exists, but it is not executeable, nothing to do."
-			script_exit_code="111"
-			exit
+			logHandler "Execution of post backup script seems to be unssuccessful. rc: '${rc}'."
 		fi
-
-			eval "${post_backup_script} 2>&1" | logHandler
-			rc="${PIPESTATUS[0]}"
-
-			if [ "${rc}" == "0" ] ;then
-				logHandler "Execution of post backup script seems to be successful. rc: '${rc}'."
-			else
-				logHandler "Execution of post backup script seems to be unssuccessful. rc: '${rc}'."
-			fi
 	else
 		logHandler "Post backup script is not defined."
 	fi
@@ -1092,25 +1116,29 @@ delUnencryptedBackupFile()
 		checkFilePermissions "${backup_full_path}"
 		rc="$?"
 
-		if ([ "${rc}" == "2" ] || [ "${rc}" == "3" ] || [ "${rc}" == "6" ] || [ "${rc}" == "7" ]) ;then
-			logHandler "Unencrypted backup file  exists and it is writeable."
-			logHandler "Deleting unencrypted backup file..."
+		case "${rc}" in
+			2|3|6|7)
+				logHandler "Unencrypted backup file  exists and it is writeable."
+				logHandler "Deleting unencrypted backup file..."
 
-			eval "${rm_bin} '${backup_full_path}' 2>&1" | logHandler
-			rc="${PIPESTATUS[0]}"
+				${rm_bin} "${backup_full_path}" 2>&1 | logHandler
+				rc="${PIPESTATUS[0]}"
 
-			if [ "${rc}" == "0" ] ;then
-				logHandler "Deleting unencrypted backup file was successful."
-			else
-				logHandler "Deleting unencrypted backup file was not successful."
-				script_exit_code="120"
-			fi
-		elif [ "${rc}" == "10" ] ;then
-			logHandler "Unencrypted backup file doesnt exist, nothing to do."
-		else
-			logHandler "Unencrypted backup file is not writeable, we can not delete it."
-			script_exit_code="121"
-		fi
+				if [ "${rc}" == "0" ] ;then
+					logHandler "Deleting unencrypted backup file was successful."
+				else
+					logHandler "Deleting unencrypted backup file was not successful."
+					script_exit_code="120"
+				fi
+				;;
+			10)
+				logHandler "Unencrypted backup file doesnt exist, nothing to do."
+				;;
+			*)
+				logHandler "Unencrypted backup file is not writeable, we can not delete it."
+				script_exit_code="121"
+				;;
+		esac
 	fi
 }
 
@@ -1125,25 +1153,29 @@ delInstalledPackagesFile()
 		checkFilePermissions "${installed_packages_filename}"
 		rc="$?"
 
-		if ([ "${rc}" == "2" ] || [ "${rc}" == "3" ] || [ "${rc}" == "6" ] || [ "${rc}" == "7" ]) ;then
-			logHandler "Installed packages file exists and is writeable."
-			logHandler "Deleting installed packages file..."
+		case "${rc}" in
+			2|3|6|7)
+				logHandler "Installed packages file exists and is writeable."
+				logHandler "Deleting installed packages file..."
 
-			eval "${rm_bin} '${installed_packages_filename}' 2>&1" | logHandler
-			rc="${PIPESTATUS[0]}"
+				${rm_bin} "${installed_packages_filename}" 2>&1 | logHandler
+				rc="${PIPESTATUS[0]}"
 
-			if [ "${rc}" == "0" ] ;then
-				logHandler "Deleting installed packages file was successful."
-			else
-				logHandler "Deleting installed packages file was not successful."
-				script_exit_code="130"
-			fi
-		elif [ "${rc}" == "10" ] ;then
-			logHandler "Installed packages file doesnt exist, nothing to do."
-		else
-			logHandler "Installed packages file exists, but it is not writeable, we can not delete it."
-			script_exit_code="131"
-		fi
+				if [ "${rc}" == "0" ] ;then
+					logHandler "Deleting installed packages file was successful."
+				else
+					logHandler "Deleting installed packages file was not successful."
+					script_exit_code="130"
+				fi
+				;;
+			10)
+				logHandler "Installed packages file doesnt exist, nothing to do."
+				;;
+			*)
+				logHandler "Installed packages file exists, but it is not writeable, we can not delete it."
+				script_exit_code="131"
+				;;
+		esac
 	fi
 }
 
