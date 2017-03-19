@@ -9,7 +9,7 @@
 #			https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-03-19
+#			2017-02-20
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -94,19 +94,26 @@ log_to_file="0"
 log_file="/var/log/${script_name}.log"
 log_to_stdout="1"
 
-root_privileges_required="1"
+re_nice_required="1"
+re_nice_priority="19"
 
-backup_destination_path="/var/backups/"
-backup_filename="${script_name}.${script_hostname}.tar.gz"
-backup_full_path="${backup_destination_path}${backup_filename}"
-items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
-items_to_exclude=("")
+re_ionice_required="1"
+re_ionice_scheduling_class="2"
+re_ionice_priority="7"
+
+root_privileges_required="1"
 
 backup_rotating_required="1"
 backup_rotating_files_to_keep="5"
 
 installed_packages_required="1"
 installed_packages_filename="/root/installed_packages_filename.txt"
+
+backup_destination_path="/var/backups/"
+backup_filename="${script_name}.${script_hostname}.tar.gz"
+backup_full_path="${backup_destination_path}${backup_filename}"
+items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
+items_to_exclude=("")
 
 backup_encryption_required="1"
 backup_encryption_password="test1234"
@@ -171,6 +178,103 @@ setDefaultValues()
 	return
 }
 
+reNice()
+{
+	local rc=
+
+	logHandler "Check if reniceing of: '${script_name}' is required..."
+
+	if [ "${re_nice_required}" == "1" ] ;then
+		logHandler "Reniceing is required."
+		logHandler "Check if renice priority is in range..."
+
+		if ([ "${re_nice_priority}" -gt "20" ] || [ "${re_nice_priority}" -lt "-19" ]) ;then
+			logHandler "Renice priority: '${re_nice_priority}' is out of range."
+			logHandler "HINT: Have a look at: 'man renice'."
+			script_exit_code="10"
+			exit
+		else
+			logHandler "Renice priority: '${re_nice_priority}' is in range."
+			logHandler "Reniceing..."
+
+			eval "${renice_bin} -n ${re_nice_priority} -p ${script_pid} 2>&1" | logHandler
+			rc="${PIPESTATUS[0]}"
+			
+			if [ "${rc}" == "0" ] ;then
+				logHandler "Reniceing was successful."
+			else
+				logHandler "Reniceing was not successful."
+				script_exit_code="11"
+				exit
+			fi
+		fi
+	else
+		logHandler "Reniceing is not required."
+	fi
+}
+
+reIONice()
+{
+	local rc=
+	local re_ionice_cmd=
+	local re_ionice_priority_required=
+
+	logHandler "Check if re-ioniceing of: '${script_name}' is required..."
+
+	if [ "${re_ionice_required}" == "1" ] ;then
+		logHandler "Re-ioniceing is required."
+		logHandler "Check if re-ioniceing parameters are in range..."
+
+		if ([ "${re_ionice_scheduling_class}" -gt "3" ] || [ "${re_ionice_scheduling_class}" -lt "1" ]) ;then
+			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is out of range."
+			logHandler "HINT: Have a look at: 'man ionice'."
+			script_exit_code="20"
+			exit
+		else
+			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is in range."
+		fi
+
+		if ([ "${re_ionice_scheduling_class}" == "1" ] || [ "${re_ionice_scheduling_class}" == "2" ]) ;then
+			logHandler "Selected re-ioniceing scheduling class: '${re_ionice_scheduling_class}' requires re-ioniceing priority."
+			logHandler "Check if re-ioniceing priority is in range..."
+
+			re_ionice_priority_required="1"
+
+			if ([ "${re_ionice_priority}" -gt "7" ] || [ "${re_ionice_priority}" -lt "0" ]) ;then
+				logHandler "Re-ioniceing priority: '${re_ionice_priority}' is out of range."
+				logHandler "HINT: Have a look at: 'man ionice'."
+				script_exit_code="21"
+				exit
+			else
+				logHandler "Re-ioniceing priority: '${re_ionice_scheduling_class}' is in range."
+			fi
+		else
+			logHandler "Selected re-ioniceing scheduling class: '${re_ionice_scheduling_class}' does not require a re-ioniceing priority."
+		fi
+
+		logHandler "Re-ioniceing..."
+
+		if [ "${re_ionice_priority_required}" == "1" ] ;then
+			re_ionice_cmd="${ionice_bin} -c ${re_ionice_scheduling_class} -n ${re_ionice_priority} -p ${script_pid}"
+		else
+			re_ionice_cmd="${ionice_bin} -c ${re_ionice_scheduling_class} -p ${script_pid}"
+		fi
+
+		eval "${re_ionice_cmd}  2>&1" | logHandler
+		rc="${PIPESTATUS[0]}"
+		
+		if [ "${rc}" == "0" ] ;then
+			logHandler "Re-ioniceing was successful."
+		else
+			logHandler "Re-ioniceing was not successful."
+			script_exit_code="22"
+			exit
+		fi
+	else
+		logHandler "Re-ioniceing is not required."
+	fi
+}
+
 checkRootPrivileges()
 {
 	logHandler "Check if root priviliges are required..."
@@ -226,6 +330,14 @@ checkRequiredBinaries()
 
 	if [ "${backup_encryption_required}" == "1" ] ;then
 		required_binaries+=("openssl")
+	fi
+
+	if [ "${re_nice_required}" == "1" ] ;then
+		required_binaries+=("renice")
+	fi
+
+	if [ "${re_ionice_required}" == "1" ] ;then
+		required_binaries+=("ionice")
 	fi
 
 	required_binaries+=("whoami" "pgrep" "rm" "tar" "mkdir" "kill")
@@ -367,7 +479,7 @@ setLock()
 		logHandler "Script lock directory doesnt exist."
 		logHandler "Creating script lock directory..."
 
-		${mkdir_bin} "${script_lock_directory}" 2>&1 | logHandler
+		eval "${mkdir_bin} '${script_lock_directory}' 2>&1" | logHandler
 		rc="${PIPESTATUS[0]}"
 
 		if [ "${rc}" == "0" ] ;then
@@ -403,7 +515,7 @@ removeLock()
 
 	logHandler "Removing lock..."
 
-	${rm_bin} "${script_lock_file}" 2>&1 | logHandler
+	eval "${rm_bin} '${script_lock_file}' 2>&1" | logHandler
 	rc="${PIPESTATUS[0]}"
 
 	if [ "${rc}" == "0" ] ;then
@@ -650,7 +762,7 @@ rotateHandler()
 			logHandler "Backup directory doesnt exist."
 			logHandler "Creating backup directory..."
 
-			${mkdir_bin} "${backup_destination_path}" 2>&1 | logHandler
+			eval "${mkdir_bin} '${backup_destination_path}' 2>&1" | logHandler
 			rc="${PIPESTATUS[0]}"
 
 			if [ "${rc}" == "0" ] ;then
@@ -694,7 +806,7 @@ rotateHandler()
 			if ([ "${rc}" == "4" ] || [ "${rc}" == "5" ] || [ "${rc}" == "6" ] || [ "${rc}" == "7" ]) ;then
 				logHandler "File exists and is readable, do rotating..."
 
-				${mv_bin} "${file_to_handle}" "${file}.${backup_rotating_files_to_keep}" 2>&1 | logHandler
+				eval "${mv_bin} '${file_to_handle}' '${file}.${backup_rotating_files_to_keep}' 2>&1" | logHandler
 				rc="${PIPESTATUS[0]}"
 
 				if [ "${rc}" == "0" ] ;then
@@ -835,7 +947,8 @@ sigHandler()
 			logHandler "Script was running: '${SECONDS}' seconds."
 			logHandler "Bye, bye..."
 
-			${kill_bin} -s ${signal} ${script_pid}
+			eval "${kill_bin} -s ${signal} ${script_pid}"
+
 			exit ${script_exit_code}
 			;;
 		*)
@@ -879,7 +992,7 @@ encryptBackup()
 		logHandler "Backup encryption is enabled..."
 		logHandler "Encrypting backup file: '${backup_full_path}'..."
 
-		${openssl_bin} aes-256-cbc -salt -in "${backup_full_path}" -out "${backup_encryption_filename}" -k "${backup_encryption_password}" 2>&1 | logHandler
+		eval "${openssl_bin} aes-256-cbc -salt -in '${backup_full_path}' -out '${backup_encryption_filename}' -k '${backup_encryption_password}' 2>&1" | logHandler
 		rc="${PIPESTATUS[0]}"
 
 		if [ "${rc}" == "0" ] ;then
@@ -983,7 +1096,7 @@ delUnencryptedBackupFile()
 			logHandler "Unencrypted backup file  exists and it is writeable."
 			logHandler "Deleting unencrypted backup file..."
 
-			${rm_bin} "${backup_full_path}" 2>&1 | logHandler
+			eval "${rm_bin} '${backup_full_path}' 2>&1" | logHandler
 			rc="${PIPESTATUS[0]}"
 
 			if [ "${rc}" == "0" ] ;then
@@ -1016,7 +1129,7 @@ delInstalledPackagesFile()
 			logHandler "Installed packages file exists and is writeable."
 			logHandler "Deleting installed packages file..."
 
-			${rm_bin} "${installed_packages_filename}" 2>&1 | logHandler
+			eval "${rm_bin} '${installed_packages_filename}' 2>&1" | logHandler
 			rc="${PIPESTATUS[0]}"
 
 			if [ "${rc}" == "0" ] ;then
@@ -1098,8 +1211,10 @@ while getopts ":hov" OPTION
 setDefaultValues
 checkRootPrivileges
 getUser
-checkAlreadyRunningInstance
 checkBashVersion
+checkAlreadyRunningInstance
+reNice
+reIONice
 createInstalledPackagesFile
 buildExcludeOpts
 executePreBackupScript
