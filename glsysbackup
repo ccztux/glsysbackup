@@ -4,17 +4,19 @@
 #
 #  Author:		Christian Zettel (ccztux)
 #			2017-02-04
-#			Copyright © 2017 Christian Zettel (cczux), all rights reserved
+#			Copyright © 2017 Christian Zettel (ccztux), all rights reserved
 #			http://linuxinside.at
 #			https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-02-20
+#			2017-03-22
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
 #  Changelog:		1.0.0		Initial revision
-#			1.0.0.a		tbd
+#			1.0.1.a		First alpha version
+#			1.0.1-alpha2	Second alpha version
+#			1.0.1-alpha3	Second alpha version
 #
 #  License:		GNU GPLv3
 #
@@ -38,7 +40,6 @@
 # Bash options:
 #--------------
 
-#set -x
 set -o noclobber || { printf "Essential bash option: 'noclobber' can not be set, terminating...\n" ; exit 245 ; }
 set -o nounset || { printf "Essential bash option: 'nounset' can not be set, terminating...\n" ; exit 246 ; }
 set -o pipefail || { printf "Essential bash option: 'pipefail' can not be set, terminating...\n" ; exit 247 ; }
@@ -70,9 +71,9 @@ script_major_bashversion="${BASH_VERSINFO[0]}"
 script_minor_bashversion="${BASH_VERSINFO[1]}"
 script_name="${0##*/}"
 script_hostname="${HOSTNAME%%.*}"
-script_version="1.0.0.a"
+script_version="1.0.1-alpha3"
 script_author="ccztux"
-script_last_modification_date="2017-02-20"
+script_last_modification_date="2017-03-22"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -290,8 +291,6 @@ checkRootPrivileges()
 
 getUser()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 	script_exec_user=
 
@@ -414,8 +413,6 @@ checkBashVersion()
 
 checkAlreadyRunningInstance()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 	local running_script_pids=
 	running_script_pids="$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_name}(.*)$")"
@@ -537,8 +534,6 @@ setLock()
 
 removeLock()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 
 	logHandler "Removing lock..."
@@ -773,8 +768,6 @@ buildExcludeOpts()
 
 rotateHandler()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 	local file=
 	local file_to_handle=
@@ -922,8 +915,6 @@ logHandlerSetConfig()
 
 logHandler()
 {
-	# shellcheck disable=SC2154
-
 	local log_message="${1:-}"
 	local log_timestamp=
 
@@ -1129,8 +1120,6 @@ sigHandler()
 
 makeBackup()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 	local backup_cmd=
 
@@ -1157,8 +1146,6 @@ makeBackup()
 
 encryptBackup()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 
 	if [ "${backup_encryption_required}" == "1" ] ;then
@@ -1264,8 +1251,6 @@ executePostBackupScript()
 
 delUnencryptedBackupFile()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 
 	if [ "${backup_encryption_required}" == "1" ] ;then
@@ -1303,8 +1288,6 @@ delUnencryptedBackupFile()
 
 delInstalledPackagesFile()
 {
-	# shellcheck disable=SC2154
-
 	local rc=
 
 	if [ "${installed_packages_required}" == "1" ] ;then
