@@ -73,6 +73,8 @@ post_backup_script="/home/pi/post.sh"
 - **tar** to create the backup
 - **rm** to delete files
 - **mv** to move files
+- **mkdir** to create directories
+- **kill** to send kill signal to glsysbackup
 
 
 
@@ -80,6 +82,8 @@ post_backup_script="/home/pi/post.sh"
 - **logger** to log to the system log
 - **rpm** || **dpkg** to create a file with installed packages
 - **openssl** to encrypt the backup file
+- **renice** to renice glsysbackup and all child processes
+- **ionice** to re-ionice glsysbackup and all child processes
 
 
 
@@ -106,6 +110,8 @@ post_backup_script="/home/pi/post.sh"
 - Creates a file with installed packages (rpm || dpkg)
 - Encryption with openssl
 - CLI options and arguments
+- Renicing
+- Re-ioniceing
 
 
 

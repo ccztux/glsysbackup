@@ -4,19 +4,17 @@
 #
 #  Author:		Christian Zettel (ccztux)
 #			2017-02-04
-#			Copyright © 2017 Christian Zettel (ccztux), all rights reserved
+#			Copyright © 2017 Christian Zettel (cczux), all rights reserved
 #			http://linuxinside.at
 #			https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-03-21
+#			2017-02-20
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
 #  Changelog:		1.0.0		Initial revision
-#			1.0.1.a		First alpha version
-#			1.0.1-alpha2	Second alpha version
-#			1.0.1-alpha3	Third alpha version
+#			1.0.0.a		tbd
 #
 #  License:		GNU GPLv3
 #
@@ -40,6 +38,7 @@
 # Bash options:
 #--------------
 
+#set -x
 set -o noclobber || { printf "Essential bash option: 'noclobber' can not be set, terminating...\n" ; exit 245 ; }
 set -o nounset || { printf "Essential bash option: 'nounset' can not be set, terminating...\n" ; exit 246 ; }
 set -o pipefail || { printf "Essential bash option: 'pipefail' can not be set, terminating...\n" ; exit 247 ; }
@@ -71,9 +70,9 @@ script_major_bashversion="${BASH_VERSINFO[0]}"
 script_minor_bashversion="${BASH_VERSINFO[1]}"
 script_name="${0##*/}"
 script_hostname="${HOSTNAME%%.*}"
-script_version="1.0.1-alpha3"
+script_version="1.0.0.a"
 script_author="ccztux"
-script_last_modification_date="2017-03-21"
+script_last_modification_date="2017-02-20"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -88,10 +87,11 @@ script_override_lock="${script_override_lock:=0}"
 # Configuration variables:
 #-------------------------
 
-log_to_syslog="1"
 log_to_file="0"
 log_file="/var/log/${script_name}.log"
 log_to_stdout="1"
+log_to_syslog="1"
+log_timestamp_format="%Y-%m-%d %H:%M:%S"
 
 re_nice_required="0"
 re_nice_priority="19"
@@ -183,7 +183,7 @@ reNice()
 		logHandler "Re-niceing is required."
 		logHandler "Check if renice priority is in range..."
 
-		if ([ "${re_nice_priority}" -gt "20" ] || [ "${re_nice_priority}" -lt "-19" ]) ;then
+		if ([ "${re_nice_priority}" -lt "-20" ] || [ "${re_nice_priority}" -gt "19" ]) ;then
 			logHandler "Re-nice priority: '${re_nice_priority}' is out of range."
 			logHandler "HINT: Have a look at: 'man renice'."
 			script_exit_code="10"
@@ -310,6 +310,8 @@ checkRequiredBinaries()
 {
 	local rc=
 	local required_binaries=()
+	local binaries_not_found=()
+	local binaries_not_found_helper=
 	local logging_started="0"
 	local supported_syspackage_managers=("rpm" "dpkg")
 
@@ -318,7 +320,12 @@ checkRequiredBinaries()
 	fi
 
 	if ([ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ]) ;then
-		required_binaries+=("date")
+		if ([ "${script_major_bashversion}" -ge "4" ] && [ "${script_minor_bashversion}" -ge "2" ]) ;then
+			date_bin_printf="1"
+			date_bin="printf"
+		else
+			required_binaries+=("date")
+		fi
 	fi
 
 	if [ "${backup_rotating_required}" == "1" ] ;then
@@ -339,36 +346,36 @@ checkRequiredBinaries()
 
 	required_binaries+=("whoami" "pgrep" "rm" "tar" "mkdir" "kill")
 
-	for bin in ${required_binaries[*]}
-	   do
-		export ${bin}_bin="${bin:-}"
-	   done
-
-	for bin in ${required_binaries[*]}
+	for bin in "${required_binaries[@]}"
 	   do
 		checkBin "${bin}"
 		rc="$?"
 
-		if ([ ! -z "${logger_bin:-}" ] && [ "${logger_bin}" != "logger" ] && [ ! -z "${date_bin:-}" ] && [ "${date_bin}" != "date" ] && [ "${logging_started:-}" == "0" ]) ;then
-			logging_started="1"
-
-			logHandlerSetConfig
-			logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
-		fi
-
 		if [ "${rc}" != "0" ] ;then
-			logHandlerSetConfig
-
-			logHandler "Required binary: '${bin}' not found, exiting."
-			script_exit_code="127"
-			exit
+			binaries_not_found+=("${bin}")
 		fi
 	   done
+
+	logHandlerSetConfig
+	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
+
+	if [ "${#binaries_not_found[*]}" -gt "1" ] ;then
+		binaries_not_found_helper="${binaries_not_found[*]}"
+		binaries_not_found_helper="${binaries_not_found_helper//\ /\,\ }"
+
+		logHandler "Required binaries: '${binaries_not_found_helper}' not found, exiting."
+		script_exit_code="127"
+		exit
+	elif [ "${#binaries_not_found[*]}" -eq "1" ] ;then
+		logHandler "Required binary: '${binaries_not_found[*]}' not found, exiting."
+		script_exit_code="127"
+		exit
+	fi
 
 	if [ "${installed_packages_required}" == "1" ] ;then
 		available_syspackage_managers=()
 
-		for syspackman in ${supported_syspackage_managers[*]}
+		for syspackman in "${supported_syspackage_managers[@]}"
 		   do
 			checkBin "${syspackman}"
 			rc="$?"
@@ -496,7 +503,7 @@ setLock()
 			logHandler "Script lock directory doesnt exist."
 			logHandler "Creating script lock directory..."
 
-			${mkdir_bin} "${script_lock_directory}" 2>&1 | logHandler
+			${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
 			rc="${PIPESTATUS[0]}"
 
 			if [ "${rc}" == "0" ] ;then
@@ -746,7 +753,7 @@ buildExcludeOpts()
 		logHandler "Building of excluding options is required."
 		exclude_string=()
 
-		for item in ${items_to_exclude[*]}
+		for item in "${items_to_exclude[@]}"
 		   do
 			checkTrailingSlash "${item}"
 			rc="$?"
@@ -790,7 +797,7 @@ rotateHandler()
 				logHandler "Backup directory doesnt exist."
 				logHandler "Creating backup directory..."
 
-				${mkdir_bin} "${backup_destination_path}" 2>&1 | logHandler
+				${mkdir_bin} -p "${backup_destination_path}" 2>&1 | logHandler
 				rc="${PIPESTATUS[0]}"
 
 				if [ "${rc}" == "0" ] ;then
@@ -876,6 +883,12 @@ logHandlerSetConfig()
 {
 	log_conf="$((2#0000000))"
 
+	if [ "${date_bin_printf:-}" == "1" ] ;then
+		date_cmd="${date_bin:-} '%(${log_timestamp_format})T\n'"
+	else
+		date_cmd="${date_bin:-} '+${log_timestamp_format}'"
+	fi
+
 	if ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "0" ]) ;then
 		return ${log_conf}
 	elif ([ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "0" ]) ;then
@@ -892,16 +905,6 @@ logHandlerSetConfig()
 		log_conf="$((log_conf + 2#0000110))"
 	elif ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "1" ]) ;then
 		log_conf="$((log_conf + 2#0000111))"
-	fi
-
-	if ([ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ]) ;then
-		if ([ "${script_major_bashversion}" -ge "4" ] && [ "${script_minor_bashversion}" -ge "2" ]) ;then
-			date_bin="printf '%(%Y-%m-%d %H:%M:%S)T\n'"
-		else
-			if [ ! -z "${date_bin:-}" ] ;then
-				date_bin="${date_bin} '+%Y-%m-%d %H:%M:%S'"
-			fi
-		fi
 	fi
 
 	if ([ -z "${date_bin:-}" ] && [ -z "${logger_bin:-}" ]) ;then
@@ -959,32 +962,32 @@ logHandler()
 						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					17) # log to file, nonzero date, zero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						;;
 					18) # log to stdout, nonzero date, zero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					19) # log to syslog, nonzero date, zero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					20) # log to file and stdout, nonzero date, zero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					21) # log to file and syslog, nonzero date, zero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						;;
 					22) # log to stdout and syslog, nonzero date, zero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					23) # log to file, stdout and syslog, nonzero date, zero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
@@ -1015,33 +1018,33 @@ logHandler()
 						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
 						;;
 					65) # log to file, nonzero date, nonzero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						;;
 					66) # log to stdout, nonzero date, nonzero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					67) # log to syslog, nonzero date, nonzero logger
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 					68) # log to file and stdout, nonzero date, nonzero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					69) # log to file and syslog, nonzero date, nonzero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 					70) # log to stdout and syslog, nonzero date, nonzero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 					71) # log to file, stdout and syslog, nonzero date, nonzero logger
-						log_timestamp="$(eval ${date_bin})"
+						log_timestamp="$(eval ${date_cmd})"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
@@ -1111,7 +1114,9 @@ sigHandler()
 			logHandler "Script was running: '${SECONDS}' seconds."
 			logHandler "Bye, bye..."
 
-			${kill_bin} -s ${signal} ${script_pid}
+			if [ ! -z "${kill_bin:-}" ] ;then
+				${kill_bin} -s ${signal} ${script_pid}
+			fi
 
 			exit ${script_exit_code}
 			;;
