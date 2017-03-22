@@ -311,7 +311,6 @@ checkRequiredBinaries()
 	local required_binaries=()
 	local binaries_not_found=()
 	local binaries_not_found_helper=
-	local logging_started="0"
 	local supported_syspackage_managers=("rpm" "dpkg")
 
 	if [ "${log_to_syslog}" == "1" ] ;then
@@ -520,7 +519,7 @@ setLock()
 
 	logHandler "Setting lock..."
 
-	printf "${script_pid}\n" > "${script_lock_file}"
+	printf "%s\n" "${script_pid}" > "${script_lock_file}"
 	rc="$?"
 
 	if [ "${rc}" == "0" ] ;then
@@ -677,7 +676,7 @@ checkTrailingSlash()
 removeLastChar()
 {
 	local string="${1:-}"
-	printf "${string:0:$((${#string} - 1))}"
+	printf "%s" "${string:0:$((${#string} - 1))}"
 }
 
 createInstalledPackagesFile()
