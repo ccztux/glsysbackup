@@ -10,7 +10,7 @@
 
 
 
-### Example usage:
+### Example help output:
 ```
 [2017-03-23 18:48:06] glsysbackup: [4347] glsysbackup 1.0.1-alpha3 starting... (PID=4347)
 [2017-03-23 18:48:06] glsysbackup: [4347] Getting options...

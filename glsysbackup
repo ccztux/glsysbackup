@@ -4,9 +4,11 @@
 #
 #  Author:		Christian Zettel (ccztux)
 #			2017-02-04
-#			Copyright © 2017 Christian Zettel (ccztux), all rights reserved
 #			http://linuxinside.at
-#			https://github.com/ccztux/glsysbackup
+#
+#  Copyright:		Copyright © 2017 Christian Zettel (ccztux), all rights reserved
+#
+#  Project website:	https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
 #			2017-03-23
@@ -67,17 +69,18 @@ trap 'sigHandler EXIT' EXIT || { printf "Essential trap for signal: 'EXIT' can n
 #-----------------------
 
 script_pid="${BASHPID}"
-script_major_bashversion="${BASH_VERSINFO[0]}"
-script_minor_bashversion="${BASH_VERSINFO[1]}"
 script_name="${0##*/}"
 script_hostname="${HOSTNAME%%.*}"
 script_version="1.0.1-alpha3"
 script_author="ccztux"
+script_copyright="Copyright © 2017 Christian Zettel (ccztux), all rights reserved"
+script_project_website="https://github.com/ccztux/glsysbackup"
 script_last_modification_date="2017-03-23"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
 script_another_instance_is_running="0"
+script_normal_termination="0"
 script_lock_directory="/var/lock/"
 script_lock_file="${script_lock_directory}${script_name}"
 script_override_lock="${script_override_lock:=0}"
@@ -187,6 +190,7 @@ reNice()
 		if ([ "${re_nice_priority}" -lt "-20" ] || [ "${re_nice_priority}" -gt "19" ]) ;then
 			logHandler "Re-nice priority: '${re_nice_priority}' is out of range."
 			logHandler "HINT: Have a look at: 'man renice'."
+
 			script_exit_code="10"
 			exit
 		else
@@ -224,6 +228,7 @@ reIONice()
 		if ([ "${re_ionice_scheduling_class}" -gt "3" ] || [ "${re_ionice_scheduling_class}" -lt "1" ]) ;then
 			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is out of range."
 			logHandler "HINT: Have a look at: 'man ionice'."
+
 			script_exit_code="20"
 			exit
 		else
@@ -239,6 +244,7 @@ reIONice()
 			if ([ "${re_ionice_priority}" -gt "7" ] || [ "${re_ionice_priority}" -lt "0" ]) ;then
 				logHandler "Re-ioniceing priority: '${re_ionice_priority}' is out of range."
 				logHandler "HINT: Have a look at: 'man ionice'."
+
 				script_exit_code="21"
 				exit
 			else
@@ -277,6 +283,7 @@ checkRootPrivileges()
 
 	if [ "${root_privileges_required}" == "1" ] ;then
 		logHandler "Root privileges are required, checking privileges..."
+
 		if [ "$UID" == "0" ] ;then
 			logHandler "HOORAY, we have root privileges. :)"
 		else
@@ -318,7 +325,7 @@ checkRequiredBinaries()
 	fi
 
 	if ([ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ]) ;then
-		if ([ "${script_major_bashversion}" -ge "4" ] && [ "${script_minor_bashversion}" -ge "2" ]) ;then
+		if ([ "${BASH_VERSINFO[0]}" -ge "4" ] && [ "${BASH_VERSINFO[1]}" -ge "2" ]) ;then
 			date_bin_printf="1"
 			date_bin="printf"
 		else
@@ -389,20 +396,20 @@ checkBashVersion()
 {
 	logHandler "Checking bash version..."
 
-	if [ -z "${script_major_bashversion:-}" ] ;then
+	if [ -z "${BASH_VERSINFO[0]}" ] ;then
 		logHandler "Could not determine bash version, exiting."
 		script_exit_code="20"
 		exit
 	else
-		case "${script_major_bashversion}" in
+		case "${BASH_VERSINFO[0]}" in
 					3)
-						logHandler "Bash version: '${script_major_bashversion}' meets requirements."
+						logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
 						;;
 					4)
-						logHandler "Bash version: '${script_major_bashversion}' meets requirements."
+						logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
 						;;
 					*)
-						logHandler "Bash version: '${script_major_bashversion}' doesnt meet requirements, terminating."
+						logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
 						script_exit_code="21"
 						exit
 						;;
@@ -1084,16 +1091,20 @@ sigHandler()
 		EXIT)
 			logHandler "Caught: '${signal}', exiting script..."
 
-			cleanUp
+			if [ "${script_normal_termination}" != "1" ] ;then
+				cleanUp
+			fi
 
 			if [ "${script_exit_code}" == "0" ] ;then
 				logHandler "We did a great job. :)"
+			elif [ "${script_normal_termination}" == "1" ] ;then
+				logHandler "We hope you are informed better now. :P This was a lazy job. :)"
 			else
 				logHandler "Ooops!!! Something went wrong. :("
 				logHandler "Read the log or output to determine what exactly went wrong."
 			fi
 
-			if [ "${script_another_instance_is_running}" != "1" ] ;then
+			if ([ "${script_another_instance_is_running}" != "1" ] && [ "${script_normal_termination}" != "1" ]) ;then
 				checkLock
 				rc="$?"
 				if [ "${rc}" == "0" ] ;then
@@ -1351,6 +1362,7 @@ while getopts ":hov" OPTION
 	case "$OPTION" in
 			h)
 				printUsage
+				script_normal_termination="1"
 				script_exit_code="160"
 				exit
 				;;
@@ -1359,6 +1371,7 @@ while getopts ":hov" OPTION
 				;;
 			v)
 				printScriptInfos
+				script_normal_termination="1"
 				script_exit_code="161"
 				exit
 				;;
