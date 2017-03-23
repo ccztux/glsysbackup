@@ -12,15 +12,14 @@
 
 ### Example help output:
 ```
-[2017-03-23 19:58:43] glsysbackup: [10444] glsysbackup 1.0.1-alpha3 starting... (PID=10444)
-[2017-03-23 19:58:43] glsysbackup: [10444] Getting options...
+[2017-03-23 20:10:35] glsysbackup: [13040] glsysbackup 1.0.1-alpha3 starting... (PID=13040)
+[2017-03-23 20:10:35] glsysbackup: [13040] Getting options...
 
 Usage: glsysbackup OPTIONS
 
-Author:			ccztux
+Author:			Christian Zettel (ccztux)
 Last modification:	2017-03-23
 Version:		1.0.1-alpha3
-License:		GNU GPLv3
 
 Description:		glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
 
@@ -29,10 +28,10 @@ OPTIONS:
    -o		Override lock in case glsysbackup was terminated abnormally.
    -v		Shows script version.
 
-[2017-03-23 19:58:43] glsysbackup: [10444] Caught: 'EXIT', exiting script...
-[2017-03-23 19:58:43] glsysbackup: [10444] We hope you are informed better now. :P This was a lazy job. :)
-[2017-03-23 19:58:43] glsysbackup: [10444] Script was running: '0' seconds.
-[2017-03-23 19:58:43] glsysbackup: [10444] Bye, bye...
+[2017-03-23 20:10:35] glsysbackup: [13040] Caught: 'EXIT', exiting script...
+[2017-03-23 20:10:35] glsysbackup: [13040] We hope you are informed better now. :P This was a lazy job. :)
+[2017-03-23 20:10:35] glsysbackup: [13040] Script was running: '0' seconds.
+[2017-03-23 20:10:35] glsysbackup: [13040] Bye, bye...
 ```
 
 
