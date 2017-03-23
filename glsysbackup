@@ -75,7 +75,7 @@ script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
 script_another_instance_is_running="0"
-script_normal_termination="0"
+script_bypass_exit_routines="0"
 script_lock_directory="/var/lock/"
 script_lock_file="${script_lock_directory}${script_name}"
 script_override_lock="${script_override_lock:=0}"
@@ -92,6 +92,8 @@ log_to_stdout="1"
 log_to_syslog="1"
 log_timestamp_format="%Y-%m-%d %H:%M:%S"
 
+root_privileges_required="1"
+
 re_nice_required="0"
 re_nice_priority="19"
 
@@ -99,10 +101,8 @@ re_ionice_required="0"
 re_ionice_scheduling_class="2"
 re_ionice_priority="7"
 
-root_privileges_required="1"
-
-backup_rotating_required="1"
-backup_rotating_files_to_keep="5"
+backup_rotation_required="1"
+backup_rotation_files_to_keep="5"
 
 installed_packages_required="1"
 installed_packages_filename="/root/installed_packages_filename.txt"
@@ -166,148 +166,6 @@ printScriptInfos()
 	fi
 }
 
-setDefaultValues()
-{
-	# already not in use
-	# will be realized when config file implementation will be done
-	return
-}
-
-reNice()
-{
-	local rc=
-
-	logHandler "Check if re-niceing is required..."
-
-	if [ "${re_nice_required}" == "1" ] ;then
-		logHandler "Re-niceing is required."
-		logHandler "Check if renice priority is in range..."
-
-		if ([ "${re_nice_priority}" -lt "-20" ] || [ "${re_nice_priority}" -gt "19" ]) ;then
-			logHandler "Re-nice priority: '${re_nice_priority}' is out of range."
-			logHandler "HINT: Have a look at: 'man renice'."
-
-			script_exit_code="10"
-			exit
-		else
-			logHandler "Re-nice priority: '${re_nice_priority}' is in range."
-			logHandler "Re-niceing..."
-
-			${renice_bin} -n ${re_nice_priority} -p ${script_pid} 2>&1 | logHandler
-			rc="${PIPESTATUS[0]}"
-			
-			if [ "${rc}" == "0" ] ;then
-				logHandler "Re-niceing was successful."
-			else
-				logHandler "Re-niceing was not successful."
-				script_exit_code="11"
-				exit
-			fi
-		fi
-	else
-		logHandler "Re-niceing is not required."
-	fi
-}
-
-reIONice()
-{
-	local rc=
-	local re_ionice_cmd=
-	local re_ionice_priority_required=
-
-	logHandler "Check if re-ioniceing is required..."
-
-	if [ "${re_ionice_required}" == "1" ] ;then
-		logHandler "Re-ioniceing is required."
-		logHandler "Check if re-ioniceing parameters are in range..."
-
-		if ([ "${re_ionice_scheduling_class}" -gt "3" ] || [ "${re_ionice_scheduling_class}" -lt "1" ]) ;then
-			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is out of range."
-			logHandler "HINT: Have a look at: 'man ionice'."
-
-			script_exit_code="20"
-			exit
-		else
-			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is in range."
-		fi
-
-		if ([ "${re_ionice_scheduling_class}" == "1" ] || [ "${re_ionice_scheduling_class}" == "2" ]) ;then
-			logHandler "Selected re-ioniceing scheduling class: '${re_ionice_scheduling_class}' requires re-ioniceing priority."
-			logHandler "Check if re-ioniceing priority is in range..."
-
-			re_ionice_priority_required="1"
-
-			if ([ "${re_ionice_priority}" -gt "7" ] || [ "${re_ionice_priority}" -lt "0" ]) ;then
-				logHandler "Re-ioniceing priority: '${re_ionice_priority}' is out of range."
-				logHandler "HINT: Have a look at: 'man ionice'."
-
-				script_exit_code="21"
-				exit
-			else
-				logHandler "Re-ioniceing priority: '${re_ionice_scheduling_class}' is in range."
-			fi
-		else
-			logHandler "Selected re-ioniceing scheduling class: '${re_ionice_scheduling_class}' does not require a re-ioniceing priority."
-		fi
-
-		logHandler "Re-ioniceing..."
-
-		if [ "${re_ionice_priority_required}" == "1" ] ;then
-			re_ionice_cmd="${ionice_bin} -c ${re_ionice_scheduling_class} -n ${re_ionice_priority} -p ${script_pid}"
-		else
-			re_ionice_cmd="${ionice_bin} -c ${re_ionice_scheduling_class} -p ${script_pid}"
-		fi
-
-		${re_ionice_cmd}  2>&1 | logHandler
-		rc="${PIPESTATUS[0]}"
-		
-		if [ "${rc}" == "0" ] ;then
-			logHandler "Re-ioniceing was successful."
-		else
-			logHandler "Re-ioniceing was not successful."
-			script_exit_code="22"
-			exit
-		fi
-	else
-		logHandler "Re-ioniceing is not required."
-	fi
-}
-
-checkRootPrivileges()
-{
-	logHandler "Check if root priviliges are required..."
-
-	if [ "${root_privileges_required}" == "1" ] ;then
-		logHandler "Root privileges are required, checking privileges..."
-
-		if [ "$UID" == "0" ] ;then
-			logHandler "HOORAY, we have root privileges. :)"
-		else
-			logHandler "You must run this script as root, terminating."
-			script_exit_code="10"
-			exit
-		fi
-	else
-		logHandler "Root privileges are not required..."
-	fi
-}
-
-getUser()
-{
-	local rc=
-	script_exec_user=
-
-	logHandler "Get user which starts the script..."
-
-	if [ ! -z "${SUDO_USER:-}" ] ;then
-		script_exec_user="$SUDO_USER"
-	else
-		script_exec_user="$(${whoami_bin})"
-	fi
-
-	logHandler "${script_name} was started by: '${script_exec_user}'."
-}
-
 checkRequiredBinaries()
 {
 	local rc=
@@ -329,7 +187,7 @@ checkRequiredBinaries()
 		fi
 	fi
 
-	if [ "${backup_rotating_required}" == "1" ] ;then
+	if [ "${backup_rotation_required}" == "1" ] ;then
 		required_binaries+=("mv")
 	fi
 
@@ -385,484 +243,6 @@ checkRequiredBinaries()
 				available_syspackage_managers+=("${syspackman}")
 			fi
 		   done
-	fi
-}
-
-checkBashVersion()
-{
-	logHandler "Checking bash version..."
-
-	if [ -z "${BASH_VERSINFO[0]}" ] ;then
-		logHandler "Could not determine bash version, exiting."
-		script_exit_code="20"
-		exit
-	else
-		case "${BASH_VERSINFO[0]}" in
-					3)
-						logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
-						;;
-					4)
-						logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
-						;;
-					*)
-						logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
-						script_exit_code="21"
-						exit
-						;;
-		esac
-	fi
-}
-
-checkAlreadyRunningInstance()
-{
-	local rc=
-	local running_script_pids=
-	running_script_pids="$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_name}(.*)$")"
-	running_script_pids="${running_script_pids//${script_pid}/}"
-	running_script_pids="${running_script_pids//$(${pgrep_bin} -d " " -P "${script_pid}")/}"
-	running_script_pids="${running_script_pids//\ /\,\ }"
-
-	logHandler "Check if another instance of: '${script_name}' is already running..."
-
-	checkLock
-	rc="$?"
-	if ([ "${rc}" != "0" ] && [ -z "${running_script_pids:-}" ]) ;then
-		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)."
-		setLock
-	elif ([ "${rc}" == "0" ] && [ -z "${running_script_pids:-}" ]) ;then
-		logHandler "Another instance of: '${script_name}' seems to be running (Lockfile: '${script_lock_file}' exists and no processes are running). Maybe ${script_name} was terminated abnormally."
-
-		if [ "${script_override_lock}" == "1" ] ;then
-			overrideLock
-		else
-			logHandler "HINT: You can override the old left over lock by calling ${script_name} with option '-o'."
-
-			script_another_instance_is_running="1"
-			script_exit_code="30"
-			exit
-		fi
-	elif ([ "${rc}" == "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
-		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
-
-		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids}' are running)."
-
-		script_another_instance_is_running="1"
-		script_exit_code="31"
-		exit
-	elif ([ "${rc}" != "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
-		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
-
-		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids}' are running)."
-
-		script_another_instance_is_running="1"
-		script_exit_code="32"
-		exit
-	fi
-}
-
-checkLock()
-{
-	local rc=
-
-	logHandler "Check if lock file: '${script_lock_file}' exists and if it is read and writeable..."
-
-	checkFilePermissions "${script_lock_file}"
-	rc="$?"
-
-	case "${rc}" in
-		6|7)
-			logHandler "Lock file exists and it is read/writeable."
-			return 0
-			;;
-		10)
-			logHandler "Lock file doesnt exist."
-			return 1
-			;;
-		*)
-			logHandler "Lock file exists, but it is not read/writeable."
-			return 2
-			;;
-	esac
-}
-
-setLock()
-{
-	local rc=
-
-	logHandler "Check if script lock directory: '${script_lock_directory}' exists and permissions to set lock are ok..."
-
-	checkDirectoryPermissions "${script_lock_directory}"
-	rc="$?"
-
-	case "${rc}" in
-		3|7)
-			logHandler "Script lock directory exists and permissions are ok."
-			;;
-		10)
-			logHandler "Script lock directory doesnt exist."
-			logHandler "Creating script lock directory..."
-
-			${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
-			rc="${PIPESTATUS[0]}"
-
-			if [ "${rc}" == "0" ] ;then
-				logHandler "Creating script lock directory was successful."
-			else
-				logHandler "Creating script lock directory was not successful."
-				script_exit_code="40"
-				exit
-			fi
-			;;
-		*)
-			logHandler "Script lock directory exists but permissions are not ok, exiting."
-			script_exit_code="41"
-			exit
-			;;
-	esac
-
-	logHandler "Setting lock..."
-
-	printf "%s\n" "${script_pid}" > "${script_lock_file}"
-	rc="$?"
-
-	if [ "${rc}" == "0" ] ;then
-		logHandler "Setting lock was successful."
-	else
-		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock."
-		script_exit_code="42"
-		exit
-	fi
-}
-
-removeLock()
-{
-	local rc=
-
-	logHandler "Removing lock..."
-
-	${rm_bin} "${script_lock_file}" 2>&1 | logHandler
-	rc="${PIPESTATUS[0]}"
-
-	if [ "${rc}" == "0" ] ;then
-		logHandler "Removing lock was successful."
-	else
-		logHandler "Removing lock was not successful."
-		script_exit_code="50"
-		exit
-	fi
-}
-
-overrideLock()
-{
-	logHandler "Overriding lock, because you want it..."
-	removeLock
-	setLock
-}
-
-checkRegularFileExists()
-{
-	local file="${1:-}"
-
-	if [ -f "${file}" ] ;then
-		return 0
-	else
-		return 1
-	fi
-}
-
-checkFilePermissions()
-{
-	# file doesnt exist:	rc=10
-	# read allowed:		rc=4|5|6|7
-	# write allowed:	rc=2|3|6|7
-	# execute allowed:	rc=1|3|5|7
-	# read/write allowed:	rc=6|7
-
-	local file="${1:-}"
-	local rc=
-	local file_permission=
-
-	checkRegularFileExists "${file}"
-	rc="$?"
-
-	if [ "${rc}" == "0" ] ;then
-		if [ -x "${file}" ] ;then
-			file_permission="$((file_permission + 2#0001))"
-		fi
-
-		if [ -w "${file}" ] ;then
-			file_permission="$((file_permission + 2#0010))"
-		fi
-
-		if [ -r "${file}" ] ;then
-			file_permission="$((file_permission + 2#0100))"
-		fi
-	else
-		file_permission="$((2#1010))"
-	fi
-
-	return "${file_permission}"
-}
-
-checkDirectoryExists()
-{
-	local directory="${1:-}"
-
-	if [ -d "${directory}" ] ;then
-		return 0
-	else
-		return 1
-	fi
-}
-
-checkDirectoryPermissions()
-{
-	# directory doesnt exist:	rc=10
-	# read allowed:			rc=4|5|6|7
-	# write allowed:		rc=2|3|6|7
-	# execute allowed:		rc=1|3|5|7
-
-	local directory="${1:-}"
-	local rc=
-	local directory_permission=
-
-	checkDirectoryExists "${directory}"
-	rc="$?"
-
-	if [ "${rc}" == "0" ] ;then
-		if [ -x "${directory}" ] ;then
-			directory_permission="$((directory_permission + 2#0001))"
-		fi
-
-		if [ -w "${directory}" ] ;then
-			directory_permission="$((directory_permission + 2#0010))"
-		fi
-
-		if [ -r "${directory}" ] ;then
-			directory_permission="$((directory_permission + 2#0100))"
-		fi
-	else
-		directory_permission="$((2#1010))"
-	fi
-
-	return "${directory_permission}"
-}
-
-checkBin()
-{
-	local binary="${1:-}"
-	local _bin=
-	local rc=
-
-	_bin="$(which "${binary}" 2>&1)"
-	rc="$?"
-
-	if [ "${rc}" == "0" ] ;then
-		export "${binary}"_bin="${_bin}"
-		return 0
-	else
-		return 1
-	fi
-}
-
-checkTrailingSlash()
-{
-	local path="${1:-}"
-
-	if [[ "${path}" =~ ^(.*)\/$ ]] ;then
-		return 1
-	else
-		return 0
-	fi
-}
-
-removeLastChar()
-{
-	local string="${1:-}"
-	printf "%s" "${string:0:$((${#string} - 1))}"
-}
-
-createInstalledPackagesFile()
-{
-	local rc=
-	local syspackage_manager=
-	local available_syspackage_managers_helper=
-
-	logHandler "Check if installed packages are required..."
-
-	if [ "${installed_packages_required}" == "1" ] ;then
-		logHandler "Installed packages are required."
-
-		if [ "${#available_syspackage_managers[*]}" -gt "1" ] ;then
-			available_syspackage_managers_helper="${available_syspackage_managers[*]}"
-			available_syspackage_managers_helper="${available_syspackage_managers_helper//\ /\,\ }"
-
-			logHandler "More than one supported syspackage managers found: '${available_syspackage_managers_helper}', dont know what to do, exiting."
-
-			script_exit_code="60"
-			exit
-		elif [ "${#available_syspackage_managers[*]}" -eq "1" ] ;then
-			syspackage_manager="${available_syspackage_managers[*]}"
-			logHandler "The supported system package manager we found is: '${syspackage_manager}'."
-		elif [ "${#available_syspackage_managers[*]}" -eq "0" ] ;then
-			logHandler "No supported system package manager found, exiting."
-			script_exit_code="61"
-			exit
-		fi
-
-		logHandler "Creating installed packages file: '${installed_packages_filename}'..."
-
-		case "${syspackage_manager}" in
-						rpm)
-							${syspackage_manager} -qa > "${installed_packages_filename}"
-							;;
-						dpkg)
-							${syspackage_manager} --get-selections > "${installed_packages_filename}"
-							;;
-						*)
-							logHandler "Ooops!!! Someting went wrong in function: '${FUNCNAME[0]}'. :( Exiting."
-							script_exit_code="62"
-							exit
-							;;
-		esac
-
-		rc="$?"
-
-		if [ "${rc}" == "0" ] ;then
-			logHandler "Creating installed packages file was successful."
-		else
-			logHandler "Creating installed packages file was not successful."
-			script_exit_code="63"
-			exit
-		fi
-	else
-		logHandler "Installed packages are not required..."
-	fi
-}
-
-buildExcludeOpts()
-{
-	local rc=
-
-	logHandler "Check if we need to build excluding options..."
-
-	if [ ! -z "${items_to_exclude[*]:-}" ] ;then
-		logHandler "Building of excluding options is required."
-		exclude_string=()
-
-		for item in "${items_to_exclude[@]}"
-		   do
-			checkTrailingSlash "${item}"
-			rc="$?"
-
-			if [ "${rc}" == "0" ] ;then	
-				exclude_string+=("--exclude='${item}'")
-			else
-				exclude_string+=("--exclude='$(removeLastChar "${item}")'")
-			fi
-		   done
-
-		logHandler "We build the following excluding options: '${exclude_string[*]}'."
-	else
-		logHandler "We dont have to build excluding options..."
-	fi
-}
-
-rotateHandler()
-{
-	local rc=
-	local file=
-	local file_to_handle=
-	local file_helper=
-
-	logHandler "Check if backup rotating is required..."
-
-	if [ "${backup_rotating_required}" == "1" ] ;then
-		logHandler "Backup rotating is required."
-		logHandler "Check if backup directory: '${backup_destination_path}' exists and permissions to move files are ok..."
-
-		checkDirectoryPermissions "${backup_destination_path}"
-		rc="$?"
-
-		case "${rc}" in
-			3|7)
-				logHandler "Backup directory exists and permissions are ok."
-				;;
-			10)
-				logHandler "Backup directory doesnt exist."
-				logHandler "Creating backup directory..."
-
-				${mkdir_bin} -p "${backup_destination_path}" 2>&1 | logHandler
-				rc="${PIPESTATUS[0]}"
-
-				if [ "${rc}" == "0" ] ;then
-					logHandler "Creating backup directory was successful."
-				else
-					logHandler "Creating backup directory was not successful."
-					script_exit_code="70"
-					exit
-				fi
-				;;
-			*)
-				logHandler "Backup directory exists but permissions are not ok, exiting."
-				script_exit_code="71"
-				exit
-				;;
-		esac
-
-		if [ "${backup_encryption_required}" == "1" ] ;then
-			file="${backup_encryption_filename}"
-		else
-			file="${backup_full_path}"
-		fi
-
-		backup_rotating_files_to_keep=$((backup_rotating_files_to_keep - 1))
-		
-		logHandler "Rotating backup files..."
-
-		while [ "${backup_rotating_files_to_keep}" -gt "0" ]
-		   do
-			file_helper=$((backup_rotating_files_to_keep - 1))
-
-			if [ "${backup_rotating_files_to_keep}" != "1" ] ;then
-				file_to_handle="${file}.${file_helper}"
-			else
-				file_to_handle="${file}"
-			fi
-
-			logHandler "Check if file: '${file_to_handle}' exists and if it is readable..."
-
-			checkFilePermissions "${file_to_handle}"
-			rc="$?"
-
-			case "${rc}" in
-				4|5|6|7)
-					logHandler "File exists and is readable, do rotating..."
-
-					${mv_bin} "${file_to_handle}" "${file}.${backup_rotating_files_to_keep}" 2>&1 | logHandler
-					rc="${PIPESTATUS[0]}"
-
-					if [ "${rc}" == "0" ] ;then
-						logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotating_files_to_keep}' was successful."
-					else
-						logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotating_files_to_keep}' was not successful."
-					fi
-					;;
-				10)
-					logHandler "File doesnt exist, nothing to do."
-					;;
-				*)
-					logHandler "File exists but is not readable."
-					script_exit_code="72"
-					exit
-					;;
-			esac
-
-			backup_rotating_files_to_keep=$((backup_rotating_files_to_keep - 1))
-
-		   done
-	else
-		logHandler "Backup rotating is not required..."
 	fi
 }
 
@@ -1087,25 +467,25 @@ sigHandler()
 		EXIT)
 			logHandler "Caught: '${signal}', exiting script..."
 
-			if [ "${script_normal_termination}" != "1" ] ;then
+			if [ "${script_bypass_exit_routines}" != "1" ] ;then
 				cleanUp
-			fi
 
-			if [ "${script_exit_code}" == "0" ] ;then
-				logHandler "We did a great job. :)"
-			elif [ "${script_normal_termination}" == "1" ] ;then
-				logHandler "We hope you are informed better now. :P This was a lazy job. :)"
-			else
-				logHandler "Ooops!!! Something went wrong. :("
-				logHandler "Read the log or output to determine what exactly went wrong."
-			fi
-
-			if ([ "${script_another_instance_is_running}" != "1" ] && [ "${script_normal_termination}" != "1" ]) ;then
-				checkLock
-				rc="$?"
-				if [ "${rc}" == "0" ] ;then
-					removeLock
+				if [ "${script_exit_code}" == "0" ] ;then
+					logHandler "We did a great job. :)"
+				else
+					logHandler "Ooops!!! Something went wrong. :("
+					logHandler "Read the log or output to determine what exactly went wrong."
 				fi
+
+				if [ "${script_another_instance_is_running}" != "1" ] ;then
+					checkLock
+					rc="$?"
+					if [ "${rc}" == "0" ] ;then
+						removeLock
+					fi
+				fi
+			else
+				logHandler "We hope you are informed better now. :P This was a lazy job. :)"
 			fi
 
 			logHandler "Script was running: '${SECONDS}' seconds."
@@ -1124,135 +504,111 @@ sigHandler()
 	esac
 }
 
-makeBackup()
+checkLock()
 {
 	local rc=
-	local backup_cmd=
 
-	if [ -z "${exclude_string[*]:-}" ] ;then
-		backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${items_to_backup}"
-	else
-		backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${items_to_backup} ${exclude_string[*]}"
-	fi
+	logHandler "Check if lock file: '${script_lock_file}' exists and if it is read and writeable..."
 
-	logHandler "Starting backup job..."
+	checkFilePermissions "${script_lock_file}"
+	rc="$?"
 
-	${backup_cmd} 2>&1 | logHandler
-	rc="${PIPESTATUS[0]}"
+	case "${rc}" in
+		6|7)
+			logHandler "Lock file exists and it is read/writeable."
+			return 0
+			;;
+		10)
+			logHandler "Lock file doesnt exist."
+			return 1
+			;;
+		*)
+			logHandler "Lock file exists, but it is not read/writeable."
+			return 2
+			;;
+	esac
+}
+
+setLock()
+{
+	local rc=
+
+	logHandler "Check if script lock directory: '${script_lock_directory}' exists and permissions to set lock are ok..."
+
+	checkDirectoryPermissions "${script_lock_directory}"
+	rc="$?"
+
+	case "${rc}" in
+		3|7)
+			logHandler "Script lock directory exists and permissions are ok."
+			;;
+		10)
+			logHandler "Script lock directory doesnt exist."
+			logHandler "Creating script lock directory..."
+
+			${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
+			rc="${PIPESTATUS[0]}"
+
+			if [ "${rc}" == "0" ] ;then
+				logHandler "Creating script lock directory was successful."
+			else
+				logHandler "Creating script lock directory was not successful."
+				script_exit_code="40"
+				exit
+			fi
+			;;
+		*)
+			logHandler "Script lock directory exists but permissions are not ok, exiting."
+			script_exit_code="41"
+			exit
+			;;
+	esac
+
+	logHandler "Setting lock..."
+
+	printf "%s\n" "${script_pid}" > "${script_lock_file}"
+	rc="$?"
 
 	if [ "${rc}" == "0" ] ;then
-		logHandler "Backup job was successful."
-		script_exit_code="0"
+		logHandler "Setting lock was successful."
 	else
-		logHandler "Backup job was not successful."
-		script_exit_code="81"
+		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock."
+		script_exit_code="42"
 		exit
 	fi
 }
 
-encryptBackup()
+removeLock()
 {
 	local rc=
 
-	if [ "${backup_encryption_required}" == "1" ] ;then
-		logHandler "Backup encryption is enabled..."
-		logHandler "Encrypting backup file: '${backup_full_path}'..."
+	logHandler "Removing lock..."
 
-		${openssl_bin} aes-256-cbc -salt -in "${backup_full_path}" -out "${backup_encryption_filename}" -k "${backup_encryption_password}" 2>&1 | logHandler
-		rc="${PIPESTATUS[0]}"
+	${rm_bin} "${script_lock_file}" 2>&1 | logHandler
+	rc="${PIPESTATUS[0]}"
 
-		if [ "${rc}" == "0" ] ;then
-			logHandler "Encrypting job was successful."
-			logHandler "HINT: To decrypt use this command: '${openssl_bin} aes-256-cbc -d -salt -in ${backup_encryption_filename} -out ${backup_full_path}'."
-			script_exit_code="0"
-		else
-			logHandler "Encrypting job was not successful."
-			script_exit_code="90"
-			exit
-		fi
+	if [ "${rc}" == "0" ] ;then
+		logHandler "Removing lock was successful."
 	else
-		logHandler "Backup encryption is not enabled..."
+		logHandler "Removing lock was not successful."
+		script_exit_code="50"
+		exit
 	fi
 }
 
-executePreBackupScript()
+overrideLock()
 {
-	local rc=
-
-	if [ ! -z "${pre_backup_script:-}" ] ;then
-		logHandler "Pre backup script: '${pre_backup_script}' is defined..."
-		logHandler "Check if pre backup script exists and if it is executeable..."
-
-		checkFilePermissions "${pre_backup_script}"
-		rc="$?"
-
-		case "${rc}" in
-			1|3|5|7)
-				logHandler "Pre backup script exists and it is executeable, so we execute it..."
-				;;
-			10)
-				logHandler "Pre backup script doesnt exist, nothing to do."
-				script_exit_code="100"
-				exit
-				;;
-			*)
-				logHandler "Pre backup script exists, but it is not executeable, nothing to do."
-				script_exit_code="101"
-				exit
-				;;
-		esac
-
-		eval "${pre_backup_script} 2>&1" | logHandler
-		rc="${PIPESTATUS[0]}"
-
-		if [ "${rc}" == "0" ] ;then
-			logHandler "Execution of pre backup script seems to be successful. rc: '${rc}'."
-		else
-			logHandler "Execution of pre backup script seems to be unssuccessful. rc: '${rc}'."
-		fi
-	else
-		logHandler "Pre backup script is not defined."
-	fi
+	logHandler "Overriding lock, because you want it..."
+	removeLock
+	setLock
 }
 
-executePostBackupScript()
+cleanUp()
 {
-	local rc=
+	logHandler "Now we are doing some cleanup jobs..."
 
-	if [ ! -z "${post_backup_script:-}" ] ;then
-		logHandler "Post backup script: '${post_backup_script}' is defined..."
-		logHandler "Check if post backup script exists and if it is executeable..."
-
-		checkFilePermissions "${post_backup_script}"
-		rc="$?"
-
-		case "${rc}" in
-			1|3|5|7)
-				logHandler "Post backup script exists and it is executeable, so we execute it..."
-				;;
-			10)
-				logHandler "Post backup script doesnt exist, nothing to do."
-				script_exit_code="110"
-				exit
-				;;
-			*)
-				logHandler "Post backup script exists, but it is not executeable, nothing to do."
-				script_exit_code="111"
-				exit
-				;;
-		esac
-
-		eval "${post_backup_script} 2>&1" | logHandler
-		rc="${PIPESTATUS[0]}"
-
-		if [ "${rc}" == "0" ] ;then
-			logHandler "Execution of post backup script seems to be successful. rc: '${rc}'."
-		else
-			logHandler "Execution of post backup script seems to be unssuccessful. rc: '${rc}'."
-		fi
-	else
-		logHandler "Post backup script is not defined."
-	fi
+	delUnencryptedBackupFile
+	delInstalledPackagesFile
 }
 
 delUnencryptedBackupFile()
@@ -1329,12 +685,656 @@ delInstalledPackagesFile()
 	fi
 }
 
-cleanUp()
+checkRegularFileExists()
 {
-	logHandler "Now we are doing some cleanup jobs..."
+	local file="${1:-}"
 
-	delUnencryptedBackupFile
-	delInstalledPackagesFile
+	if [ -f "${file}" ] ;then
+		return 0
+	else
+		return 1
+	fi
+}
+
+checkFilePermissions()
+{
+	# file doesnt exist:	rc=10
+	# read allowed:		rc=4|5|6|7
+	# write allowed:	rc=2|3|6|7
+	# execute allowed:	rc=1|3|5|7
+	# read/write allowed:	rc=6|7
+
+	local file="${1:-}"
+	local rc=
+	local file_permission=
+
+	checkRegularFileExists "${file}"
+	rc="$?"
+
+	if [ "${rc}" == "0" ] ;then
+		if [ -x "${file}" ] ;then
+			file_permission="$((file_permission + 2#0001))"
+		fi
+
+		if [ -w "${file}" ] ;then
+			file_permission="$((file_permission + 2#0010))"
+		fi
+
+		if [ -r "${file}" ] ;then
+			file_permission="$((file_permission + 2#0100))"
+		fi
+	else
+		file_permission="$((2#1010))"
+	fi
+
+	return "${file_permission}"
+}
+
+checkDirectoryExists()
+{
+	local directory="${1:-}"
+
+	if [ -d "${directory}" ] ;then
+		return 0
+	else
+		return 1
+	fi
+}
+
+checkDirectoryPermissions()
+{
+	# directory doesnt exist:	rc=10
+	# read allowed:			rc=4|5|6|7
+	# write allowed:		rc=2|3|6|7
+	# execute allowed:		rc=1|3|5|7
+
+	local directory="${1:-}"
+	local rc=
+	local directory_permission=
+
+	checkDirectoryExists "${directory}"
+	rc="$?"
+
+	if [ "${rc}" == "0" ] ;then
+		if [ -x "${directory}" ] ;then
+			directory_permission="$((directory_permission + 2#0001))"
+		fi
+
+		if [ -w "${directory}" ] ;then
+			directory_permission="$((directory_permission + 2#0010))"
+		fi
+
+		if [ -r "${directory}" ] ;then
+			directory_permission="$((directory_permission + 2#0100))"
+		fi
+	else
+		directory_permission="$((2#1010))"
+	fi
+
+	return "${directory_permission}"
+}
+
+checkBin()
+{
+	local binary="${1:-}"
+	local _bin=
+	local rc=
+
+	_bin="$(which "${binary}" 2>&1)"
+	rc="$?"
+
+	if [ "${rc}" == "0" ] ;then
+		export "${binary}"_bin="${_bin}"
+		return 0
+	else
+		return 1
+	fi
+}
+
+checkTrailingSlash()
+{
+	local path="${1:-}"
+
+	if [[ "${path}" =~ ^(.*)\/$ ]] ;then
+		return 1
+	else
+		return 0
+	fi
+}
+
+removeLastChar()
+{
+	local string="${1:-}"
+	printf "%s" "${string:0:$((${#string} - 1))}"
+}
+
+setDefaultValues()
+{
+	# already not in use
+	# will be realized when config file implementation will be done
+	return
+}
+
+checkRootPrivileges()
+{
+	logHandler "Check if root priviliges are required..."
+
+	if [ "${root_privileges_required}" == "1" ] ;then
+		logHandler "Root privileges are required, checking privileges..."
+
+		if [ "$UID" == "0" ] ;then
+			logHandler "HOORAY, we have root privileges. :)"
+		else
+			logHandler "You must run this script as root, terminating."
+			script_exit_code="10"
+			exit
+		fi
+	else
+		logHandler "Root privileges are not required..."
+	fi
+}
+
+getUser()
+{
+	local rc=
+	script_exec_user=
+
+	logHandler "Get user which starts the script..."
+
+	if [ ! -z "${SUDO_USER:-}" ] ;then
+		script_exec_user="$SUDO_USER"
+	else
+		script_exec_user="$(${whoami_bin})"
+	fi
+
+	logHandler "${script_name} was started by: '${script_exec_user}'."
+}
+
+checkBashVersion()
+{
+	logHandler "Checking bash version..."
+
+	if [ -z "${BASH_VERSINFO[0]}" ] ;then
+		logHandler "Could not determine bash version, exiting."
+		script_exit_code="20"
+		exit
+	else
+		case "${BASH_VERSINFO[0]}" in
+					3)
+						logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
+						;;
+					4)
+						logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
+						;;
+					*)
+						logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
+						script_exit_code="21"
+						exit
+						;;
+		esac
+	fi
+}
+
+checkAlreadyRunningInstance()
+{
+	local rc=
+	local running_script_pids=
+	running_script_pids="$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_name}(.*)$")"
+	running_script_pids="${running_script_pids//${script_pid}/}"
+	running_script_pids="${running_script_pids//$(${pgrep_bin} -d " " -P "${script_pid}")/}"
+	running_script_pids="${running_script_pids//\ /\,\ }"
+
+	logHandler "Check if another instance of: '${script_name}' is already running..."
+
+	checkLock
+	rc="$?"
+	if ([ "${rc}" != "0" ] && [ -z "${running_script_pids:-}" ]) ;then
+		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)."
+		setLock
+	elif ([ "${rc}" == "0" ] && [ -z "${running_script_pids:-}" ]) ;then
+		logHandler "Another instance of: '${script_name}' seems to be running (Lockfile: '${script_lock_file}' exists and no processes are running). Maybe ${script_name} was terminated abnormally."
+
+		if [ "${script_override_lock}" == "1" ] ;then
+			overrideLock
+		else
+			logHandler "HINT: You can override the old left over lock by calling ${script_name} with option '-o'."
+
+			script_another_instance_is_running="1"
+			script_exit_code="30"
+			exit
+		fi
+	elif ([ "${rc}" == "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
+		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
+
+		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids}' are running)."
+
+		script_another_instance_is_running="1"
+		script_exit_code="31"
+		exit
+	elif ([ "${rc}" != "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
+		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
+
+		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids}' are running)."
+
+		script_another_instance_is_running="1"
+		script_exit_code="32"
+		exit
+	fi
+}
+
+reNice()
+{
+	local rc=
+
+	logHandler "Check if re-niceing is required..."
+
+	if [ "${re_nice_required}" == "1" ] ;then
+		logHandler "Re-niceing is required."
+		logHandler "Check if renice priority is in range..."
+
+		if ([ "${re_nice_priority}" -lt "-20" ] || [ "${re_nice_priority}" -gt "19" ]) ;then
+			logHandler "Re-nice priority: '${re_nice_priority}' is out of range."
+			logHandler "HINT: Have a look at: 'man renice'."
+
+			script_exit_code="10"
+			exit
+		else
+			logHandler "Re-nice priority: '${re_nice_priority}' is in range."
+			logHandler "Re-niceing..."
+
+			${renice_bin} -n ${re_nice_priority} -p ${script_pid} 2>&1 | logHandler
+			rc="${PIPESTATUS[0]}"
+			
+			if [ "${rc}" == "0" ] ;then
+				logHandler "Re-niceing was successful."
+			else
+				logHandler "Re-niceing was not successful."
+				script_exit_code="11"
+				exit
+			fi
+		fi
+	else
+		logHandler "Re-niceing is not required."
+	fi
+}
+
+reIONice()
+{
+	local rc=
+	local re_ionice_cmd=
+	local re_ionice_priority_required=
+
+	logHandler "Check if re-ioniceing is required..."
+
+	if [ "${re_ionice_required}" == "1" ] ;then
+		logHandler "Re-ioniceing is required."
+		logHandler "Check if re-ioniceing parameters are in range..."
+
+		if ([ "${re_ionice_scheduling_class}" -gt "3" ] || [ "${re_ionice_scheduling_class}" -lt "1" ]) ;then
+			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is out of range."
+			logHandler "HINT: Have a look at: 'man ionice'."
+
+			script_exit_code="20"
+			exit
+		else
+			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is in range."
+		fi
+
+		if ([ "${re_ionice_scheduling_class}" == "1" ] || [ "${re_ionice_scheduling_class}" == "2" ]) ;then
+			logHandler "Selected re-ioniceing scheduling class: '${re_ionice_scheduling_class}' requires re-ioniceing priority."
+			logHandler "Check if re-ioniceing priority is in range..."
+
+			re_ionice_priority_required="1"
+
+			if ([ "${re_ionice_priority}" -gt "7" ] || [ "${re_ionice_priority}" -lt "0" ]) ;then
+				logHandler "Re-ioniceing priority: '${re_ionice_priority}' is out of range."
+				logHandler "HINT: Have a look at: 'man ionice'."
+
+				script_exit_code="21"
+				exit
+			else
+				logHandler "Re-ioniceing priority: '${re_ionice_scheduling_class}' is in range."
+			fi
+		else
+			logHandler "Selected re-ioniceing scheduling class: '${re_ionice_scheduling_class}' does not require a re-ioniceing priority."
+		fi
+
+		logHandler "Re-ioniceing..."
+
+		if [ "${re_ionice_priority_required}" == "1" ] ;then
+			re_ionice_cmd="${ionice_bin} -c ${re_ionice_scheduling_class} -n ${re_ionice_priority} -p ${script_pid}"
+		else
+			re_ionice_cmd="${ionice_bin} -c ${re_ionice_scheduling_class} -p ${script_pid}"
+		fi
+
+		${re_ionice_cmd}  2>&1 | logHandler
+		rc="${PIPESTATUS[0]}"
+		
+		if [ "${rc}" == "0" ] ;then
+			logHandler "Re-ioniceing was successful."
+		else
+			logHandler "Re-ioniceing was not successful."
+			script_exit_code="22"
+			exit
+		fi
+	else
+		logHandler "Re-ioniceing is not required."
+	fi
+}
+
+executePreBackupScript()
+{
+	local rc=
+
+	if [ ! -z "${pre_backup_script:-}" ] ;then
+		logHandler "Pre backup script: '${pre_backup_script}' is defined..."
+		logHandler "Check if pre backup script exists and if it is executeable..."
+
+		checkFilePermissions "${pre_backup_script}"
+		rc="$?"
+
+		case "${rc}" in
+			1|3|5|7)
+				logHandler "Pre backup script exists and it is executeable, so we execute it..."
+				;;
+			10)
+				logHandler "Pre backup script doesnt exist, nothing to do."
+				script_exit_code="100"
+				exit
+				;;
+			*)
+				logHandler "Pre backup script exists, but it is not executeable, nothing to do."
+				script_exit_code="101"
+				exit
+				;;
+		esac
+
+		eval "${pre_backup_script} 2>&1" | logHandler
+		rc="${PIPESTATUS[0]}"
+
+		if [ "${rc}" == "0" ] ;then
+			logHandler "Execution of pre backup script seems to be successful. rc: '${rc}'."
+		else
+			logHandler "Execution of pre backup script seems to be unssuccessful. rc: '${rc}'."
+		fi
+	else
+		logHandler "Pre backup script is not defined."
+	fi
+}
+
+rotateHandler()
+{
+	local rc=
+	local file=
+	local file_to_handle=
+	local file_helper=
+
+	logHandler "Check if backup rotating is required..."
+
+	if [ "${backup_rotation_required}" == "1" ] ;then
+		logHandler "Backup rotating is required."
+		logHandler "Check if backup directory: '${backup_destination_path}' exists and permissions to move files are ok..."
+
+		checkDirectoryPermissions "${backup_destination_path}"
+		rc="$?"
+
+		case "${rc}" in
+			3|7)
+				logHandler "Backup directory exists and permissions are ok."
+				;;
+			10)
+				logHandler "Backup directory doesnt exist."
+				logHandler "Creating backup directory..."
+
+				${mkdir_bin} -p "${backup_destination_path}" 2>&1 | logHandler
+				rc="${PIPESTATUS[0]}"
+
+				if [ "${rc}" == "0" ] ;then
+					logHandler "Creating backup directory was successful."
+				else
+					logHandler "Creating backup directory was not successful."
+					script_exit_code="70"
+					exit
+				fi
+				;;
+			*)
+				logHandler "Backup directory exists but permissions are not ok, exiting."
+				script_exit_code="71"
+				exit
+				;;
+		esac
+
+		if [ "${backup_encryption_required}" == "1" ] ;then
+			file="${backup_encryption_filename}"
+		else
+			file="${backup_full_path}"
+		fi
+
+		backup_rotation_files_to_keep=$((backup_rotation_files_to_keep - 1))
+		
+		logHandler "Rotating backup files..."
+
+		while [ "${backup_rotation_files_to_keep}" -gt "0" ]
+		   do
+			file_helper=$((backup_rotation_files_to_keep - 1))
+
+			if [ "${backup_rotation_files_to_keep}" != "1" ] ;then
+				file_to_handle="${file}.${file_helper}"
+			else
+				file_to_handle="${file}"
+			fi
+
+			logHandler "Check if file: '${file_to_handle}' exists and if it is readable..."
+
+			checkFilePermissions "${file_to_handle}"
+			rc="$?"
+
+			case "${rc}" in
+				4|5|6|7)
+					logHandler "File exists and is readable, do rotating..."
+
+					${mv_bin} "${file_to_handle}" "${file}.${backup_rotation_files_to_keep}" 2>&1 | logHandler
+					rc="${PIPESTATUS[0]}"
+
+					if [ "${rc}" == "0" ] ;then
+						logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotation_files_to_keep}' was successful."
+					else
+						logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotation_files_to_keep}' was not successful."
+					fi
+					;;
+				10)
+					logHandler "File doesnt exist, nothing to do."
+					;;
+				*)
+					logHandler "File exists but is not readable."
+					script_exit_code="72"
+					exit
+					;;
+			esac
+
+			backup_rotation_files_to_keep=$((backup_rotation_files_to_keep - 1))
+
+		   done
+	else
+		logHandler "Backup rotating is not required..."
+	fi
+}
+
+createInstalledPackagesFile()
+{
+	local rc=
+	local syspackage_manager=
+	local available_syspackage_managers_helper=
+
+	logHandler "Check if installed packages are required..."
+
+	if [ "${installed_packages_required}" == "1" ] ;then
+		logHandler "Installed packages are required."
+
+		if [ "${#available_syspackage_managers[*]}" -gt "1" ] ;then
+			available_syspackage_managers_helper="${available_syspackage_managers[*]}"
+			available_syspackage_managers_helper="${available_syspackage_managers_helper//\ /\,\ }"
+
+			logHandler "More than one supported syspackage managers found: '${available_syspackage_managers_helper}', dont know what to do, exiting."
+
+			script_exit_code="60"
+			exit
+		elif [ "${#available_syspackage_managers[*]}" -eq "1" ] ;then
+			syspackage_manager="${available_syspackage_managers[*]}"
+			logHandler "The supported system package manager we found is: '${syspackage_manager}'."
+		elif [ "${#available_syspackage_managers[*]}" -eq "0" ] ;then
+			logHandler "No supported system package manager found, exiting."
+			script_exit_code="61"
+			exit
+		fi
+
+		logHandler "Creating installed packages file: '${installed_packages_filename}'..."
+
+		case "${syspackage_manager}" in
+						rpm)
+							${syspackage_manager} -qa > "${installed_packages_filename}"
+							;;
+						dpkg)
+							${syspackage_manager} --get-selections > "${installed_packages_filename}"
+							;;
+						*)
+							logHandler "Ooops!!! Someting went wrong in function: '${FUNCNAME[0]}'. :( Exiting."
+							script_exit_code="62"
+							exit
+							;;
+		esac
+
+		rc="$?"
+
+		if [ "${rc}" == "0" ] ;then
+			logHandler "Creating installed packages file was successful."
+		else
+			logHandler "Creating installed packages file was not successful."
+			script_exit_code="63"
+			exit
+		fi
+	else
+		logHandler "Installed packages are not required..."
+	fi
+}
+
+buildExcludeOpts()
+{
+	local rc=
+
+	logHandler "Check if we need to build excluding options..."
+
+	if [ ! -z "${items_to_exclude[*]:-}" ] ;then
+		logHandler "Building of excluding options is required."
+		exclude_string=()
+
+		for item in "${items_to_exclude[@]}"
+		   do
+			checkTrailingSlash "${item}"
+			rc="$?"
+
+			if [ "${rc}" == "0" ] ;then	
+				exclude_string+=("--exclude='${item}'")
+			else
+				exclude_string+=("--exclude='$(removeLastChar "${item}")'")
+			fi
+		   done
+
+		logHandler "We build the following excluding options: '${exclude_string[*]}'."
+	else
+		logHandler "We dont have to build excluding options..."
+	fi
+}
+
+makeBackup()
+{
+	local rc=
+	local backup_cmd=
+
+	if [ -z "${exclude_string[*]:-}" ] ;then
+		backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${items_to_backup}"
+	else
+		backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${items_to_backup} ${exclude_string[*]}"
+	fi
+
+	logHandler "Starting backup job..."
+
+	${backup_cmd} 2>&1 | logHandler
+	rc="${PIPESTATUS[0]}"
+
+	if [ "${rc}" == "0" ] ;then
+		logHandler "Backup job was successful."
+		script_exit_code="0"
+	else
+		logHandler "Backup job was not successful."
+		script_exit_code="81"
+		exit
+	fi
+}
+
+encryptBackup()
+{
+	local rc=
+
+	if [ "${backup_encryption_required}" == "1" ] ;then
+		logHandler "Backup encryption is enabled..."
+		logHandler "Encrypting backup file: '${backup_full_path}'..."
+
+		${openssl_bin} aes-256-cbc -salt -in "${backup_full_path}" -out "${backup_encryption_filename}" -k "${backup_encryption_password}" 2>&1 | logHandler
+		rc="${PIPESTATUS[0]}"
+
+		if [ "${rc}" == "0" ] ;then
+			logHandler "Encrypting job was successful."
+			logHandler "HINT: To decrypt use this command: '${openssl_bin} aes-256-cbc -d -salt -in ${backup_encryption_filename} -out ${backup_full_path}'."
+			script_exit_code="0"
+		else
+			logHandler "Encrypting job was not successful."
+			script_exit_code="90"
+			exit
+		fi
+	else
+		logHandler "Backup encryption is not enabled..."
+	fi
+}
+
+executePostBackupScript()
+{
+	local rc=
+
+	if [ ! -z "${post_backup_script:-}" ] ;then
+		logHandler "Post backup script: '${post_backup_script}' is defined..."
+		logHandler "Check if post backup script exists and if it is executeable..."
+
+		checkFilePermissions "${post_backup_script}"
+		rc="$?"
+
+		case "${rc}" in
+			1|3|5|7)
+				logHandler "Post backup script exists and it is executeable, so we execute it..."
+				;;
+			10)
+				logHandler "Post backup script doesnt exist, nothing to do."
+				script_exit_code="110"
+				exit
+				;;
+			*)
+				logHandler "Post backup script exists, but it is not executeable, nothing to do."
+				script_exit_code="111"
+				exit
+				;;
+		esac
+
+		eval "${post_backup_script} 2>&1" | logHandler
+		rc="${PIPESTATUS[0]}"
+
+		if [ "${rc}" == "0" ] ;then
+			logHandler "Execution of post backup script seems to be successful. rc: '${rc}'."
+		else
+			logHandler "Execution of post backup script seems to be unssuccessful. rc: '${rc}'."
+		fi
+	else
+		logHandler "Post backup script is not defined."
+	fi
 }
 
 
@@ -1352,13 +1352,15 @@ checkRequiredBinaries
 #-------------
 
 OPTERR="0"
+
 while getopts ":hov" OPTION
    do
 	logHandler "Getting options..."
+
 	case "$OPTION" in
 			h)
 				printUsage
-				script_normal_termination="1"
+				script_bypass_exit_routines="1"
 				script_exit_code="160"
 				exit
 				;;
@@ -1367,7 +1369,7 @@ while getopts ":hov" OPTION
 				;;
 			v)
 				printScriptInfos
-				script_normal_termination="1"
+				script_bypass_exit_routines="1"
 				script_exit_code="161"
 				exit
 				;;
