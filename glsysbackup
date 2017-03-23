@@ -246,14 +246,6 @@ checkRequiredBinaries()
 	fi
 }
 
-logHandlerStdinHelper()
-{
-	while read -r stdin_line
-	   do
-		logHandler "${stdin_line}"
-	   done < "/dev/stdin"
-}
-
 logHandlerSetConfig()
 {
 	log_conf="$((2#0000000))"
@@ -293,6 +285,14 @@ logHandlerSetConfig()
 	fi
 
 	return ${log_conf}
+}
+
+logHandlerStdinHelper()
+{
+	while read -r stdin_line
+	   do
+		logHandler "${stdin_line}"
+	   done < "/dev/stdin"
 }
 
 logHandler()
