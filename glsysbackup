@@ -9,7 +9,7 @@
 #			https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-03-22
+#			2017-03-23
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -65,15 +65,13 @@ trap 'sigHandler EXIT' EXIT || { printf "Essential trap for signal: 'EXIT' can n
 #-----------------------
 
 script_pid="${BASHPID}"
-script_argc="${BASH_ARGC[*]:-}"
-script_argv="${BASH_ARGV[*]:-}"
 script_major_bashversion="${BASH_VERSINFO[0]}"
 script_minor_bashversion="${BASH_VERSINFO[1]}"
 script_name="${0##*/}"
 script_hostname="${HOSTNAME%%.*}"
 script_version="1.0.1-alpha3"
 script_author="ccztux"
-script_last_modification_date="2017-03-22"
+script_last_modification_date="2017-03-23"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -655,7 +653,7 @@ checkBin()
 	rc="$?"
 
 	if [ "${rc}" == "0" ] ;then
-		export ${binary}_bin="${_bin}"
+		export "${binary}"_bin="${_bin}"
 		return 0
 	else
 		return 1
@@ -952,32 +950,32 @@ logHandler()
 						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					17) # log to file, nonzero date, zero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						;;
 					18) # log to stdout, nonzero date, zero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					19) # log to syslog, nonzero date, zero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					20) # log to file and stdout, nonzero date, zero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					21) # log to file and syslog, nonzero date, zero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						;;
 					22) # log to stdout and syslog, nonzero date, zero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					23) # log to file, stdout and syslog, nonzero date, zero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
@@ -1008,33 +1006,33 @@ logHandler()
 						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
 						;;
 					65) # log to file, nonzero date, nonzero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						;;
 					66) # log to stdout, nonzero date, nonzero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					67) # log to syslog, nonzero date, nonzero logger
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 					68) # log to file and stdout, nonzero date, nonzero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					69) # log to file and syslog, nonzero date, nonzero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 					70) # log to stdout and syslog, nonzero date, nonzero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 					71) # log to file, stdout and syslog, nonzero date, nonzero logger
-						log_timestamp="$(eval ${date_cmd})"
+						log_timestamp="$(eval "${date_cmd}")"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
@@ -1105,7 +1103,7 @@ sigHandler()
 			logHandler "Bye, bye..."
 
 			if [ ! -z "${kill_bin:-}" ] ;then
-				${kill_bin} -s ${signal} ${script_pid}
+				${kill_bin} -s "${signal}" "${script_pid}"
 			fi
 
 			exit ${script_exit_code}

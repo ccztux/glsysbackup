@@ -5,26 +5,44 @@
 
 
 
-# glsysbackup 1.0.1-alpha2
+# glsysbackup 1.0.1-alpha3
 ## Generic Linux System Backup is an advanced backup tool written in bash.
 
 
 
-### CLI options:
+### Example usage:
 ```
+[2017-03-23 18:48:06] glsysbackup: [4347] glsysbackup 1.0.1-alpha3 starting... (PID=4347)
+[2017-03-23 18:48:06] glsysbackup: [4347] Getting options...
+
 Usage: glsysbackup OPTIONS
 
-Author:                 ccztux
-Last modification:      2017-03-14
-Version:                1.0.1-alpha2
-License:                GNU GPLv3
+Author:			ccztux
+Last modification:	2017-03-23
+Version:		1.0.1-alpha3
+License:		GNU GPLv3
 
-Description:            glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
+Description:		glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
 
 OPTIONS:
-   -h        Shows this help.
-   -o	     Override lock in case glsysbackup was terminated abnormally.
-   -v        Shows script version.
+   -h		Shows this help.
+   -o		Override lock in case glsysbackup was terminated abnormally.
+   -v		Shows script version.
+
+[2017-03-23 18:48:06] glsysbackup: [4347] Caught: 'EXIT', exiting script...
+[2017-03-23 18:48:06] glsysbackup: [4347] Now we are doing some cleanup jobs...
+[2017-03-23 18:48:06] glsysbackup: [4347] Backup encryption is enabled, now we check if unencrypted backup file exists, if it is writeable and delete it...
+[2017-03-23 18:48:06] glsysbackup: [4347] Check if unencrypted backup file: '/var/backups/glsysbackup.tux01.tar.gz' exists and if it is writeable...
+[2017-03-23 18:48:06] glsysbackup: [4347] Unencrypted backup file doesnt exist, nothing to do.
+[2017-03-23 18:48:06] glsysbackup: [4347] Installed packages functionality is enabled, now we check if the file exists, if it is writeable and delete it...
+[2017-03-23 18:48:06] glsysbackup: [4347] Check if installed packages file: '/root/installed_packages_filename.txt' exists and if it is writeable...
+[2017-03-23 18:48:06] glsysbackup: [4347] Installed packages file doesnt exist, nothing to do.
+[2017-03-23 18:48:06] glsysbackup: [4347] Ooops!!! Something went wrong. :(
+[2017-03-23 18:48:06] glsysbackup: [4347] Read the log or output to determine what exactly went wrong.
+[2017-03-23 18:48:06] glsysbackup: [4347] Check if lock file: '/var/lock/glsysbackup' exists and if it is read and writeable...
+[2017-03-23 18:48:06] glsysbackup: [4347] Lock file doesnt exist.
+[2017-03-23 18:48:06] glsysbackup: [4347] Script was running: '0' seconds.
+[2017-03-23 18:48:06] glsysbackup: [4347] Bye, bye...
 ```
 
 
@@ -69,7 +87,7 @@ post_backup_script="/home/pi/post.sh"
 - **which** to get the full path to the required binaries through environment variable $PATH
 - **pgrep** to check if an instance of glsysbackup is already running
 - **whoami** to check the user who executes glsysbackup
-- **date** for logging purposes
+- **date** for logging purposes (Only required if bash version < 4.2. Else printf builtin will be used.)
 - **tar** to create the backup
 - **rm** to delete files
 - **mv** to move files
