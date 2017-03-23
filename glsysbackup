@@ -140,7 +140,7 @@ printUsage()
 	printf "OPTIONS:\n"
 	printf "   -h\t\tShows this help.\n"
 	printf "   -o\t\tOverride lock in case %s was terminated abnormally.\n" "${script_name}"
-	printf "   -v\t\tShows script version.\n"
+	printf "   -v\t\tShows detailed script information.\n"
 
 	if [ "${log_to_stdout}" == "1" ] ;then
 		printf "\n"
@@ -547,9 +547,8 @@ setLock()
 			logHandler "Creating script lock directory..."
 
 			${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
-			rc="${PIPESTATUS[0]}"
 
-			if [ "${rc}" == "0" ] ;then
+			if [ "${PIPESTATUS[0]}" == "0" ] ;then
 				logHandler "Creating script lock directory was successful."
 			else
 				logHandler "Creating script lock directory was not successful."
@@ -580,14 +579,11 @@ setLock()
 
 removeLock()
 {
-	local rc=
-
 	logHandler "Removing lock..."
 
 	${rm_bin} "${script_lock_file}" 2>&1 | logHandler
-	rc="${PIPESTATUS[0]}"
 
-	if [ "${rc}" == "0" ] ;then
+	if [ "${PIPESTATUS[0]}" == "0" ] ;then
 		logHandler "Removing lock was successful."
 	else
 		logHandler "Removing lock was not successful."
@@ -628,9 +624,8 @@ delUnencryptedBackupFile()
 				logHandler "Deleting unencrypted backup file..."
 
 				${rm_bin} "${backup_full_path}" 2>&1 | logHandler
-				rc="${PIPESTATUS[0]}"
 
-				if [ "${rc}" == "0" ] ;then
+				if [ "${PIPESTATUS[0]}" == "0" ] ;then
 					logHandler "Deleting unencrypted backup file was successful."
 				else
 					logHandler "Deleting unencrypted backup file was not successful."
@@ -665,9 +660,8 @@ delInstalledPackagesFile()
 				logHandler "Deleting installed packages file..."
 
 				${rm_bin} "${installed_packages_filename}" 2>&1 | logHandler
-				rc="${PIPESTATUS[0]}"
 
-				if [ "${rc}" == "0" ] ;then
+				if [ "${PIPESTATUS[0]}" == "0" ] ;then
 					logHandler "Deleting installed packages file was successful."
 				else
 					logHandler "Deleting installed packages file was not successful."
@@ -924,8 +918,6 @@ checkAlreadyRunningInstance()
 
 reNice()
 {
-	local rc=
-
 	logHandler "Check if re-niceing is required..."
 
 	if [ "${re_nice_required}" == "1" ] ;then
@@ -943,9 +935,8 @@ reNice()
 			logHandler "Re-niceing..."
 
 			${renice_bin} -n ${re_nice_priority} -p ${script_pid} 2>&1 | logHandler
-			rc="${PIPESTATUS[0]}"
 			
-			if [ "${rc}" == "0" ] ;then
+			if [ "${PIPESTATUS[0]}" == "0" ] ;then
 				logHandler "Re-niceing was successful."
 			else
 				logHandler "Re-niceing was not successful."
@@ -960,7 +951,6 @@ reNice()
 
 reIONice()
 {
-	local rc=
 	local re_ionice_cmd=
 	local re_ionice_priority_required=
 
@@ -1008,9 +998,8 @@ reIONice()
 		fi
 
 		${re_ionice_cmd}  2>&1 | logHandler
-		rc="${PIPESTATUS[0]}"
 		
-		if [ "${rc}" == "0" ] ;then
+		if [ "${PIPESTATUS[0]}" == "0" ] ;then
 			logHandler "Re-ioniceing was successful."
 		else
 			logHandler "Re-ioniceing was not successful."
@@ -1050,9 +1039,8 @@ executePreBackupScript()
 		esac
 
 		eval "${pre_backup_script} 2>&1" | logHandler
-		rc="${PIPESTATUS[0]}"
 
-		if [ "${rc}" == "0" ] ;then
+		if [ "${PIPESTATUS[0]}" == "0" ] ;then
 			logHandler "Execution of pre backup script seems to be successful. rc: '${rc}'."
 		else
 			logHandler "Execution of pre backup script seems to be unssuccessful. rc: '${rc}'."
@@ -1069,10 +1057,10 @@ rotateHandler()
 	local file_to_handle=
 	local file_helper=
 
-	logHandler "Check if backup rotating is required..."
+	logHandler "Check if backup rotation is required..."
 
 	if [ "${backup_rotation_required}" == "1" ] ;then
-		logHandler "Backup rotating is required."
+		logHandler "Backup rotation is required."
 		logHandler "Check if backup directory: '${backup_destination_path}' exists and permissions to move files are ok..."
 
 		checkDirectoryPermissions "${backup_destination_path}"
@@ -1087,9 +1075,8 @@ rotateHandler()
 				logHandler "Creating backup directory..."
 
 				${mkdir_bin} -p "${backup_destination_path}" 2>&1 | logHandler
-				rc="${PIPESTATUS[0]}"
 
-				if [ "${rc}" == "0" ] ;then
+				if [ "${PIPESTATUS[0]}" == "0" ] ;then
 					logHandler "Creating backup directory was successful."
 				else
 					logHandler "Creating backup directory was not successful."
@@ -1131,12 +1118,11 @@ rotateHandler()
 
 			case "${rc}" in
 				4|5|6|7)
-					logHandler "File exists and is readable, do rotating..."
+					logHandler "File exists and is readable, do rotation..."
 
 					${mv_bin} "${file_to_handle}" "${file}.${backup_rotation_files_to_keep}" 2>&1 | logHandler
-					rc="${PIPESTATUS[0]}"
 
-					if [ "${rc}" == "0" ] ;then
+					if [ "${PIPESTATUS[0]}" == "0" ] ;then
 						logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotation_files_to_keep}' was successful."
 					else
 						logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotation_files_to_keep}' was not successful."
@@ -1156,7 +1142,7 @@ rotateHandler()
 
 		   done
 	else
-		logHandler "Backup rotating is not required..."
+		logHandler "Backup rotation is not required..."
 	fi
 }
 
@@ -1248,7 +1234,6 @@ buildExcludeOpts()
 
 makeBackup()
 {
-	local rc=
 	local backup_cmd=
 
 	if [ -z "${exclude_string[*]:-}" ] ;then
@@ -1260,9 +1245,8 @@ makeBackup()
 	logHandler "Starting backup job..."
 
 	${backup_cmd} 2>&1 | logHandler
-	rc="${PIPESTATUS[0]}"
 
-	if [ "${rc}" == "0" ] ;then
+	if [ "${PIPESTATUS[0]}" == "0" ] ;then
 		logHandler "Backup job was successful."
 		script_exit_code="0"
 	else
@@ -1274,16 +1258,13 @@ makeBackup()
 
 encryptBackup()
 {
-	local rc=
-
 	if [ "${backup_encryption_required}" == "1" ] ;then
 		logHandler "Backup encryption is enabled..."
 		logHandler "Encrypting backup file: '${backup_full_path}'..."
 
 		${openssl_bin} aes-256-cbc -salt -in "${backup_full_path}" -out "${backup_encryption_filename}" -k "${backup_encryption_password}" 2>&1 | logHandler
-		rc="${PIPESTATUS[0]}"
 
-		if [ "${rc}" == "0" ] ;then
+		if [ "${PIPESTATUS[0]}" == "0" ] ;then
 			logHandler "Encrypting job was successful."
 			logHandler "HINT: To decrypt use this command: '${openssl_bin} aes-256-cbc -d -salt -in ${backup_encryption_filename} -out ${backup_full_path}'."
 			script_exit_code="0"
@@ -1325,9 +1306,8 @@ executePostBackupScript()
 		esac
 
 		eval "${post_backup_script} 2>&1" | logHandler
-		rc="${PIPESTATUS[0]}"
 
-		if [ "${rc}" == "0" ] ;then
+		if [ "${PIPESTATUS[0]}" == "0" ] ;then
 			logHandler "Execution of post backup script seems to be successful. rc: '${rc}'."
 		else
 			logHandler "Execution of post backup script seems to be unssuccessful. rc: '${rc}'."
