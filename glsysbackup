@@ -15,11 +15,6 @@
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
-#  Changelog:		1.0.0		Initial revision
-#			1.0.1.a		First alpha version
-#			1.0.1-alpha2	Second alpha version
-#			1.0.1-alpha3	Second alpha version
-#
 #  License:		GNU GPLv3
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -73,7 +68,7 @@ script_name="${0##*/}"
 script_hostname="${HOSTNAME%%.*}"
 script_version="1.0.1-alpha3"
 script_author="Christian Zettel (ccztux)"
-script_copyright="Copyright © 2017 Christian Zettel (ccztux), all rights reserved"
+script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
 script_last_modification_date="2017-03-23"
 script_license="GNU GPLv3"
