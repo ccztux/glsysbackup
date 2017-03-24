@@ -1,5 +1,5 @@
-[![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/master.svg?maxAge=3600&label=Shellcheck%20state%20master)](https://travis-ci.org/ccztux/glsysbackup)
-[![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/devel.svg?maxAge=3600&label=Shellcheck%20state%20devel)](https://travis-ci.org/ccztux/glsysbackup)
+[![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/master.svg?maxAge=3600&label=shellcheck%20master)](https://travis-ci.org/ccztux/glsysbackup)
+[![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/devel.svg?maxAge=3600&label=shellcheck%20devel)](https://travis-ci.org/ccztux/glsysbackup)
 [![GitHub license](https://img.shields.io/badge/license-AGPL-blue.svg?maxAge=3600)](https://raw.githubusercontent.com/ccztux/glsysbackup/master/LICENSE)
 [![Latest Release](https://img.shields.io/github/release/ccztux/glsysbackup.svg?maxAge=3600&label=latest%20release)](https://github.com/ccztux/glsysbackup/releases/latest)
 
