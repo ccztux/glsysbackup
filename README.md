@@ -6,7 +6,7 @@
 
 
 # glsysbackup
-(**g**eneric **l**inux **sys**tem **b**ackup) is an advanced backup tool written in bash.  
+(**g**eneric **l**inux **sys**tem **b**ackup) is an advanced backup tool written in bash.
 
 
 
