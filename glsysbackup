@@ -365,7 +365,7 @@ checkBin()
 	_bin="$(which "${binary}" 2>&1)"
 	rc="$?"
 	if [ "$rc" == "0" ] ;then
-		export ${binary}_bin="$_bin"
+		export "${binary}"_bin="$_bin"
 		return 0
 	else
 		return 1
