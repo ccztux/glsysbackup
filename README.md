@@ -6,12 +6,12 @@
 
 
 
-# glsysbackup 1.0.1-alpha2
-## Generic Linux System Backup is an advanced backup tool written in bash.
+# glsysbackup
+(**g**eneric **l**inux **sys**tem **b**ackup) is an advanced backup tool written in bash.
 
 
 
-### CLI options:
+## CLI options:
 ```
 Usage: glsysbackup OPTIONS
 
@@ -30,7 +30,7 @@ OPTIONS:
 
 
 
-### Configuration variables:
+## Configuration variables:
 ```bash
 #-------------------------
 # Configuration variables:
@@ -65,7 +65,7 @@ post_backup_script="/home/pi/post.sh"
 
 
 
-### It requries the following binaries:
+## It requries the following binaries:
 - **bash** (Version 3 || 4)
 - **which** to get the full path to the required binaries through environment variable $PATH
 - **pgrep** to check if an instance of glsysbackup is already running
@@ -77,14 +77,14 @@ post_backup_script="/home/pi/post.sh"
 
 
 
-### Optionally used binaries:
+## Optionally used binaries:
 - **logger** to log to the system log
 - **rpm** || **dpkg** to create a file with installed packages
 - **openssl** to encrypt the backup file
 
 
 
-### Description:
+## Description:
 1. Check if glsysbackup will be exectuted with root privileges
 2. Get and log the user, who starts glsysbackup
 3. Check if required, common binaries exists
@@ -99,7 +99,7 @@ post_backup_script="/home/pi/post.sh"
 
 
 
-### Features:
+## Features:
 - Lock functionality. Only one instance is possible to run. (Lock file and check with pgrep)
 - Verbose logging to stdout and/or system logfile and/or individual logfile.
 - Excluding of files
@@ -110,7 +110,7 @@ post_backup_script="/home/pi/post.sh"
 
 
 
-### Future plans:
+## Future plans:
 - use config files for multiple jobs
 - add sendEmail functionality
 - add incremental backup feature
