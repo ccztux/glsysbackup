@@ -855,10 +855,7 @@ checkBashVersion()
 		exit
 	else
 		case "${BASH_VERSINFO[0]}" in
-					3)
-						logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
-						;;
-					4)
+					3|4)
 						logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
 						;;
 					*)
