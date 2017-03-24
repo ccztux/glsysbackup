@@ -1,8 +1,7 @@
-[![Build Status](https://travis-ci.org/ccztux/glsysbackup.svg?branch=master)](https://travis-ci.org/ccztux/glsysbackup)
 [![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/master.svg?maxAge=3600&label=Master)](https://travis-ci.org/ccztux/glsysbackup)
-[![Build Status](https://travis-ci.org/ccztux/glsysbackup.svg?branch=devel)](https://travis-ci.org/ccztux/glsysbackup)
 [![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/devel.svg?maxAge=3600&label=Devel)](https://travis-ci.org/ccztux/glsysbackup)
 [![GitHub license](https://img.shields.io/badge/license-AGPL-blue.svg)](https://raw.githubusercontent.com/ccztux/glsysbackup/master/LICENSE)
+[![GitHub release](https://img.shields.io/github/release/qubyte/rubidium.svg)](https://github.com/ccztux/glsysbackup/releases)
 
 
 
