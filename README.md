@@ -1,7 +1,8 @@
-| Branch: | Shellcheck state: |
-| ------------- | ------------- |
-| Master | [![Build Status](https://travis-ci.org/ccztux/glsysbackup.svg?branch=master)](https://travis-ci.org/ccztux/glsysbackup) |
-| Devel  | [![Build Status](https://travis-ci.org/ccztux/glsysbackup.svg?branch=devel)](https://travis-ci.org/ccztux/glsysbackup) |
+[![Build Status](https://travis-ci.org/ccztux/glsysbackup.svg?branch=master)](https://travis-ci.org/ccztux/glsysbackup)
+[![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/master.svg)](https://travis-ci.org/ccztux/glsysbackup?branch=master)
+[![Build Status](https://travis-ci.org/ccztux/glsysbackup.svg?branch=devel)](https://travis-ci.org/ccztux/glsysbackup)
+[![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/devel.svg)](https://travis-ci.org/ccztux/glsysbackup?branch=devel)
+[![GitHub license](https://img.shields.io/badge/license-AGPL-blue.svg)](https://raw.githubusercontent.com/ccztux/glsysbackup/master/LICENSE)
 
 
 
