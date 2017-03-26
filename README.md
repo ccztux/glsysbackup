@@ -2,7 +2,7 @@
 [![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/devel.svg?label=build%20%28devel%29)](https://travis-ci.org/ccztux/glsysbackup)
 [![GitHub license](https://img.shields.io/badge/license-AGPL-blue.svg)](https://github.com/ccztux/glsysbackup/blob/master/LICENSE)
 [![Latest Release](https://img.shields.io/github/release/ccztux/glsysbackup.svg?label=latest%20release)](https://github.com/ccztux/glsysbackup/releases/latest)
-[![GitHub tag](https://img.shields.io/github/tag/strongloop/express.svg?label=latest%20pre%2drelease)](https://github.com/ccztux/glsysbackup/tags)
+[![Latest Pre-release](https://img.shields.io/badge/latest%20pre--release-v1.0.1--alpha2-orange.svg)](https://github.com/ccztux/glsysbackup/releases/tag/1.0.1-alpha2)
 
 
 
