@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-03-24
+#			2017-03-26
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -66,11 +66,11 @@ trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXI
 script_pid="${BASHPID}"
 script_name="${0##*/}"
 script_hostname="${HOSTNAME%%.*}"
-script_version="1.0.1-alpha3"
+script_version="1.0.1-beta1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2017-03-24"
+script_last_modification_date="2017-03-26"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -87,9 +87,10 @@ script_override_lock="${script_override_lock:=0}"
 #-------------------------
 
 log_to_file="0"
-log_file="/var/log/${script_name}.log"
 log_to_stdout="1"
 log_to_syslog="1"
+log_directory="/var/log/"
+log_file="${log_directory}${script_name}.log"
 log_timestamp_format="%Y-%m-%d %H:%M:%S"
 
 root_privileges_required="1"
@@ -110,8 +111,17 @@ installed_packages_filename="/root/installed_packages_filename.txt"
 backup_destination_path="/var/backups/"
 backup_filename="${script_name}.${script_hostname}.tar.gz"
 backup_full_path="${backup_destination_path}${backup_filename}"
-items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
-items_to_exclude=("/blah" "/zwei/")
+backup_items=(
+"/home/"
+"/root/"
+"/var/lib/mpd/"
+"/usr/local/bin/"
+"/boot/config.txt"
+)
+backup_exlude_items=(
+"/blah"
+"/zwei/"
+)
 
 backup_encryption_required="1"
 backup_encryption_password="test1234"
@@ -1209,11 +1219,11 @@ buildExcludeOpts()
 
 	logHandler "Check if we need to build excluding options..."
 
-	if [ ! -z "${items_to_exclude[*]:-}" ] ;then
+	if [ ! -z "${backup_exlude_items[*]:-}" ] ;then
 		logHandler "Building of excluding options is required."
 		exclude_string=()
 
-		for item in "${items_to_exclude[@]}"
+		for item in "${backup_exlude_items[@]}"
 		   do
 			checkTrailingSlash "${item}"
 			rc="$?"
@@ -1236,9 +1246,9 @@ makeBackup()
 	local backup_cmd=
 
 	if [ -z "${exclude_string[*]:-}" ] ;then
-		backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${items_to_backup}"
+		backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${backup_items[*]}"
 	else
-		backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${items_to_backup} ${exclude_string[*]}"
+		backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${backup_items[*]} ${exclude_string[*]}"
 	fi
 
 	logHandler "Starting backup job..."
