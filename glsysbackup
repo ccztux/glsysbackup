@@ -200,7 +200,7 @@ checkRequiredBinaries()
 	local required_binaries=()
 	local binaries_not_found=()
 	local binaries_not_found_helper=
-	local supported_syspackage_managers=("rpm" "dpkg")
+	local supported_syspackage_managers=("rpm" "dpkg" "pacman" "equery" "pkgutil")
 
 	if [ "${log_to_syslog}" == "1" ] ;then
 		required_binaries+=("logger")
@@ -1179,6 +1179,15 @@ createInstalledPackagesFile()
 							;;
 						dpkg)
 							${syspackage_manager} --get-selections > "${installed_packages_filename}"
+							;;
+						pacman)
+							${syspackage_manager} -Qqe > "${installed_packages_filename}"
+							;;
+						equery)
+							${syspackage_manager} list "*" > "${installed_packages_filename}"
+							;;
+						pkgutil)
+							${syspackage_manager} --pkgs > "${installed_packages_filename}"
 							;;
 						*)
 							logHandler "Ooops!!! Someting went wrong in function: '${FUNCNAME[0]}'. :( Exiting."

@@ -228,7 +228,7 @@ post_backup_script="/home/pi/post.sh"
 - Verbose logging to stdout and/or system logfile and/or individual logfile.
 - Excluding of files
 - Backupfile rotation
-- Creates a file with installed packages (rpm || dpkg)
+- Creates a file with installed packages (rpm || dpkg || pacman || equery || pkgutil)
 - Encryption with openssl
 - CLI options and arguments
 - Renicing
@@ -273,7 +273,7 @@ post_backup_script="/home/pi/post.sh"
 
 ## Optionally used binaries:
 - **logger** to log to the system log
-- **rpm** || **dpkg** to create a file with installed packages
+- **rpm** || **dpkg** || **pacman** || **equery** || **pkgutil** to create a file with installed packages
 - **openssl** to encrypt the backup file
 - **renice** to renice glsysbackup and all child processes
 - **ionice** to re-ionice glsysbackup and all child processes
