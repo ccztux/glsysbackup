@@ -163,9 +163,7 @@ post_backup_script="/home/pi/post.sh"
 [2017-03-23 20:23:51] glsysbackup: [27771] /home/pi/pre.sh
 .
 .
-.
 [snip]
-.
 .
 .
 [2017-03-23 20:24:04] glsysbackup: [27771] /usr/local/bin/
