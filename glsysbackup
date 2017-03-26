@@ -32,7 +32,6 @@
 #
 #========================================================================================================
 
-# shellcheck disable=SC1001
 # shellcheck disable=SC2154
 
 #--------------
@@ -799,6 +798,8 @@ checkTrailingSlash()
 
 removeLastChar()
 {
+	# shellcheck disable=SC1001
+
 	local string="${1:-}"
 	printf "%s" "${string:0:$((${#string} - 1))}"
 }
