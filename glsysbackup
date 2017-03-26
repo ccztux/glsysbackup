@@ -108,6 +108,9 @@ installed_packages_required="1"
 installed_packages_force_manager=""
 installed_packages_filename="/root/installed_syspackages.txt"
 
+backup_compression_enabled="1"
+backup_compression_type="gzip"
+backup_verbose_mode_enabled="1"
 backup_destination_path="/var/backups/"
 backup_filename="${script_name}.${script_hostname}.tar.gz"
 backup_full_path="${backup_destination_path}${backup_filename}"
@@ -1245,14 +1248,55 @@ buildExcludeOpts()
 	fi
 }
 
+buildBackupOpts()
+{
+	logHandler "Building backup options..."
+
+	backup_options=("--create" "--file=${backup_full_path}")
+
+	if [ "${backup_compression_enabled}" == "1" ] ;then
+		case "${backup_compression_type}" in
+							gzip)
+								backup_options+=("--gzip")
+								;;
+							bzip2)
+								backup_options+=("--bzip2")
+								;;
+							xz)
+								backup_options+=("--xz")
+								;;
+							lzip)
+								backup_options+=("--lzip")
+								;;
+							lzma)
+								backup_options+=("--lzma")
+								;;
+							lzop)
+								backup_options+=("--lzop")
+								;;
+							*)
+								logHandler "Unsupported compression type configured, exiting."
+								script_exit_code="130"
+								exit
+								;;
+		esac
+	fi
+
+	if [ "${backup_verbose_mode_enabled}" == "1" ] ;then
+		backup_options+=("--verbose")
+	fi
+
+	logHandler "We build the following backup options: '${backup_options[*]}'."
+}
+
 makeBackup()
 {
 	local backup_cmd=
 
 	if [ -z "${exclude_string[*]:-}" ] ;then
-		backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${backup_items[*]}"
+		backup_cmd="${tar_bin} ${backup_options[*]} ${backup_items[*]}"
 	else
-		backup_cmd="${tar_bin} -cvzf ${backup_full_path} ${backup_items[*]} ${exclude_string[*]}"
+		backup_cmd="${tar_bin} ${backup_options[*]} ${backup_items[*]} ${exclude_string[*]}"
 	fi
 
 	logHandler "Starting backup job..."
@@ -1264,7 +1308,7 @@ makeBackup()
 		script_exit_code="0"
 	else
 		logHandler "Backup job was not successful."
-		script_exit_code="130"
+		script_exit_code="140"
 		exit
 	fi
 }
@@ -1283,7 +1327,7 @@ encryptBackup()
 			script_exit_code="0"
 		else
 			logHandler "Encrypting job was not successful."
-			script_exit_code="140"
+			script_exit_code="150"
 			exit
 		fi
 	else
@@ -1308,12 +1352,12 @@ executePostBackupScript()
 				;;
 			10)
 				logHandler "Post backup script doesnt exist, nothing to do."
-				script_exit_code="150"
+				script_exit_code="160"
 				exit
 				;;
 			*)
 				logHandler "Post backup script exists, but it is not executeable, nothing to do."
-				script_exit_code="151"
+				script_exit_code="161"
 				exit
 				;;
 		esac
@@ -1327,7 +1371,7 @@ executePostBackupScript()
 
 			if [ "${break_if_post_backup_unsuccessful}" ] ;then
 				logHandler "Breaking, because execution of post backup script was unsuccessful und you want it."
-				script_exit_code="152"
+				script_exit_code="162"
 				exit
 			fi
 		fi
@@ -1360,7 +1404,7 @@ while getopts ":hov" OPTION
 			h)
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="160"
+				script_exit_code="170"
 				exit
 				;;
 			o)
@@ -1369,19 +1413,19 @@ while getopts ":hov" OPTION
 			v)
 				printScriptInfos
 				script_bypass_exit_routines="1"
-				script_exit_code="161"
+				script_exit_code="171"
 				exit
 				;;
 			\?)
 				logHandler "Invalid option: -${OPTARG}"
 				printUsage
-				script_exit_code="162"
+				script_exit_code="172"
 				exit
 				;;
 			:)
 				logHandler "Option: -${OPTARG} requires an argument."
 				printUsage
-				script_exit_code="163"
+				script_exit_code="173"
 				exit
 				;;
 	esac
@@ -1404,6 +1448,7 @@ executePreBackupScript
 rotateHandler
 createInstalledPackagesFile
 buildExcludeOpts
+buildBackupOpts
 makeBackup
 encryptBackup
 executePostBackupScript
