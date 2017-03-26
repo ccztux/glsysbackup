@@ -9,6 +9,7 @@ before_install:
   - docker pull koalaman/shellcheck
 
 script:
+  - docker run koalaman/shellcheck --version
   - docker run -v $(pwd):/scripts koalaman/shellcheck /scripts/glsysbackup
 
 matrix:
