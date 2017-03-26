@@ -12,7 +12,7 @@
 
 
 ## Example help output:
-```bash
+```
 20:10:35 [root@localhost]:~$ ./glsysbackup -h
 [2017-03-23 20:10:35] glsysbackup: [13040] glsysbackup 1.0.1-alpha3 starting... (PID=13040)
 [2017-03-23 20:10:35] glsysbackup: [13040] Getting options...
@@ -82,7 +82,7 @@ post_backup_script="/home/pi/post.sh"
 
 
 ## Example job output:
-```bash
+```
 20:23:47 [pi@localhost]:~$ sudo ./glsysbackup
 [2017-03-23 20:23:47] glsysbackup: [27771] glsysbackup 1.0.1-alpha3 starting... (PID=27771)
 [2017-03-23 20:23:47] glsysbackup: [27771] Check if root priviliges are required...
@@ -214,7 +214,7 @@ post_backup_script="/home/pi/post.sh"
 
 
 ## Backupfile structure with enabled openssl encryption and backup rotation:
-```bash
+```
 20:23:47 [pi@localhost]:~$ ls -lah /var/backups/glsysbackup.wurlitzer.aes.tar.gz*
 -rw-r--r-- 1 root root 3,3M Mär 26 12:37 /var/backups/glsysbackup.wurlitzer.aes.tar.gz
 -rw-r--r-- 1 root root 3,3M Mär 24 19:07 /var/backups/glsysbackup.wurlitzer.aes.tar.gz.1
