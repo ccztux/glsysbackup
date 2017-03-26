@@ -7,12 +7,12 @@
 
 
 # glsysbackup
-(**G**eneric **L**inux **SYS**tem **BACKUP**) is an advanced backup tool written in bash.
+(**g**eneric **l**inux **sys**tem **backup**) is an advanced backup tool written in bash.
 
 
 
 ## Example help output:
-```
+```bash
 20:10:35 [root@localhost]:~$ ./glsysbackup -h
 [2017-03-23 20:10:35] glsysbackup: [13040] glsysbackup 1.0.1-alpha3 starting... (PID=13040)
 [2017-03-23 20:10:35] glsysbackup: [13040] Getting options...
@@ -82,7 +82,7 @@ post_backup_script="/home/pi/post.sh"
 
 
 ## Example job output:
-```
+```bash
 20:23:47 [pi@localhost]:~$ sudo ./glsysbackup
 [2017-03-23 20:23:47] glsysbackup: [27771] glsysbackup 1.0.1-alpha3 starting... (PID=27771)
 [2017-03-23 20:23:47] glsysbackup: [27771] Check if root priviliges are required...
@@ -225,6 +225,40 @@ post_backup_script="/home/pi/post.sh"
 
 
 
+## Features:
+- Lock functionality. Only one instance is possible to run. (Lock file and check with pgrep)
+- Verbose logging to stdout and/or system logfile and/or individual logfile.
+- Excluding of files
+- Backupfile rotation
+- Creates a file with installed packages (rpm || dpkg)
+- Encryption with openssl
+- CLI options and arguments
+- Renicing
+- Re-ioniceing
+- Execution of pre-backup-script
+- Execution of post-backup-script
+
+
+
+## Description:
+1. Check if the required binaries exists
+2. Set configuration of logHandler
+3. Check if glsysbackup will be exectuted with root privileges
+4. Get and log the user, who starts glsysbackup
+5. Check if bash version meets requirements
+6. Check if an instance is already running via lockfile and pgrep
+7. Re-nice glsysbackup if required
+8. Re-ionice glsysbackup if required
+9. Execute the pre-backup-script, if it is defined and executeable
+10. Rotation of backup files
+11. Create file with installed packages
+12. Build excluding options from config array
+13. Make the tar backup
+14. Enrypt the backup with openssl if required
+15. Execute the post-backup-script, if it is defined and executeable
+
+
+
 ## It requires the following binaries:
 - **bash** (Version 3 || 4)
 - **which** to get the full path to the required binaries through environment variable $PATH
@@ -245,34 +279,6 @@ post_backup_script="/home/pi/post.sh"
 - **openssl** to encrypt the backup file
 - **renice** to renice glsysbackup and all child processes
 - **ionice** to re-ionice glsysbackup and all child processes
-
-
-
-## Description:
-1. Check if glsysbackup will be exectuted with root privileges
-2. Get and log the user, who starts glsysbackup
-3. Check if required, common binaries exists
-4. Check if an instance is already running via lockfile and pgrep
-5. Check if bash version meets requirements
-6. Rotation of old backup files
-7. Get syspackage manager and if it is supported, create file with installed packages
-8. Build excluding options from config array
-9. Execute Prebackup script, if it is defined
-10. Make the backup
-11. Execute Prebackup script, if it is defined
-
-
-
-## Features:
-- Lock functionality. Only one instance is possible to run. (Lock file and check with pgrep)
-- Verbose logging to stdout and/or system logfile and/or individual logfile.
-- Excluding of files
-- Backupfile rotation
-- Creates a file with installed packages (rpm || dpkg)
-- Encryption with openssl
-- CLI options and arguments
-- Renicing
-- Re-ioniceing
 
 
 
