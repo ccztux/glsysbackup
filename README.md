@@ -14,14 +14,14 @@
 ## Example help output:
 ```
 20:10:35 [root@localhost]:~$ ./glsysbackup -h
-[2017-03-23 20:10:35] glsysbackup: [13040] glsysbackup 1.0.1-alpha3 starting... (PID=13040)
+[2017-03-23 20:10:35] glsysbackup: [13040] glsysbackup 1.0.1-beta1 starting... (PID=13040)
 [2017-03-23 20:10:35] glsysbackup: [13040] Getting options...
 
 Usage: glsysbackup OPTIONS
 
 Author:			Christian Zettel (ccztux)
 Last modification:	2017-03-23
-Version:		1.0.1-alpha3
+Version:		1.0.1-beta1
 
 Description:		glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
 
@@ -45,9 +45,10 @@ OPTIONS:
 #-------------------------
 
 log_to_file="0"
-log_file="/var/log/${script_name}.log"
 log_to_stdout="1"
 log_to_syslog="1"
+log_directory="/var/log/"
+log_file="${log_directory}${script_name}.log"
 log_timestamp_format="%Y-%m-%d %H:%M:%S"
 
 root_privileges_required="1"
@@ -63,19 +64,33 @@ backup_rotation_required="1"
 backup_rotation_files_to_keep="5"
 
 installed_packages_required="1"
-installed_packages_filename="/root/installed_packages_filename.txt"
+installed_packages_force_manager=""
+installed_packages_filename="/root/installed_syspackages.txt"
 
+backup_compression_enabled="1"
+backup_compression_type="gzip"
+backup_verbose_mode_enabled="1"
 backup_destination_path="/var/backups/"
 backup_filename="${script_name}.${script_hostname}.tar.gz"
 backup_full_path="${backup_destination_path}${backup_filename}"
-items_to_backup="/home/ /root/ /var/lib/mpd/ /usr/local/bin/ /boot/config.txt"
-items_to_exclude=("/blah" "/zwei/")
+backup_items=(
+"/home/"
+"/root/"
+"/var/lib/mpd/"
+"/usr/local/bin/"
+"/boot/config.txt"
+)
+backup_exlude_items=(
+"/blah"
+"/zwei/"
+)
 
 backup_encryption_required="1"
 backup_encryption_password="test1234"
-backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
 
+break_if_pre_backup_unsuccessful="1"
 pre_backup_script="/home/pi/pre.sh"
+break_if_post_backup_unsuccessful="1"
 post_backup_script="/home/pi/post.sh"
 ```
 
