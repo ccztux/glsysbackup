@@ -28,7 +28,7 @@ Description:		glsysbackup (Generic Linux System Backup) is an advanced backup to
 OPTIONS:
    -h		Shows this help.
    -o		Override lock in case glsysbackup was terminated abnormally.
-   -v		Shows script version.
+   -v		Shows detailed version information.
 
 [2017-03-23 20:10:35] glsysbackup: [13040] Caught: 'EXIT', exiting script...
 [2017-03-23 20:10:35] glsysbackup: [13040] We hope you are informed better now. :P This was a lazy job. :)
