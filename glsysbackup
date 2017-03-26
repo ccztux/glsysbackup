@@ -76,9 +76,9 @@ script_description="${script_name} (Generic Linux System Backup) is an advanced 
 script_exit_code="255"
 script_another_instance_is_running="0"
 script_bypass_exit_routines="0"
+script_override_lock="0"
 script_lock_directory="/var/lock/"
 script_lock_file="${script_lock_directory}${script_name}"
-script_override_lock="${script_override_lock:=0}"
 
 
 
@@ -106,7 +106,7 @@ backup_rotation_required="1"
 backup_rotation_files_to_keep="5"
 
 installed_packages_required="1"
-installed_packages_filename="/root/installed_packages_filename.txt"
+installed_packages_filename="/root/installed_syspackages.txt"
 
 backup_destination_path="/var/backups/"
 backup_filename="${script_name}.${script_hostname}.tar.gz"
@@ -797,23 +797,6 @@ checkDirectoryPermissions()
 	return "${directory_permission}"
 }
 
-checkTrailingSlash()
-{
-	local path="${1:-}"
-
-	if [[ "${path}" =~ ^(.*)\/$ ]] ;then
-		return 1
-	else
-		return 0
-	fi
-}
-
-removeLastChar()
-{
-	local string="${1:-}"
-	printf "%s" "${string:0:$((${#string} - 1))}"
-}
-
 setDefaultValues()
 {
 	backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
@@ -1230,14 +1213,7 @@ buildExcludeOpts()
 
 		for item in "${backup_exlude_items[@]}"
 		   do
-			checkTrailingSlash "${item}"
-			rc="$?"
-
-			if [ "${rc}" == "0" ] ;then	
-				exclude_string+=("--exclude='${item}'")
-			else
-				exclude_string+=("--exclude='$(removeLastChar "${item}")'")
-			fi
+			exclude_string+=("--exclude='${item}'")
 		   done
 
 		logHandler "We build the following excluding options: '${exclude_string[*]}'."
