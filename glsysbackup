@@ -127,7 +127,9 @@ backup_encryption_required="1"
 backup_encryption_password="test1234"
 backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
 
+break_if_pre_backup_unsuccessful="1"
 pre_backup_script="/home/pi/pre.sh"
+break_if_post_backup_unsuccessful="1"
 post_backup_script="/home/pi/post.sh"
 
 
@@ -1050,9 +1052,15 @@ executePreBackupScript()
 		eval "${pre_backup_script} 2>&1" | logHandler
 
 		if [ "${PIPESTATUS[0]}" == "0" ] ;then
-			logHandler "Execution of pre backup script seems to be successful. rc: '${rc}'."
+			logHandler "Execution of pre backup script was successful. rc: '${rc}'."
 		else
-			logHandler "Execution of pre backup script seems to be unssuccessful. rc: '${rc}'."
+			logHandler "Execution of pre backup script was unsuccessful. rc: '${rc}'."
+
+			if [ "${break_if_pre_backup_unsuccessful}" ] ;then
+				logHandler "Breaking, because exeecution of pre backup script was unsuccessful und you want it."
+				script_exit_code="102"
+				exit
+			fi
 		fi
 	else
 		logHandler "Pre backup script is not defined."
@@ -1317,9 +1325,15 @@ executePostBackupScript()
 		eval "${post_backup_script} 2>&1" | logHandler
 
 		if [ "${PIPESTATUS[0]}" == "0" ] ;then
-			logHandler "Execution of post backup script seems to be successful. rc: '${rc}'."
+			logHandler "Execution of post backup script was successful. rc: '${rc}'."
 		else
-			logHandler "Execution of post backup script seems to be unssuccessful. rc: '${rc}'."
+			logHandler "Execution of post backup script was unsuccessful. rc: '${rc}'."
+
+			if [ "${break_if_post_backup_unsuccessful}" ] ;then
+				logHandler "Breaking, because exeecution of post backup script was unsuccessful und you want it."
+				script_exit_code="152"
+				exit
+			fi
 		fi
 	else
 		logHandler "Post backup script is not defined."
