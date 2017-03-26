@@ -32,7 +32,6 @@
 #
 #========================================================================================================
 
-# shellcheck disable=SC1001
 # shellcheck disable=SC2154
 
 #--------------
@@ -106,6 +105,7 @@ backup_rotation_required="1"
 backup_rotation_files_to_keep="5"
 
 installed_packages_required="1"
+installed_packages_force_manager=""
 installed_packages_filename="/root/installed_syspackages.txt"
 
 backup_destination_path="/var/backups/"
@@ -262,15 +262,25 @@ checkRequiredBinaries()
 	if [ "${installed_packages_required}" == "1" ] ;then
 		available_syspackage_managers=()
 
-		for syspackman in "${supported_syspackage_managers[@]}"
-		   do
-			checkBin "${syspackman}"
+		if [ -z "${installed_packages_force_manager}" ] ;then
+			for syspackman in "${supported_syspackage_managers[@]}"
+			   do
+				checkBin "${syspackman}"
+				rc="$?"
+
+				if [ "${rc}" == "0" ] ;then
+					available_syspackage_managers+=("${syspackman}")
+				fi
+			   done
+		else
+			checkBin "${installed_packages_force_manager}"
 			rc="$?"
 
 			if [ "${rc}" == "0" ] ;then
-				available_syspackage_managers+=("${syspackman}")
+				available_syspackage_managers+=("${installed_packages_force_manager}")
 			fi
-		   done
+		fi
+
 	fi
 }
 
@@ -1160,6 +1170,10 @@ createInstalledPackagesFile()
 
 			logHandler "More than one supported syspackage managers found: '${available_syspackage_managers_helper}', dont know what to do, exiting."
 
+			if [ -z "${installed_packages_force_manager}" ] ;then
+				logHandler "HINT: You can force to use one of the supported syspackage managers by setting configuration variable: 'installed_packages_force_manager'."
+			fi
+
 			script_exit_code="120"
 			exit
 		elif [ "${#available_syspackage_managers[*]}" -eq "1" ] ;then
@@ -1190,7 +1204,7 @@ createInstalledPackagesFile()
 							${syspackage_manager} --pkgs > "${installed_packages_filename}"
 							;;
 						*)
-							logHandler "Ooops!!! Someting went wrong in function: '${FUNCNAME[0]}'. :( Exiting."
+							logHandler "Unsupported syspackage manager used in function: '${FUNCNAME[0]}'. :( Exiting."
 							script_exit_code="122"
 							exit
 							;;
