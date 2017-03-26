@@ -125,7 +125,6 @@ backup_exlude_items=(
 
 backup_encryption_required="1"
 backup_encryption_password="test1234"
-backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
 
 break_if_pre_backup_unsuccessful="1"
 pre_backup_script="/home/pi/pre.sh"
@@ -175,6 +174,23 @@ printScriptInfos()
 
 	if [ "${log_to_stdout}" == "1" ] ;then
 		printf "\n"
+	fi
+}
+
+checkBin()
+{
+	local binary="${1:-}"
+	local _bin=
+	local rc=
+
+	_bin="$(which "${binary}" 2>&1)"
+	rc="$?"
+
+	if [ "${rc}" == "0" ] ;then
+		export "${binary}"_bin="${_bin}"
+		return 0
+	else
+		return 1
 	fi
 }
 
@@ -781,23 +797,6 @@ checkDirectoryPermissions()
 	return "${directory_permission}"
 }
 
-checkBin()
-{
-	local binary="${1:-}"
-	local _bin=
-	local rc=
-
-	_bin="$(which "${binary}" 2>&1)"
-	rc="$?"
-
-	if [ "${rc}" == "0" ] ;then
-		export "${binary}"_bin="${_bin}"
-		return 0
-	else
-		return 1
-	fi
-}
-
 checkTrailingSlash()
 {
 	local path="${1:-}"
@@ -817,9 +816,7 @@ removeLastChar()
 
 setDefaultValues()
 {
-	# already not in use
-	# will be realized when config file implementation will be done
-	return
+	backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
 }
 
 checkRootPrivileges()
