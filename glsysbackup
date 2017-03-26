@@ -1047,7 +1047,7 @@ executePreBackupScript()
 			logHandler "Execution of pre backup script was unsuccessful. rc: '${rc}'."
 
 			if [ "${break_if_pre_backup_unsuccessful}" ] ;then
-				logHandler "Breaking, because exeecution of pre backup script was unsuccessful und you want it."
+				logHandler "Breaking, because execution of pre backup script was unsuccessful und you want it."
 				script_exit_code="102"
 				exit
 			fi
@@ -1326,7 +1326,7 @@ executePostBackupScript()
 			logHandler "Execution of post backup script was unsuccessful. rc: '${rc}'."
 
 			if [ "${break_if_post_backup_unsuccessful}" ] ;then
-				logHandler "Breaking, because exeecution of post backup script was unsuccessful und you want it."
+				logHandler "Breaking, because execution of post backup script was unsuccessful und you want it."
 				script_exit_code="152"
 				exit
 			fi
