@@ -1056,8 +1056,9 @@ executePreBackupScript()
 		esac
 
 		eval "${pre_backup_script} 2>&1" | logHandler
+		rc="$?"
 
-		if [ "${PIPESTATUS[0]}" == "0" ] ;then
+		if [ "${rc}" == "0" ] ;then
 			logHandler "Execution of pre backup script was successful. rc: '${rc}'."
 		else
 			logHandler "Execution of pre backup script was unsuccessful. rc: '${rc}'."
@@ -1382,8 +1383,9 @@ executePostBackupScript()
 		esac
 
 		eval "${post_backup_script} 2>&1" | logHandler
+		rc="$?"
 
-		if [ "${PIPESTATUS[0]}" == "0" ] ;then
+		if [ "${rc}" == "0" ] ;then
 			logHandler "Execution of post backup script was successful. rc: '${rc}'."
 		else
 			logHandler "Execution of post backup script was unsuccessful. rc: '${rc}'."
