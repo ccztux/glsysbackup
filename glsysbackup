@@ -33,7 +33,6 @@
 #========================================================================================================
 
 
-
 #--------------
 # Bash options:
 #--------------
@@ -588,6 +587,8 @@ setLock()
 			logHandler "Script lock directory doesnt exist."
 			logHandler "Creating script lock directory..."
 
+			# shellcheck disable=SC2154
+
 			${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
 
 			if [ "${PIPESTATUS[0]}" == "0" ] ;then
@@ -622,6 +623,8 @@ setLock()
 removeLock()
 {
 	logHandler "Removing lock..."
+
+	# shellcheck disable=SC2154
 
 	${rm_bin} "${script_lock_file}" 2>&1 | logHandler
 
@@ -665,6 +668,8 @@ delUnencryptedBackupFile()
 				logHandler "Unencrypted backup file  exists and it is writeable."
 				logHandler "Deleting unencrypted backup file..."
 
+				# shellcheck disable=SC2154
+
 				${rm_bin} "${backup_full_path}" 2>&1 | logHandler
 
 				if [ "${PIPESTATUS[0]}" == "0" ] ;then
@@ -700,6 +705,8 @@ delInstalledPackagesFile()
 			2|3|6|7)
 				logHandler "Installed packages file exists and is writeable."
 				logHandler "Deleting installed packages file..."
+
+				# shellcheck disable=SC2154
 
 				${rm_bin} "${installed_packages_filename}" 2>&1 | logHandler
 
@@ -844,6 +851,8 @@ getUser()
 	if [ ! -z "${SUDO_USER:-}" ] ;then
 		script_exec_user="$SUDO_USER"
 	else
+		# shellcheck disable=SC2154
+
 		script_exec_user="$(${whoami_bin})"
 	fi
 
@@ -876,8 +885,14 @@ checkAlreadyRunningInstance()
 {
 	local rc=
 	local running_script_pids=
+
+	# shellcheck disable=SC2154
+
 	running_script_pids="$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_name}(.*)$")"
 	running_script_pids="${running_script_pids//${script_pid}/}"
+
+	# shellcheck disable=SC2154
+
 	running_script_pids="${running_script_pids//$(${pgrep_bin} -d " " -P "${script_pid}")/}"
 	running_script_pids="${running_script_pids//\ /\,\ }"
 
@@ -938,6 +953,8 @@ reNice()
 			logHandler "Re-nice priority: '${re_nice_priority}' is in range."
 			logHandler "Re-niceing..."
 
+			# shellcheck disable=SC2154
+
 			${renice_bin} -n ${re_nice_priority} -p ${script_pid} 2>&1 | logHandler
 			
 			if [ "${PIPESTATUS[0]}" == "0" ] ;then
@@ -996,8 +1013,12 @@ reIONice()
 		logHandler "Re-ioniceing..."
 
 		if [ "${re_ionice_priority_required}" == "1" ] ;then
+			# shellcheck disable=SC2154
+
 			re_ionice_cmd="${ionice_bin} -c ${re_ionice_scheduling_class} -n ${re_ionice_priority} -p ${script_pid}"
 		else
+			# shellcheck disable=SC2154
+
 			re_ionice_cmd="${ionice_bin} -c ${re_ionice_scheduling_class} -p ${script_pid}"
 		fi
 
@@ -1084,6 +1105,8 @@ rotateHandler()
 				logHandler "Backup directory doesnt exist."
 				logHandler "Creating backup directory..."
 
+				# shellcheck disable=SC2154
+
 				${mkdir_bin} -p "${backup_destination_path}" 2>&1 | logHandler
 
 				if [ "${PIPESTATUS[0]}" == "0" ] ;then
@@ -1129,6 +1152,8 @@ rotateHandler()
 			case "${rc}" in
 				4|5|6|7)
 					logHandler "File exists and is readable, do rotation..."
+
+					# shellcheck disable=SC2154
 
 					${mv_bin} "${file_to_handle}" "${file}.${backup_rotation_files_to_keep}" 2>&1 | logHandler
 
@@ -1294,8 +1319,12 @@ makeBackup()
 	local backup_cmd=
 
 	if [ -z "${exclude_string[*]:-}" ] ;then
+		# shellcheck disable=SC2154
+
 		backup_cmd="${tar_bin} ${backup_options[*]} ${backup_items[*]}"
 	else
+		# shellcheck disable=SC2154
+
 		backup_cmd="${tar_bin} ${backup_options[*]} ${backup_items[*]} ${exclude_string[*]}"
 	fi
 
@@ -1318,6 +1347,8 @@ encryptBackup()
 	if [ "${backup_encryption_required}" == "1" ] ;then
 		logHandler "Backup encryption is enabled..."
 		logHandler "Encrypting backup file: '${backup_full_path}'..."
+
+		# shellcheck disable=SC2154
 
 		${openssl_bin} aes-256-cbc -salt -in "${backup_full_path}" -out "${backup_encryption_filename}" -k "${backup_encryption_password}" 2>&1 | logHandler
 
