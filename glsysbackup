@@ -1229,7 +1229,8 @@ createInstalledPackagesFile()
 		rc="$?"
 
 		if [ "${rc}" == "0" ] ;then
-			logHandler "Creating installed packages file was successful."
+			logHandler "Creating installed packages file was successful, adding file to backup_items config array."
+			backup_items+=("${installed_packages_filename}")
 		else
 			logHandler "Creating installed packages file was not successful."
 			script_exit_code="123"
