@@ -639,6 +639,7 @@ removeLock()
 overrideLock()
 {
 	logHandler "Overriding lock, because you want it..."
+
 	removeLock
 	setLock
 }
