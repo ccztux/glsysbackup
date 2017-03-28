@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-03-26
+#			2017-03-28
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -68,7 +68,7 @@ script_version="1.0.1-beta1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2017-03-26"
+script_last_modification_date="2017-03-28"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -128,9 +128,9 @@ backup_exlude_items=(
 backup_encryption_required="1"
 backup_encryption_password="test1234"
 
-break_if_pre_backup_unsuccessful="1"
+pre_backup_exit_when_unsuccessful="1"
 pre_backup_script="/home/pi/pre.sh"
-break_if_post_backup_unsuccessful="1"
+post_backup_exit_when_unsuccessful="1"
 post_backup_script="/home/pi/post.sh"
 
 
@@ -1060,7 +1060,7 @@ executePreBackupScript()
 		else
 			logHandler "Execution of pre backup script was unsuccessful. rc: '${rc}'."
 
-			if [ "${break_if_pre_backup_unsuccessful}" ] ;then
+			if [ "${pre_backup_exit_when_unsuccessful}" == "1" ] ;then
 				logHandler "Breaking, because execution of pre backup script was unsuccessful und you want it."
 				script_exit_code="102"
 				exit
@@ -1385,7 +1385,7 @@ executePostBackupScript()
 		else
 			logHandler "Execution of post backup script was unsuccessful. rc: '${rc}'."
 
-			if [ "${break_if_post_backup_unsuccessful}" ] ;then
+			if [ "${post_backup_exit_when_unsuccessful}" == "1" ] ;then
 				logHandler "Breaking, because execution of post backup script was unsuccessful und you want it."
 				script_exit_code="162"
 				exit
