@@ -84,35 +84,113 @@ script_lock_file="${script_lock_directory}${script_name}"
 # Configuration variables:
 #-------------------------
 
+#---------
+# Logging:
+#---------
+
+# enable log to file. (possible values: 1|0)
 log_to_file="0"
-log_to_stdout="1"
-log_to_syslog="1"
+
+# log directory
 log_directory="/var/log/"
-log_file="${log_directory}${script_name}.log"
+
+# filename of logfile
+log_filename="${script_name}.log"
+
+# enable log to stdout (possible values: 1|0)
+log_to_stdout="1"
+
+# enable log to system logfile (possible values: 1|0)
+log_to_syslog="1"
+
+# timestamp format for log messages.
 log_timestamp_format="%Y-%m-%d %H:%M:%S"
 
+
+
+#------------
+# Privileges:
+#------------
+
+# enable this to ensure glsysbackup is running with root privileges (possible values: 1|0)
 root_privileges_required="1"
 
+
+
+#--------
+# Renice:
+#--------
+
+# enable renice of glsysbackup and child procs (possible values: 1|0)
 re_nice_required="0"
+
+# set renice priority (HINT: have a look at: 'man renice')
 re_nice_priority="19"
 
+
+
+#-----------
+# Re-ionice:
+#-----------
+
+# enable re-ionice of glsysbackup and child procs (possible values: 1|0)
 re_ionice_required="0"
+
+# set re-ionice scheduling class (HINT: have a look at: 'man ionice')
 re_ionice_scheduling_class="2"
+
+# set re-ionice priority (HINT: have a look at: 'man ionice')
 re_ionice_priority="7"
 
+
+
+#----------
+# Rotation:
+#----------
+
+# enable backup rotation (possible values: 1|0)
 backup_rotation_required="1"
+
+# number of backup files to keep
 backup_rotation_files_to_keep="5"
 
+
+
+#--------------------
+# Installed packages:
+#--------------------
+
+# enable backup rotation (possible values: 1|0)
 installed_packages_required="1"
+
+# force to use this package manager to create installed packages file, if you have more than one package manager installed (possible values: rpm|dpkg|pacman|equery|pkgutil)
 installed_packages_forced_manager=""
+
+# file name of installed packages
 installed_packages_filename="/root/installed_syspackages.txt"
 
+
+
+#--------
+# Backup:
+#--------
+
+# enable backup compression (possible values: 1|0)
 backup_compression_enabled="1"
+
+# backup compression type (possible values: gzip|bzip2|xz|lzip|lzma|lzop)
 backup_compression_type="gzip"
+
+# enable backup verbose mode
 backup_verbose_mode_enabled="1"
+
+# set backup destination path
 backup_destination_path="/var/backups/"
+
+# set backup filename
 backup_filename="${script_name}.${script_hostname}.tar.gz"
-backup_full_path="${backup_destination_path}${backup_filename}"
+
+# files and folders you want to backupp
 backup_items=(
 "/etc/"
 "/home/"
@@ -121,17 +199,48 @@ backup_items=(
 "/usr/local/bin/"
 "/boot/config.txt"
 )
+
+# exclude this items from backup
 backup_exlude_items=(
 "/old.backups"
 "/old.mysqldumps/"
 )
 
+
+
+#------------
+# Encryption:
+#------------
+
+# enable backup encryption with openssl (possible values: 1|0)
 backup_encryption_required="1"
+
+# set password for encryption
 backup_encryption_password="test1234"
 
+
+
+
+#-------------------
+# Pre backup script:
+#-------------------
+
+# exit glsysbackup in case execution of pre backup script was not successful
 pre_backup_exit_when_unsuccessful="1"
+
+# path to pre backup script 
 pre_backup_script="/home/pi/pre.sh"
+
+
+
+#--------------------
+# Post backup script:
+#--------------------
+
+# exit glsysbackup in case execution of post backup script was not successful
 post_backup_exit_when_unsuccessful="1"
+
+# path to post backup script 
 post_backup_script="/home/pi/post.sh"
 
 
@@ -353,7 +462,7 @@ logHandler()
 						return
 						;;
 					9) # log to file, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					10) # log to stdout, zero date, zero logger
 						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
@@ -362,22 +471,22 @@ logHandler()
 						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					12) # log to file and stdout, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					13) # log to file and syslog, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					14) # log to stdout and syslog, zero date, zero logger
 						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					15) # log to file, stdout and syslog, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					17) # log to file, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					18) # log to stdout, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
@@ -389,12 +498,12 @@ logHandler()
 						;;
 					20) # log to file and stdout, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					21) # log to file and syslog, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					22) # log to stdout and syslog, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
@@ -402,11 +511,11 @@ logHandler()
 						;;
 					23) # log to file, stdout and syslog, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					33) # log to file, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					34) # log to stdout, zero date, nonzero logger
 						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}"
@@ -415,11 +524,11 @@ logHandler()
 						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
 						;;
 					36) # log to file and stdout, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					37) # log to file and syslog, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
 						;;
 					38) # log to stdout and syslog, zero date, nonzero logger
@@ -427,13 +536,13 @@ logHandler()
 						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
 						;;
 					39) # log to file, stdout and syslog, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
 						;;
 					65) # log to file, nonzero date, nonzero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					66) # log to stdout, nonzero date, nonzero logger
 						log_timestamp="$(eval "${date_cmd}")"
@@ -444,12 +553,12 @@ logHandler()
 						;;
 					68) # log to file and stdout, nonzero date, nonzero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					69) # log to file and syslog, nonzero date, nonzero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 					70) # log to stdout and syslog, nonzero date, nonzero logger
@@ -459,7 +568,7 @@ logHandler()
 						;;
 					71) # log to file, stdout and syslog, nonzero date, nonzero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file}"
+						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
@@ -817,6 +926,8 @@ checkDirectoryPermissions()
 
 setDefaultValues()
 {
+	log_file_full_path="${log_directory}${log_filename}"
+	backup_full_path="${backup_destination_path}${backup_filename}"
 	backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
 }
 
@@ -853,7 +964,7 @@ getUser()
 		script_exec_user="$(${whoami_bin})"
 	fi
 
-	logHandler "${script_name} was started by: '${script_exec_user}'."
+	logHandler "${script_name} was started by user: '${script_exec_user}'."
 }
 
 checkBashVersion()
