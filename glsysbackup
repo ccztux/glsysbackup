@@ -200,7 +200,7 @@ backup_items=(
 "/boot/config.txt"
 )
 
-# exclude this items from backup
+# exclude this items from backup (HINT: have a look at: 'man tar')
 backup_exlude_items=(
 "/old.backups"
 "/old.mysqldumps/"
