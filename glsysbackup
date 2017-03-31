@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-03-28
+#			2017-03-31
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -68,7 +68,7 @@ script_version="1.0.1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2017-03-28"
+script_last_modification_date="2017-03-31"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -121,7 +121,7 @@ root_privileges_required="1"
 # Renice:
 #--------
 
-# enable renice of glsysbackup and child procs (possible values: 1|0)
+# enable reniceing of glsysbackup and child procs (possible values: 1|0)
 re_nice_required="0"
 
 # set renice priority (HINT: have a look at: 'man renice')
@@ -133,7 +133,7 @@ re_nice_priority="19"
 # Re-ionice:
 #-----------
 
-# enable re-ionice of glsysbackup and child procs (possible values: 1|0)
+# enable re-ioniceing of glsysbackup and child procs (possible values: 1|0)
 re_ionice_required="0"
 
 # set re-ionice scheduling class (HINT: have a look at: 'man ionice')
@@ -160,10 +160,10 @@ backup_rotation_files_to_keep="5"
 # Installed packages:
 #--------------------
 
-# enable backup rotation (possible values: 1|0)
+# enable the creation of installed packages file (possible values: 1|0)
 installed_packages_required="1"
 
-# force to use this package manager to create installed packages file, if you have more than one package manager installed (possible values: rpm|dpkg|pacman|equery|pkgutil)
+# force this package manager to create installed packages file, if you have more than one package manager installed (possible values: rpm|dpkg|pacman|equery|pkgutil)
 installed_packages_forced_manager=""
 
 # file name of installed packages
@@ -190,7 +190,7 @@ backup_destination_path="/var/backups/"
 # set backup filename
 backup_filename="${script_name}.${script_hostname}.tar.gz"
 
-# files and folders you want to backupp
+# files and folders you want to backup
 backup_items=(
 "/etc/"
 "/home/"
@@ -225,11 +225,14 @@ backup_encryption_password="test1234"
 # Pre backup script:
 #-------------------
 
-# exit glsysbackup in case execution of pre backup script was not successful
-pre_backup_exit_when_unsuccessful="1"
+# enable pre backup script functionality (possible values: 1|0)
+pre_backup_script_required="1"
 
 # path to pre backup script 
 pre_backup_script="/home/pi/pre.sh"
+
+# exit glsysbackup in case execution of pre backup script was not successful
+pre_backup_exit_when_unsuccessful="1"
 
 
 
@@ -237,11 +240,14 @@ pre_backup_script="/home/pi/pre.sh"
 # Post backup script:
 #--------------------
 
-# exit glsysbackup in case execution of post backup script was not successful
-post_backup_exit_when_unsuccessful="1"
+# enable post backup script functionality (possible values: 1|0)
+post_backup_script_required="1"
 
 # path to post backup script 
 post_backup_script="/home/pi/post.sh"
+
+# exit glsysbackup in case execution of post backup script was not successful
+post_backup_exit_when_unsuccessful="1"
 
 
 
@@ -1143,9 +1149,11 @@ executePreBackupScript()
 {
 	local rc=
 
-	if [ ! -z "${pre_backup_script:-}" ] ;then
-		logHandler "Pre backup script: '${pre_backup_script}' is defined..."
-		logHandler "Check if pre backup script exists and if it is executeable..."
+	logHandler "Check if pre backup script functionality is enabled..."
+
+	if [ "${pre_backup_script_required}" == "1" ] ;then
+		logHandler "Pre backup script functionality is enabled."
+		logHandler "Check if pre backup script (${pre_backup_script}) exists and if it is executeable..."
 
 		checkFilePermissions "${pre_backup_script}"
 		rc="$?"
@@ -1470,9 +1478,11 @@ executePostBackupScript()
 {
 	local rc=
 
-	if [ ! -z "${post_backup_script:-}" ] ;then
-		logHandler "Post backup script: '${post_backup_script}' is defined..."
-		logHandler "Check if post backup script exists and if it is executeable..."
+	logHandler "Check if post backup script functionality is enabled..."
+
+	if [ "${post_backup_script_required}" == "1" ] ;then
+		logHandler "Post backup script functionality is enabled."
+		logHandler "Check if post backup script (${post_backup_script}) exists and if it is executeable..."
 
 		checkFilePermissions "${post_backup_script}"
 		rc="$?"

@@ -44,35 +44,113 @@ OPTIONS:
 # Configuration variables:
 #-------------------------
 
+#---------
+# Logging:
+#---------
+
+# enable log to file. (possible values: 1|0)
 log_to_file="0"
-log_to_stdout="1"
-log_to_syslog="1"
+
+# log directory
 log_directory="/var/log/"
-log_file="${log_directory}${script_name}.log"
+
+# filename of logfile
+log_filename="${script_name}.log"
+
+# enable log to stdout (possible values: 1|0)
+log_to_stdout="1"
+
+# enable log to system logfile (possible values: 1|0)
+log_to_syslog="1"
+
+# timestamp format for log messages.
 log_timestamp_format="%Y-%m-%d %H:%M:%S"
 
+
+
+#------------
+# Privileges:
+#------------
+
+# enable this to ensure glsysbackup is running with root privileges (possible values: 1|0)
 root_privileges_required="1"
 
+
+
+#--------
+# Renice:
+#--------
+
+# enable reniceing of glsysbackup and child procs (possible values: 1|0)
 re_nice_required="0"
+
+# set renice priority (HINT: have a look at: 'man renice')
 re_nice_priority="19"
 
+
+
+#-----------
+# Re-ionice:
+#-----------
+
+# enable re-ioniceing of glsysbackup and child procs (possible values: 1|0)
 re_ionice_required="0"
+
+# set re-ionice scheduling class (HINT: have a look at: 'man ionice')
 re_ionice_scheduling_class="2"
+
+# set re-ionice priority (HINT: have a look at: 'man ionice')
 re_ionice_priority="7"
 
+
+
+#----------
+# Rotation:
+#----------
+
+# enable backup rotation (possible values: 1|0)
 backup_rotation_required="1"
+
+# number of backup files to keep
 backup_rotation_files_to_keep="5"
 
+
+
+#--------------------
+# Installed packages:
+#--------------------
+
+# enable the creation of installed packages file (possible values: 1|0)
 installed_packages_required="1"
+
+# force this package manager to create installed packages file, if you have more than one package manager installed (possible values: rpm|dpkg|pacman|equery|pkgutil)
 installed_packages_forced_manager=""
+
+# file name of installed packages
 installed_packages_filename="/root/installed_syspackages.txt"
 
+
+
+#--------
+# Backup:
+#--------
+
+# enable backup compression (possible values: 1|0)
 backup_compression_enabled="1"
+
+# backup compression type (possible values: gzip|bzip2|xz|lzip|lzma|lzop)
 backup_compression_type="gzip"
+
+# enable backup verbose mode
 backup_verbose_mode_enabled="1"
+
+# set backup destination path
 backup_destination_path="/var/backups/"
+
+# set backup filename
 backup_filename="${script_name}.${script_hostname}.tar.gz"
-backup_full_path="${backup_destination_path}${backup_filename}"
+
+# files and folders you want to backup
 backup_items=(
 "/etc/"
 "/home/"
@@ -81,18 +159,55 @@ backup_items=(
 "/usr/local/bin/"
 "/boot/config.txt"
 )
+
+# exclude this items from backup (HINT: have a look at: 'man tar')
 backup_exlude_items=(
 "/old.backups"
 "/old.mysqldumps/"
 )
 
+
+
+#------------
+# Encryption:
+#------------
+
+# enable backup encryption with openssl (possible values: 1|0)
 backup_encryption_required="1"
+
+# set password for encryption
 backup_encryption_password="test1234"
 
-pre_backup_exit_when_unsuccessful="1"
+
+
+
+#-------------------
+# Pre backup script:
+#-------------------
+
+# enable pre backup script functionality (possible values: 1|0)
+pre_backup_script_required="1"
+
+# path to pre backup script 
 pre_backup_script="/home/pi/pre.sh"
-post_backup_exit_when_unsuccessful="1"
+
+# exit glsysbackup in case execution of pre backup script was not successful
+pre_backup_exit_when_unsuccessful="1"
+
+
+
+#--------------------
+# Post backup script:
+#--------------------
+
+# enable post backup script functionality (possible values: 1|0)
+post_backup_script_required="1"
+
+# path to post backup script 
 post_backup_script="/home/pi/post.sh"
+
+# exit glsysbackup in case execution of post backup script was not successful
+post_backup_exit_when_unsuccessful="1"
 ```
 
 
