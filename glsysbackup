@@ -1149,10 +1149,10 @@ executePreBackupScript()
 {
 	local rc=
 
-	logHandler "Check if pre backup script functionality is enabled..."
+	logHandler "Check if pre backup script functionality is required..."
 
 	if [ "${pre_backup_script_required}" == "1" ] ;then
-		logHandler "Pre backup script functionality is enabled."
+		logHandler "Pre backup script functionality is required."
 		logHandler "Check if pre backup script (${pre_backup_script}) exists and if it is executeable..."
 
 		checkFilePermissions "${pre_backup_script}"
@@ -1189,7 +1189,7 @@ executePreBackupScript()
 			fi
 		fi
 	else
-		logHandler "Pre backup script is not defined."
+		logHandler "Pre backup script functionality is not required."
 	fi
 }
 
@@ -1478,10 +1478,10 @@ executePostBackupScript()
 {
 	local rc=
 
-	logHandler "Check if post backup script functionality is enabled..."
+	logHandler "Check if post backup script functionality is required..."
 
 	if [ "${post_backup_script_required}" == "1" ] ;then
-		logHandler "Post backup script functionality is enabled."
+		logHandler "Post backup script functionality is required."
 		logHandler "Check if post backup script (${post_backup_script}) exists and if it is executeable..."
 
 		checkFilePermissions "${post_backup_script}"
@@ -1518,7 +1518,7 @@ executePostBackupScript()
 			fi
 		fi
 	else
-		logHandler "Post backup script is not defined."
+		logHandler "Post backup script functionality is not required."
 	fi
 }
 
