@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-03-31
+#			2017-04-09
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -68,7 +68,7 @@ script_version="1.0.1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2017-03-31"
+script_last_modification_date="2017-04-09"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -122,7 +122,7 @@ root_privileges_required="1"
 #--------
 
 # enable reniceing of glsysbackup and child procs (possible values: 1|0)
-re_nice_required="0"
+re_nice_enabled="0"
 
 # set renice priority (HINT: have a look at: 'man renice')
 re_nice_priority="19"
@@ -134,7 +134,7 @@ re_nice_priority="19"
 #-----------
 
 # enable re-ioniceing of glsysbackup and child procs (possible values: 1|0)
-re_ionice_required="0"
+re_ionice_enabled="0"
 
 # set re-ionice scheduling class (HINT: have a look at: 'man ionice')
 re_ionice_scheduling_class="2"
@@ -149,7 +149,7 @@ re_ionice_priority="7"
 #----------
 
 # enable backup rotation (possible values: 1|0)
-backup_rotation_required="1"
+backup_rotation_enabled="1"
 
 # number of backup files to keep
 backup_rotation_files_to_keep="5"
@@ -161,7 +161,7 @@ backup_rotation_files_to_keep="5"
 #--------------------
 
 # enable the creation of installed packages file (possible values: 1|0)
-installed_packages_required="1"
+installed_packages_enabled="1"
 
 # force this package manager to create installed packages file, if you have more than one package manager installed (possible values: rpm|dpkg|pacman|equery|pkgutil)
 installed_packages_forced_manager=""
@@ -213,7 +213,7 @@ backup_exlude_items=(
 #------------
 
 # enable backup encryption with openssl (possible values: 1|0)
-backup_encryption_required="1"
+backup_encryption_enabled="1"
 
 # set password for encryption
 backup_encryption_password="test1234"
@@ -226,7 +226,7 @@ backup_encryption_password="test1234"
 #-------------------
 
 # enable pre backup script functionality (possible values: 1|0)
-pre_backup_script_required="1"
+pre_backup_script_enabled="1"
 
 # path to pre backup script 
 pre_backup_script="/home/pi/pre.sh"
@@ -241,7 +241,7 @@ pre_backup_exit_when_unsuccessful="1"
 #--------------------
 
 # enable post backup script functionality (possible values: 1|0)
-post_backup_script_required="1"
+post_backup_script_enabled="1"
 
 # path to post backup script 
 post_backup_script="/home/pi/post.sh"
@@ -333,19 +333,19 @@ checkRequiredBinaries()
 		fi
 	fi
 
-	if [ "${backup_rotation_required}" == "1" ] ;then
+	if [ "${backup_rotation_enabled}" == "1" ] ;then
 		required_binaries+=("mv")
 	fi
 
-	if [ "${backup_encryption_required}" == "1" ] ;then
+	if [ "${backup_encryption_enabled}" == "1" ] ;then
 		required_binaries+=("openssl")
 	fi
 
-	if [ "${re_nice_required}" == "1" ] ;then
+	if [ "${re_nice_enabled}" == "1" ] ;then
 		required_binaries+=("renice")
 	fi
 
-	if [ "${re_ionice_required}" == "1" ] ;then
+	if [ "${re_ionice_enabled}" == "1" ] ;then
 		required_binaries+=("ionice")
 	fi
 
@@ -377,7 +377,7 @@ checkRequiredBinaries()
 		exit
 	fi
 
-	if [ "${installed_packages_required}" == "1" ] ;then
+	if [ "${installed_packages_enabled}" == "1" ] ;then
 		available_syspackage_managers=()
 
 		if [ -z "${installed_packages_forced_manager}" ] ;then
@@ -771,7 +771,7 @@ delUnencryptedBackupFile()
 {
 	local rc=
 
-	if [ "${backup_encryption_required}" == "1" ] ;then
+	if [ "${backup_encryption_enabled}" == "1" ] ;then
 		logHandler "Backup encryption is enabled, now we check if unencrypted backup file exists, if it is writeable and delete it..."
 		logHandler "Check if unencrypted backup file: '${backup_full_path}' exists and if it is writeable..."
 
@@ -808,7 +808,7 @@ delInstalledPackagesFile()
 {
 	local rc=
 
-	if [ "${installed_packages_required}" == "1" ] ;then
+	if [ "${installed_packages_enabled}" == "1" ] ;then
 		logHandler "Installed packages functionality is enabled, now we check if the file exists, if it is writeable and delete it..."
 		logHandler "Check if installed packages file: '${installed_packages_filename}' exists and if it is writeable..."
 
@@ -1049,10 +1049,10 @@ checkAlreadyRunningInstance()
 
 reNice()
 {
-	logHandler "Check if re-niceing is required..."
+	logHandler "Check if re-niceing is enabled..."
 
-	if [ "${re_nice_required}" == "1" ] ;then
-		logHandler "Re-niceing is required."
+	if [ "${re_nice_enabled}" == "1" ] ;then
+		logHandler "Re-niceing is enabled."
 		logHandler "Check if renice priority is in range..."
 
 		if ([ "${re_nice_priority}" -lt "-20" ] || [ "${re_nice_priority}" -gt "19" ]) ;then
@@ -1077,7 +1077,7 @@ reNice()
 			fi
 		fi
 	else
-		logHandler "Re-niceing is not required."
+		logHandler "Re-niceing is not enabled."
 	fi
 }
 
@@ -1086,10 +1086,10 @@ reIONice()
 	local re_ionice_cmd=
 	local re_ionice_priority_required=
 
-	logHandler "Check if re-ioniceing is required..."
+	logHandler "Check if re-ioniceing is enabled..."
 
-	if [ "${re_ionice_required}" == "1" ] ;then
-		logHandler "Re-ioniceing is required."
+	if [ "${re_ionice_enabled}" == "1" ] ;then
+		logHandler "Re-ioniceing is enabled."
 		logHandler "Check if re-ioniceing parameters are in range..."
 
 		if ([ "${re_ionice_scheduling_class}" -gt "3" ] || [ "${re_ionice_scheduling_class}" -lt "1" ]) ;then
@@ -1141,7 +1141,7 @@ reIONice()
 			exit
 		fi
 	else
-		logHandler "Re-ioniceing is not required."
+		logHandler "Re-ioniceing is not enabled."
 	fi
 }
 
@@ -1149,10 +1149,10 @@ executePreBackupScript()
 {
 	local rc=
 
-	logHandler "Check if pre backup script functionality is required..."
+	logHandler "Check if pre backup script functionality is enabled..."
 
-	if [ "${pre_backup_script_required}" == "1" ] ;then
-		logHandler "Pre backup script functionality is required."
+	if [ "${pre_backup_script_enabled}" == "1" ] ;then
+		logHandler "Pre backup script functionality is enabled."
 		logHandler "Check if pre backup script (${pre_backup_script}) exists and if it is executeable..."
 
 		checkFilePermissions "${pre_backup_script}"
@@ -1189,7 +1189,7 @@ executePreBackupScript()
 			fi
 		fi
 	else
-		logHandler "Pre backup script functionality is not required."
+		logHandler "Pre backup script functionality is not enabled."
 	fi
 }
 
@@ -1200,10 +1200,10 @@ rotateHandler()
 	local file_to_handle=
 	local file_helper=
 
-	logHandler "Check if backup rotation is required..."
+	logHandler "Check if backup rotation is enabled..."
 
-	if [ "${backup_rotation_required}" == "1" ] ;then
-		logHandler "Backup rotation is required."
+	if [ "${backup_rotation_enabled}" == "1" ] ;then
+		logHandler "Backup rotation is enabled."
 		logHandler "Check if backup directory: '${backup_destination_path}' exists and permissions to move files are ok..."
 
 		checkDirectoryPermissions "${backup_destination_path}"
@@ -1235,7 +1235,7 @@ rotateHandler()
 				;;
 		esac
 
-		if [ "${backup_encryption_required}" == "1" ] ;then
+		if [ "${backup_encryption_enabled}" == "1" ] ;then
 			file="${backup_encryption_filename}"
 		else
 			file="${backup_full_path}"
@@ -1287,7 +1287,7 @@ rotateHandler()
 
 		   done
 	else
-		logHandler "Backup rotation is not required..."
+		logHandler "Backup rotation is not enabled."
 	fi
 }
 
@@ -1297,10 +1297,10 @@ createInstalledPackagesFile()
 	local syspackage_manager=
 	local available_syspackage_managers_helper=
 
-	logHandler "Check if installed packages are required..."
+	logHandler "Check if installed packages are enabled..."
 
-	if [ "${installed_packages_required}" == "1" ] ;then
-		logHandler "Installed packages are required."
+	if [ "${installed_packages_enabled}" == "1" ] ;then
+		logHandler "Installed packages are enabled."
 
 		if [ "${#available_syspackage_managers[*]}" -gt "1" ] ;then
 			available_syspackage_managers_helper="${available_syspackage_managers[*]}"
@@ -1359,7 +1359,7 @@ createInstalledPackagesFile()
 			exit
 		fi
 	else
-		logHandler "Installed packages are not required..."
+		logHandler "Installed packages are not enabled..."
 	fi
 }
 
@@ -1370,7 +1370,7 @@ buildExcludeOpts()
 	logHandler "Check if we need to build excluding options..."
 
 	if [ ! -z "${backup_exlude_items[*]:-}" ] ;then
-		logHandler "Building of excluding options is required."
+		logHandler "Building of excluding options is enabled."
 		exclude_string=()
 
 		for item in "${backup_exlude_items[@]}"
@@ -1453,7 +1453,7 @@ makeBackup()
 
 encryptBackup()
 {
-	if [ "${backup_encryption_required}" == "1" ] ;then
+	if [ "${backup_encryption_enabled}" == "1" ] ;then
 		logHandler "Backup encryption is enabled..."
 		logHandler "Encrypting backup file: '${backup_full_path}'..."
 
@@ -1478,10 +1478,10 @@ executePostBackupScript()
 {
 	local rc=
 
-	logHandler "Check if post backup script functionality is required..."
+	logHandler "Check if post backup script functionality is enabled..."
 
-	if [ "${post_backup_script_required}" == "1" ] ;then
-		logHandler "Post backup script functionality is required."
+	if [ "${post_backup_script_enabled}" == "1" ] ;then
+		logHandler "Post backup script functionality is enabled."
 		logHandler "Check if post backup script (${post_backup_script}) exists and if it is executeable..."
 
 		checkFilePermissions "${post_backup_script}"
@@ -1518,7 +1518,7 @@ executePostBackupScript()
 			fi
 		fi
 	else
-		logHandler "Post backup script functionality is not required."
+		logHandler "Post backup script functionality is not enabled."
 	fi
 }
 
