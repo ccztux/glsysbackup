@@ -13,9 +13,9 @@
 
 ## Example help output:
 ```
-18:43:45 [root@localhost]:~$ ./glsysbackup -h
-[2017-04-23 18:43:45] glsysbackup: [3778] glsysbackup 1.0.1 starting... (PID=3778)
-[2017-04-23 18:43:45] glsysbackup: [3778] Getting options...
+18:51:10 [root@localhost]:~$ ./glsysbackup -h
+[2017-04-23 18:51:10] glsysbackup: [5198] glsysbackup 1.0.1 starting... (PID=5198)
+[2017-04-23 18:51:10] glsysbackup: [5198] Getting options...
 
 Usage: glsysbackup OPTIONS
 
@@ -27,14 +27,13 @@ Description:		glsysbackup (Generic Linux System Backup) is an advanced backup to
 
 OPTIONS:
    -h		Shows this help.
-      -o		Override lock in case glsysbackup was terminated abnormally.
-         -v		Shows detailed version information.
+   -o		Override lock in case glsysbackup was terminated abnormally.
+   -v		Shows detailed version information.
 
-	 [2017-04-23 18:43:45] glsysbackup: [3778] Caught: 'EXIT', exiting script...
-	 [2017-04-23 18:43:45] glsysbackup: [3778] We hope you are informed better now. :P This was a lazy job. :)
-	 [2017-04-23 18:43:45] glsysbackup: [3778] Script was running: '0' seconds.
-	 [2017-04-23 18:43:45] glsysbackup: [3778] Bye, bye...
-
+[2017-04-23 18:51:10] glsysbackup: [5198] Caught: 'EXIT', exiting script...
+[2017-04-23 18:51:10] glsysbackup: [5198] We hope you are informed better now. :P This was a lazy job. :)
+[2017-04-23 18:51:10] glsysbackup: [5198] Script was running: '0' seconds.
+[2017-04-23 18:51:10] glsysbackup: [5198] Bye, bye...
 ```
 
 
