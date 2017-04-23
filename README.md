@@ -13,27 +13,28 @@
 
 ## Example help output:
 ```
-20:10:41 [root@localhost]:~$ ./glsysbackup -h
-[2017-03-28 20:10:41] glsysbackup: [8641] glsysbackup 1.0.1-beta1 starting... (PID=8641)
-[2017-03-28 20:10:41] glsysbackup: [8641] Getting options...
+18:43:45 [root@localhost]:~$ ./glsysbackup -h
+[2017-04-23 18:43:45] glsysbackup: [3778] glsysbackup 1.0.1 starting... (PID=3778)
+[2017-04-23 18:43:45] glsysbackup: [3778] Getting options...
 
 Usage: glsysbackup OPTIONS
 
 Author:			Christian Zettel (ccztux)
-Last modification:	2017-03-28
-Version:		1.0.1-beta1
+Last modification:	2017-04-23
+Version:		1.0.1
 
 Description:		glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
 
 OPTIONS:
    -h		Shows this help.
-   -o		Override lock in case glsysbackup was terminated abnormally.
-   -v		Shows detailed version information.
+      -o		Override lock in case glsysbackup was terminated abnormally.
+         -v		Shows detailed version information.
 
-[2017-03-28 20:10:41] glsysbackup: [8641] Caught: 'EXIT', exiting script...
-[2017-03-28 20:10:41] glsysbackup: [8641] We hope you are informed better now. :P This was a lazy job. :)
-[2017-03-28 20:10:41] glsysbackup: [8641] Script was running: '0' seconds.
-[2017-03-28 20:10:41] glsysbackup: [8641] Bye, bye...
+	 [2017-04-23 18:43:45] glsysbackup: [3778] Caught: 'EXIT', exiting script...
+	 [2017-04-23 18:43:45] glsysbackup: [3778] We hope you are informed better now. :P This was a lazy job. :)
+	 [2017-04-23 18:43:45] glsysbackup: [3778] Script was running: '0' seconds.
+	 [2017-04-23 18:43:45] glsysbackup: [3778] Bye, bye...
+
 ```
 
 
@@ -82,7 +83,7 @@ root_privileges_required="1"
 #--------
 
 # enable reniceing of glsysbackup and child procs (possible values: 1|0)
-re_nice_required="0"
+re_nice_enabled="0"
 
 # set renice priority (HINT: have a look at: 'man renice')
 re_nice_priority="19"
@@ -94,7 +95,7 @@ re_nice_priority="19"
 #-----------
 
 # enable re-ioniceing of glsysbackup and child procs (possible values: 1|0)
-re_ionice_required="0"
+re_ionice_enabled="0"
 
 # set re-ionice scheduling class (HINT: have a look at: 'man ionice')
 re_ionice_scheduling_class="2"
@@ -109,7 +110,7 @@ re_ionice_priority="7"
 #----------
 
 # enable backup rotation (possible values: 1|0)
-backup_rotation_required="1"
+backup_rotation_enabled="1"
 
 # number of backup files to keep
 backup_rotation_files_to_keep="5"
@@ -121,7 +122,7 @@ backup_rotation_files_to_keep="5"
 #--------------------
 
 # enable the creation of installed packages file (possible values: 1|0)
-installed_packages_required="1"
+installed_packages_enabled="1"
 
 # force this package manager to create installed packages file, if you have more than one package manager installed (possible values: rpm|dpkg|pacman|equery|pkgutil)
 installed_packages_forced_manager=""
@@ -173,7 +174,7 @@ backup_exlude_items=(
 #------------
 
 # enable backup encryption with openssl (possible values: 1|0)
-backup_encryption_required="1"
+backup_encryption_enabled="1"
 
 # set password for encryption
 backup_encryption_password="test1234"
@@ -186,7 +187,7 @@ backup_encryption_password="test1234"
 #-------------------
 
 # enable pre backup script functionality (possible values: 1|0)
-pre_backup_script_required="1"
+pre_backup_script_enabled="1"
 
 # path to pre backup script 
 pre_backup_script="/home/pi/pre.sh"
@@ -201,7 +202,7 @@ pre_backup_exit_when_unsuccessful="1"
 #--------------------
 
 # enable post backup script functionality (possible values: 1|0)
-post_backup_script_required="1"
+post_backup_script_enabled="1"
 
 # path to post backup script 
 post_backup_script="/home/pi/post.sh"
@@ -214,117 +215,176 @@ post_backup_exit_when_unsuccessful="1"
 
 ## Example job output:
 ```
-20:12:52 [pi@localhost]:~$ sudo ./glsysbackup 
-[2017-03-28 20:12:55] glsysbackup: [17864] glsysbackup 1.0.1-beta1 starting... (PID=17864)
-[2017-03-28 20:12:55] glsysbackup: [17864] Check if root priviliges are required...
-[2017-03-28 20:12:55] glsysbackup: [17864] Root privileges are required, checking privileges...
-[2017-03-28 20:12:55] glsysbackup: [17864] HOORAY, we have root privileges. :)
-[2017-03-28 20:12:55] glsysbackup: [17864] Get user which starts the script...
-[2017-03-28 20:12:55] glsysbackup: [17864] glsysbackup was started by: 'pi'.
-[2017-03-28 20:12:55] glsysbackup: [17864] Checking bash version...
-[2017-03-28 20:12:55] glsysbackup: [17864] Bash version: '4' meets requirements.
-[2017-03-28 20:12:55] glsysbackup: [17864] Check if another instance of: 'glsysbackup' is already running...
-[2017-03-28 20:12:55] glsysbackup: [17864] Check if lock file: '/var/lock/glsysbackup' exists and if it is read and writeable...
-[2017-03-28 20:12:55] glsysbackup: [17864] Lock file doesnt exist.
-[2017-03-28 20:12:55] glsysbackup: [17864] No other instance of: 'glsysbackup' is currently running (Lockfile: '/var/lock/glsysbackup' doesnt exist and no processes are running).
-[2017-03-28 20:12:55] glsysbackup: [17864] Check if script lock directory: '/var/lock/' exists and permissions to set lock are ok...
-[2017-03-28 20:12:55] glsysbackup: [17864] Script lock directory exists and permissions are ok.
-[2017-03-28 20:12:55] glsysbackup: [17864] Setting lock...
-[2017-03-28 20:12:55] glsysbackup: [17864] Setting lock was successful.
-[2017-03-28 20:12:56] glsysbackup: [17864] Check if re-niceing is required...
-[2017-03-28 20:12:56] glsysbackup: [17864] Re-niceing is not required.
-[2017-03-28 20:12:56] glsysbackup: [17864] Check if re-ioniceing is required...
-[2017-03-28 20:12:56] glsysbackup: [17864] Re-ioniceing is not required.
-[2017-03-28 20:12:56] glsysbackup: [17864] Pre backup script: '/home/pi/pre.sh' is defined...
-[2017-03-28 20:12:56] glsysbackup: [17864] Check if pre backup script exists and if it is executeable...
-[2017-03-28 20:12:56] glsysbackup: [17864] Pre backup script exists and it is executeable, so we execute it...
-[2017-03-28 20:12:56] glsysbackup: [17864] Doing something here in pre script.... 1
-[2017-03-28 20:12:56] glsysbackup: [17864] Doing something here in pre script.... 2
-[2017-03-28 20:12:56] glsysbackup: [17864] Doing something here in pre script.... 3
-[2017-03-28 20:12:57] glsysbackup: [17864] Doing something here in pre script.... 4
-[2017-03-28 20:12:57] glsysbackup: [17864] Doing something here in pre script.... 5
-[2017-03-28 20:12:57] glsysbackup: [17864] Execution of pre backup script was successful. rc: '7'.
-[2017-03-28 20:12:57] glsysbackup: [17864] Check if backup rotation is required...
-[2017-03-28 20:12:58] glsysbackup: [17864] Backup rotation is required.
-[2017-03-28 20:12:58] glsysbackup: [17864] Check if backup directory: '/var/backups/' exists and permissions to move files are ok...
-[2017-03-28 20:12:58] glsysbackup: [17864] Backup directory exists and permissions are ok.
-[2017-03-28 20:12:58] glsysbackup: [17864] Rotating backup files...
-[2017-03-28 20:12:58] glsysbackup: [17864] Check if file: '/var/backups/glsysbackup.wurlitzer.aes.tar.gz.3' exists and if it is readable...
-[2017-03-28 20:12:58] glsysbackup: [17864] File doesnt exist, nothing to do.
-[2017-03-28 20:12:58] glsysbackup: [17864] Check if file: '/var/backups/glsysbackup.wurlitzer.aes.tar.gz.2' exists and if it is readable...
-[2017-03-28 20:12:58] glsysbackup: [17864] File doesnt exist, nothing to do.
-[2017-03-28 20:12:58] glsysbackup: [17864] Check if file: '/var/backups/glsysbackup.wurlitzer.aes.tar.gz.1' exists and if it is readable...
-[2017-03-28 20:12:58] glsysbackup: [17864] File exists and is readable, do rotation...
-[2017-03-28 20:12:58] glsysbackup: [17864] Rotating file: '/var/backups/glsysbackup.wurlitzer.aes.tar.gz.1' ==> '/var/backups/glsysbackup.wurlitzer.aes.tar.gz.2' was successful.
-[2017-03-28 20:12:58] glsysbackup: [17864] Check if file: '/var/backups/glsysbackup.wurlitzer.aes.tar.gz' exists and if it is readable...
-[2017-03-28 20:12:58] glsysbackup: [17864] File doesnt exist, nothing to do.
-[2017-03-28 20:12:58] glsysbackup: [17864] Check if installed packages are required...
-[2017-03-28 20:12:58] glsysbackup: [17864] Installed packages are required.
-[2017-03-28 20:12:58] glsysbackup: [17864] The supported system package manager we found is: 'dpkg'.
-[2017-03-28 20:12:58] glsysbackup: [17864] Creating installed packages file: '/root/installed_syspackages.txt'...
-[2017-03-28 20:12:58] glsysbackup: [17864] Creating installed packages file was successful, adding file to backup_items config array.
-[2017-03-28 20:12:58] glsysbackup: [17864] Check if we need to build excluding options...
-[2017-03-28 20:12:58] glsysbackup: [17864] Building of excluding options is required.
-[2017-03-28 20:12:59] glsysbackup: [17864] We build the following excluding options: '--exclude='/old.backups' --exclude='/old.mysqldumps/''.
-[2017-03-28 20:12:59] glsysbackup: [17864] Building backup options...
-[2017-03-28 20:12:59] glsysbackup: [17864] We build the following backup options: '--create --file=/var/backups/glsysbackup.wurlitzer.tar.gz --gzip --verbose'.
-[2017-03-28 20:12:59] glsysbackup: [17864] Starting backup job...
-[2017-03-28 20:12:59] glsysbackup: [17864] /bin/tar: Entferne führende „/“ von Elementnamen
-[2017-03-28 20:12:59] glsysbackup: [17864] /etc/
-[2017-03-28 20:12:59] glsysbackup: [17864] /etc/locale.alias
-[2017-03-28 20:12:59] glsysbackup: [17864] /etc/subgid
-[2017-03-28 20:12:59] glsysbackup: [17864] /etc/sgml/
-[2017-03-28 20:12:59] glsysbackup: [17864] /etc/sgml/xml-core.cat
-[2017-03-28 20:12:59] glsysbackup: [17864] /etc/sgml/catalog
+18:46:20 [pi@localhost]:~$ sudo ./glsysbackup 
+[2017-04-23 18:46:23] glsysbackup: [25695] glsysbackup 1.0.1 starting... (PID=25695)
+[2017-04-23 18:46:24] glsysbackup: [25695] Check if root priviliges are required...
+[2017-04-23 18:46:24] glsysbackup: [25695] Root privileges are required, checking privileges...
+[2017-04-23 18:46:24] glsysbackup: [25695] HOORAY, we have root privileges. :)
+[2017-04-23 18:46:24] glsysbackup: [25695] Get user which starts the script...
+[2017-04-23 18:46:24] glsysbackup: [25695] glsysbackup was started by user: 'pi'.
+[2017-04-23 18:46:24] glsysbackup: [25695] Checking bash version...
+[2017-04-23 18:46:24] glsysbackup: [25695] Bash version: '4' meets requirements.
+[2017-04-23 18:46:24] glsysbackup: [25695] Check if another instance of: 'glsysbackup' is already running...
+[2017-04-23 18:46:24] glsysbackup: [25695] Check if lock file: '/var/lock/glsysbackup' exists and if it is read and writeable...
+[2017-04-23 18:46:24] glsysbackup: [25695] Lock file doesnt exist.
+[2017-04-23 18:46:24] glsysbackup: [25695] No other instance of: 'glsysbackup' is currently running (Lockfile: '/var/lock/glsysbackup' doesnt exist and no processes are running).
+[2017-04-23 18:46:24] glsysbackup: [25695] Check if script lock directory: '/var/lock/' exists and permissions to set lock are ok...
+[2017-04-23 18:46:24] glsysbackup: [25695] Script lock directory exists and permissions are ok.
+[2017-04-23 18:46:24] glsysbackup: [25695] Setting lock...
+[2017-04-23 18:46:24] glsysbackup: [25695] Setting lock was successful.
+[2017-04-23 18:46:24] glsysbackup: [25695] Check if re-niceing is enabled...
+[2017-04-23 18:46:24] glsysbackup: [25695] Re-niceing is enabled.
+[2017-04-23 18:46:24] glsysbackup: [25695] Check if renice priority is in range...
+[2017-04-23 18:46:24] glsysbackup: [25695] Re-nice priority: '19' is in range.
+[2017-04-23 18:46:24] glsysbackup: [25695] Re-niceing...
+[2017-04-23 18:46:25] glsysbackup: [25695] 25695 (process ID) old priority 0, new priority 19
+[2017-04-23 18:46:25] glsysbackup: [25695] Re-niceing was successful.
+[2017-04-23 18:46:25] glsysbackup: [25695] Check if re-ioniceing is enabled...
+[2017-04-23 18:46:25] glsysbackup: [25695] Re-ioniceing is enabled.
+[2017-04-23 18:46:25] glsysbackup: [25695] Check if re-ioniceing parameters are in range...
+[2017-04-23 18:46:25] glsysbackup: [25695] Re-ioniceing scheduling class: '2' is in range.
+[2017-04-23 18:46:25] glsysbackup: [25695] Selected re-ioniceing scheduling class: '2' requires re-ioniceing priority.
+[2017-04-23 18:46:25] glsysbackup: [25695] Check if re-ioniceing priority is in range...
+[2017-04-23 18:46:25] glsysbackup: [25695] Re-ioniceing priority: '2' is in range.
+[2017-04-23 18:46:25] glsysbackup: [25695] Re-ioniceing...
+[2017-04-23 18:46:25] glsysbackup: [25695] Re-ioniceing was successful.
+[2017-04-23 18:46:25] glsysbackup: [25695] Check if pre backup script functionality is enabled...
+[2017-04-23 18:46:25] glsysbackup: [25695] Pre backup script functionality is enabled.
+[2017-04-23 18:46:25] glsysbackup: [25695] Check if pre backup script (/home/pi/pre.sh) exists and if it is executeable...
+[2017-04-23 18:46:25] glsysbackup: [25695] Pre backup script exists and it is executeable, so we execute it...
+[2017-04-23 18:46:25] glsysbackup: [25695] Doing something here in pre script.... 1
+[2017-04-23 18:46:25] glsysbackup: [25695] Doing something here in pre script.... 2
+[2017-04-23 18:46:26] glsysbackup: [25695] Doing something here in pre script.... 3
+[2017-04-23 18:46:26] glsysbackup: [25695] Doing something here in pre script.... 4
+[2017-04-23 18:46:26] glsysbackup: [25695] Doing something here in pre script.... 5
+[2017-04-23 18:46:26] glsysbackup: [25695] Execution of pre backup script was successful. rc: '0'.
+[2017-04-23 18:46:26] glsysbackup: [25695] Check if backup rotation is enabled...
+[2017-04-23 18:46:26] glsysbackup: [25695] Backup rotation is enabled.
+[2017-04-23 18:46:26] glsysbackup: [25695] Check if backup directory: '/var/backups/' exists and permissions to move files are ok...
+[2017-04-23 18:46:26] glsysbackup: [25695] Backup directory exists and permissions are ok.
+[2017-04-23 18:46:26] glsysbackup: [25695] Rotating backup files...
+[2017-04-23 18:46:26] glsysbackup: [25695] Check if file: '/var/backups/glsysbackup.wurlitzer.aes.tar.gz.3' exists and if it is readable...
+[2017-04-23 18:46:26] glsysbackup: [25695] File exists and is readable, do rotation...
+[2017-04-23 18:46:26] glsysbackup: [25695] Rotating file: '/var/backups/glsysbackup.wurlitzer.aes.tar.gz.3' ==> '/var/backups/glsysbackup.wurlitzer.aes.tar.gz.4' was successful.
+[2017-04-23 18:46:26] glsysbackup: [25695] Check if file: '/var/backups/glsysbackup.wurlitzer.aes.tar.gz.2' exists and if it is readable...
+[2017-04-23 18:46:26] glsysbackup: [25695] File doesnt exist, nothing to do.
+[2017-04-23 18:46:26] glsysbackup: [25695] Check if file: '/var/backups/glsysbackup.wurlitzer.aes.tar.gz.1' exists and if it is readable...
+[2017-04-23 18:46:26] glsysbackup: [25695] File exists and is readable, do rotation...
+[2017-04-23 18:46:27] glsysbackup: [25695] Rotating file: '/var/backups/glsysbackup.wurlitzer.aes.tar.gz.1' ==> '/var/backups/glsysbackup.wurlitzer.aes.tar.gz.2' was successful.
+[2017-04-23 18:46:27] glsysbackup: [25695] Check if file: '/var/backups/glsysbackup.wurlitzer.aes.tar.gz' exists and if it is readable...
+[2017-04-23 18:46:27] glsysbackup: [25695] File doesnt exist, nothing to do.
+[2017-04-23 18:46:27] glsysbackup: [25695] Check if installed packages are enabled...
+[2017-04-23 18:46:27] glsysbackup: [25695] Installed packages are enabled.
+[2017-04-23 18:46:27] glsysbackup: [25695] The supported system package manager we found is: 'dpkg'.
+[2017-04-23 18:46:27] glsysbackup: [25695] Creating installed packages file: '/root/installed_syspackages.txt'...
+[2017-04-23 18:46:27] glsysbackup: [25695] Creating installed packages file was successful, adding file to backup_items config array.
+[2017-04-23 18:46:27] glsysbackup: [25695] Check if we need to build excluding options...
+[2017-04-23 18:46:27] glsysbackup: [25695] We dont have to build excluding options...
+[2017-04-23 18:46:27] glsysbackup: [25695] Building backup options...
+[2017-04-23 18:46:27] glsysbackup: [25695] We build the following backup options: '--create --file=/var/backups/glsysbackup.wurlitzer.tar.gz --gzip --verbose'.
+[2017-04-23 18:46:27] glsysbackup: [25695] Starting backup job...
+[2017-04-23 18:46:27] glsysbackup: [25695] /bin/tar: Entferne führende „/“ von Elementnamen
+[2017-04-23 18:46:27] glsysbackup: [25695] /etc/
+[2017-04-23 18:46:27] glsysbackup: [25695] /etc/locale.alias
+[2017-04-23 18:46:28] glsysbackup: [25695] /etc/subgid
+[2017-04-23 18:46:28] glsysbackup: [25695] /etc/sgml/
+[2017-04-23 18:46:28] glsysbackup: [25695] /etc/sgml/xml-core.cat
+[2017-04-23 18:46:28] glsysbackup: [25695] /etc/sgml/catalog
+[2017-04-23 18:46:28] glsysbackup: [25695] /etc/securetty
+[2017-04-23 18:46:28] glsysbackup: [25695] /etc/ppp/
+[2017-04-23 18:46:28] glsysbackup: [25695] /etc/ppp/ip-up.d/
+[2017-04-23 18:46:28] glsysbackup: [25695] /etc/ppp/ip-up.d/000resolvconf
+[2017-04-23 18:46:28] glsysbackup: [25695] /etc/ppp/ip-down.d/
+[2017-04-23 18:46:28] glsysbackup: [25695] /etc/ppp/ip-down.d/000resolvconf
+[2017-04-23 18:46:28] glsysbackup: [25695] /etc/locale.gen
+[2017-04-23 18:46:29] glsysbackup: [25695] /etc/nanorc
+[2017-04-23 18:46:29] glsysbackup: [25695] /etc/rmt
+[2017-04-23 18:46:29] glsysbackup: [25695] /etc/rsyslog.conf
+[2017-04-23 18:46:29] glsysbackup: [25695] /etc/kbd/
+[2017-04-23 18:46:29] glsysbackup: [25695] /etc/kbd/config
+[2017-04-23 18:46:29] glsysbackup: [25695] /etc/kbd/remap
+[2017-04-23 18:46:29] glsysbackup: [25695] /etc/default/
+[2017-04-23 18:46:29] glsysbackup: [25695] /etc/default/keyboard
+[2017-04-23 18:46:29] glsysbackup: [25695] /etc/default/triggerhappy
+[2017-04-23 18:46:29] glsysbackup: [25695] /etc/default/fake-hwclock
+[2017-04-23 18:46:29] glsysbackup: [25695] /etc/default/rsyslog
+[2017-04-23 18:46:29] glsysbackup: [25695] /etc/default/useradd
+[2017-04-23 18:46:30] glsysbackup: [25695] /etc/default/nss
+[2017-04-23 18:46:30] glsysbackup: [25695] /etc/default/nfs-common
+[2017-04-23 18:46:30] glsysbackup: [25695] /etc/default/console-setup
+[2017-04-23 18:46:30] glsysbackup: [25695] /etc/default/rcS
+[2017-04-23 18:46:30] glsysbackup: [25695] /etc/default/halt
+[2017-04-23 18:46:30] glsysbackup: [25695] /etc/default/networking
+[2017-04-23 18:46:30] glsysbackup: [25695] /etc/default/rsync
+[2017-04-23 18:46:30] glsysbackup: [25695] /etc/default/crda
+[2017-04-23 18:46:30] glsysbackup: [25695] /etc/default/dbus
+[2017-04-23 18:46:30] glsysbackup: [25695] /etc/default/locale
+[2017-04-23 18:46:30] glsysbackup: [25695] /etc/default/tmpfs
+[2017-04-23 18:46:31] glsysbackup: [25695] /etc/default/devpts
+[2017-04-23 18:46:31] glsysbackup: [25695] /etc/default/hwclock
+[2017-04-23 18:46:31] glsysbackup: [25695] /etc/default/bsdmainutils
+[2017-04-23 18:46:31] glsysbackup: [25695] /etc/default/mpd
+[2017-04-23 18:46:31] glsysbackup: [25695] /etc/default/avahi-daemon
+[2017-04-23 18:46:31] glsysbackup: [25695] /etc/default/cron
+[2017-04-23 18:46:31] glsysbackup: [25695] /etc/default/ssh
+[2017-04-23 18:46:31] glsysbackup: [25695] /etc/default/ntp
+[2017-04-23 18:46:31] glsysbackup: [25695] /etc/cron.weekly/
+[2017-04-23 18:46:31] glsysbackup: [25695] /etc/cron.weekly/.placeholder
+[2017-04-23 18:46:31] glsysbackup: [25695] /etc/cron.weekly/man-db
 .
 .
 [snip]
 .
 .
-[2017-03-28 20:14:13] glsysbackup: [17864] /var/lib/mpd/state
-[2017-03-28 20:14:14] glsysbackup: [17864] /usr/local/bin/
-[2017-03-28 20:14:14] glsysbackup: [17864] /usr/local/bin/mpc_playlist_update
-[2017-03-28 20:14:14] glsysbackup: [17864] /usr/local/bin/youtube-dl
-[2017-03-28 20:14:14] glsysbackup: [17864] /usr/local/bin/wurlitzerd
-[2017-03-28 20:14:14] glsysbackup: [17864] /usr/local/bin/bashlib
-[2017-03-28 20:14:14] glsysbackup: [17864] /usr/local/bin/glsysbackup
-[2017-03-28 20:14:14] glsysbackup: [17864] /usr/local/bin/sysupdate
-[2017-03-28 20:14:14] glsysbackup: [17864] /boot/config.txt
-[2017-03-28 20:14:14] glsysbackup: [17864] /bin/tar: Entferne führende „/“ von Zielen harter Verknüpfungen
-[2017-03-28 20:14:14] glsysbackup: [17864] /root/installed_syspackages.txt
-[2017-03-28 20:14:14] glsysbackup: [17864] Backup job was successful.
-[2017-03-28 20:14:14] glsysbackup: [17864] Backup encryption is enabled...
-[2017-03-28 20:14:14] glsysbackup: [17864] Encrypting backup file: '/var/backups/glsysbackup.wurlitzer.tar.gz'...
-[2017-03-28 20:14:15] glsysbackup: [17864] Encrypting job was successful.
-[2017-03-28 20:14:15] glsysbackup: [17864] HINT: To decrypt use this command: '/usr/bin/openssl aes-256-cbc -d -salt -in /var/backups/glsysbackup.wurlitzer.aes.tar.gz -out /var/backups/glsysbackup.wurlitzer.tar.gz'.
-[2017-03-28 20:14:15] glsysbackup: [17864] Post backup script: '/home/pi/post.sh' is defined...
-[2017-03-28 20:14:15] glsysbackup: [17864] Check if post backup script exists and if it is executeable...
-[2017-03-28 20:14:15] glsysbackup: [17864] Post backup script exists and it is executeable, so we execute it...
-[2017-03-28 20:14:15] glsysbackup: [17864] Doing something here in post script.... 1
-[2017-03-28 20:14:15] glsysbackup: [17864] Doing something here in post script.... 2
-[2017-03-28 20:14:15] glsysbackup: [17864] Doing something here in post script.... 3
-[2017-03-28 20:14:16] glsysbackup: [17864] Doing something here in post script.... 4
-[2017-03-28 20:14:16] glsysbackup: [17864] Doing something here in post script.... 5
-[2017-03-28 20:14:16] glsysbackup: [17864] Execution of post backup script was successful. rc: '7'.
-[2017-03-28 20:14:16] glsysbackup: [17864] Caught: 'EXIT', exiting script...
-[2017-03-28 20:14:17] glsysbackup: [17864] Now we are doing some cleanup jobs...
-[2017-03-28 20:14:17] glsysbackup: [17864] Backup encryption is enabled, now we check if unencrypted backup file exists, if it is writeable and delete it...
-[2017-03-28 20:14:17] glsysbackup: [17864] Check if unencrypted backup file: '/var/backups/glsysbackup.wurlitzer.tar.gz' exists and if it is writeable...
-[2017-03-28 20:14:17] glsysbackup: [17864] Unencrypted backup file  exists and it is writeable.
-[2017-03-28 20:14:17] glsysbackup: [17864] Deleting unencrypted backup file...
-[2017-03-28 20:14:17] glsysbackup: [17864] Deleting unencrypted backup file was successful.
-[2017-03-28 20:14:17] glsysbackup: [17864] Installed packages functionality is enabled, now we check if the file exists, if it is writeable and delete it...
-[2017-03-28 20:14:17] glsysbackup: [17864] Check if installed packages file: '/root/installed_syspackages.txt' exists and if it is writeable...
-[2017-03-28 20:14:17] glsysbackup: [17864] Installed packages file exists and is writeable.
-[2017-03-28 20:14:17] glsysbackup: [17864] Deleting installed packages file...
-[2017-03-28 20:14:17] glsysbackup: [17864] Deleting installed packages file was successful.
-[2017-03-28 20:14:17] glsysbackup: [17864] We did a great job. :)
-[2017-03-28 20:14:17] glsysbackup: [17864] Check if lock file: '/var/lock/glsysbackup' exists and if it is read and writeable...
-[2017-03-28 20:14:17] glsysbackup: [17864] Lock file exists and it is read/writeable.
-[2017-03-28 20:14:17] glsysbackup: [17864] Removing lock...
-[2017-03-28 20:14:17] glsysbackup: [17864] Removing lock was successful.
-[2017-03-28 20:14:17] glsysbackup: [17864] Script was running: '83' seconds.
-[2017-03-28 20:14:17] glsysbackup: [17864] Bye, bye...
+[2017-04-23 18:47:55] glsysbackup: [25695] /usr/lib/cgi-bin/wurlitzer-webui/inc/
+[2017-04-23 18:47:55] glsysbackup: [25695] /usr/lib/cgi-bin/wurlitzer-webui/inc/mpc.functions.sh
+[2017-04-23 18:47:55] glsysbackup: [25695] /usr/lib/cgi-bin/wurlitzer-webui/inc/base.functions.sh
+[2017-04-23 18:47:55] glsysbackup: [25695] /usr/lib/cgi-bin/wurlitzer-webui/js/
+[2017-04-23 18:47:55] glsysbackup: [25695] /usr/lib/cgi-bin/wurlitzer-webui/js/wurlitzer_title.js
+[2017-04-23 18:47:55] glsysbackup: [25695] /usr/lib/cgi-bin/wurlitzer-webui/helper/
+[2017-04-23 18:47:55] glsysbackup: [25695] /usr/lib/cgi-bin/wurlitzer-webui/helper/wurlitzer_title.cgi
+[2017-04-23 18:47:55] glsysbackup: [25695] /usr/lib/cgi-bin/wurlitzer-webui/index.cgi
+[2017-04-23 18:47:55] glsysbackup: [25695] /usr/lib/cgi-bin/wurlitzer-webui/img/
+[2017-04-23 18:47:55] glsysbackup: [25695] /usr/lib/cgi-bin/wurlitzer-webui/img/youtube_logo.png
+[2017-04-23 18:47:55] glsysbackup: [25695] /usr/lib/cgi-bin/wurlitzer-webui/img/music.png
+[2017-04-23 18:47:55] glsysbackup: [25695] /usr/lib/cgi-bin/wurlitzer-webui/img/favicon.ico
+[2017-04-23 18:47:55] glsysbackup: [25695] /boot/config.txt
+[2017-04-23 18:47:55] glsysbackup: [25695] /bin/tar: Entferne führende „/“ von Zielen harter Verknüpfungen
+[2017-04-23 18:47:56] glsysbackup: [25695] /root/installed_syspackages.txt
+[2017-04-23 18:47:56] glsysbackup: [25695] Backup job was successful.
+[2017-04-23 18:47:56] glsysbackup: [25695] Backup encryption is enabled...
+[2017-04-23 18:47:56] glsysbackup: [25695] Encrypting backup file: '/var/backups/glsysbackup.wurlitzer.tar.gz'...
+[2017-04-23 18:47:56] glsysbackup: [25695] Encrypting job was successful.
+[2017-04-23 18:47:56] glsysbackup: [25695] HINT: To decrypt use this command: '/usr/bin/openssl aes-256-cbc -d -salt -in /var/backups/glsysbackup.wurlitzer.aes.tar.gz -out /var/backups/glsysbackup.wurlitzer.tar.gz'.
+[2017-04-23 18:47:56] glsysbackup: [25695] Check if post backup script functionality is enabled...
+[2017-04-23 18:47:56] glsysbackup: [25695] Post backup script functionality is enabled.
+[2017-04-23 18:47:56] glsysbackup: [25695] Check if post backup script (/home/pi/post.sh) exists and if it is executeable...
+[2017-04-23 18:47:57] glsysbackup: [25695] Post backup script exists and it is executeable, so we execute it...
+[2017-04-23 18:47:57] glsysbackup: [25695] Doing something here in post script.... 1
+[2017-04-23 18:47:57] glsysbackup: [25695] Doing something here in post script.... 2
+[2017-04-23 18:47:57] glsysbackup: [25695] Doing something here in post script.... 3
+[2017-04-23 18:47:57] glsysbackup: [25695] Doing something here in post script.... 4
+[2017-04-23 18:47:57] glsysbackup: [25695] Doing something here in post script.... 5
+[2017-04-23 18:47:57] glsysbackup: [25695] Execution of post backup script was successful. rc: '0'.
+[2017-04-23 18:47:57] glsysbackup: [25695] Caught: 'EXIT', exiting script...
+[2017-04-23 18:47:57] glsysbackup: [25695] Now we are doing some cleanup jobs...
+[2017-04-23 18:47:57] glsysbackup: [25695] Backup encryption is enabled, now we check if unencrypted backup file exists, if it is writeable and delete it...
+[2017-04-23 18:47:57] glsysbackup: [25695] Check if unencrypted backup file: '/var/backups/glsysbackup.wurlitzer.tar.gz' exists and if it is writeable...
+[2017-04-23 18:47:57] glsysbackup: [25695] Unencrypted backup file  exists and it is writeable.
+[2017-04-23 18:47:57] glsysbackup: [25695] Deleting unencrypted backup file...
+[2017-04-23 18:47:57] glsysbackup: [25695] Deleting unencrypted backup file was successful.
+[2017-04-23 18:47:58] glsysbackup: [25695] Installed packages functionality is enabled, now we check if the file exists, if it is writeable and delete it...
+[2017-04-23 18:47:58] glsysbackup: [25695] Check if installed packages file: '/root/installed_syspackages.txt' exists and if it is writeable...
+[2017-04-23 18:47:58] glsysbackup: [25695] Installed packages file exists and is writeable.
+[2017-04-23 18:47:58] glsysbackup: [25695] Deleting installed packages file...
+[2017-04-23 18:47:58] glsysbackup: [25695] Deleting installed packages file was successful.
+[2017-04-23 18:47:58] glsysbackup: [25695] We did a great job. :)
+[2017-04-23 18:47:58] glsysbackup: [25695] Check if lock file: '/var/lock/glsysbackup' exists and if it is read and writeable...
+[2017-04-23 18:47:58] glsysbackup: [25695] Lock file exists and it is read/writeable.
+[2017-04-23 18:47:58] glsysbackup: [25695] Removing lock...
+[2017-04-23 18:47:58] glsysbackup: [25695] Removing lock was successful.
+[2017-04-23 18:47:58] glsysbackup: [25695] Script was running: '95' seconds.
+[2017-04-23 18:47:58] glsysbackup: [25695] Bye, bye...
 ```
 
 
