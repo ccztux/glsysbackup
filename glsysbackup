@@ -527,7 +527,7 @@ logHandler()
 						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					35) # log to syslog, zero date, nonzero logger
-						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
+						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 					36) # log to file and stdout, zero date, nonzero logger
 						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
