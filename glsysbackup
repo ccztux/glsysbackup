@@ -1536,12 +1536,12 @@ checkRequiredBinaries
 # Get options:
 #-------------
 
+logHandler "Getting options..."
+
 OPTERR="0"
 
 while getopts ":hov" OPTION
    do
-	logHandler "Getting options..."
-
 	case "$OPTION" in
 			h)
 				printUsage
@@ -1561,12 +1561,14 @@ while getopts ":hov" OPTION
 			\?)
 				logHandler "Invalid option: -${OPTARG}"
 				printUsage
+				script_bypass_exit_routines="1"
 				script_exit_code="172"
 				exit
 				;;
 			:)
 				logHandler "Option: -${OPTARG} requires an argument."
 				printUsage
+				script_bypass_exit_routines="1"
 				script_exit_code="173"
 				exit
 				;;
