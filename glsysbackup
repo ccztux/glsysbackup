@@ -47,7 +47,7 @@ set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not s
 # Traps:
 #-------
 
-trap 'siggHandler SIGTERM' SIGTERM || { printf "Setting essential trap for signal: 'SIGTERM' was not successful, terminating...\n" ; exit 248 ; }
+trap 'sigHandler SIGTERM' SIGTERM || { printf "Setting essential trap for signal: 'SIGTERM' was not successful, terminating...\n" ; exit 248 ; }
 trap 'sigHandler SIGINT' SIGINT || { printf "Setting essential trap for signal: 'SIGINT' was not successful, terminating...\n" ; exit 249 ; }
 trap 'sigHandler SIGHUP' SIGHUP || { printf "Setting essential trap for signal: 'SIGHUP' was not successful, terminating...\n" ; exit 250 ; }
 trap 'sigHandler SIGABRT' SIGABRT || { printf "Setting essential trap for signal: 'SIGABRT' was not successful, terminating...\n" ; exit 251 ; }
@@ -64,7 +64,7 @@ trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXI
 script_pid="${BASHPID}"
 script_name="${0##*/}"
 script_hostname="${HOSTNAME%%.*}"
-script_version="1.0.1"
+script_version="1.0.2-alpha1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
