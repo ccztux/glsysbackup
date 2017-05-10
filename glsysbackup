@@ -413,7 +413,7 @@ logHandlerSetConfig()
 	fi
 
 	if ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "0" ]) ;then
-		return ${log_conf}
+		return
 	elif ([ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "0" ]) ;then
 		log_conf="$((log_conf + 2#0000001))"
 	elif ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "0" ]) ;then
@@ -439,8 +439,6 @@ logHandlerSetConfig()
 	elif ([ ! -z "${date_bin:-}" ] && [ ! -z "${logger_bin:-}" ]) ;then
 		log_conf="$((log_conf + 2#1000000))"
 	fi
-
-	return ${log_conf}
 }
 
 logHandlerStdinHelper()
@@ -1542,7 +1540,7 @@ OPTERR="0"
 
 while getopts ":hov" OPTION
    do
-	case "$OPTION" in
+	case "${OPTION}" in
 			h)
 				printUsage
 				script_bypass_exit_routines="1"
