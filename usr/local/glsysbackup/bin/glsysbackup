@@ -782,7 +782,7 @@ checkDirectoryPermissions()
 
 setDefaultValues()
 {
-	script_config_file="${script_config_file:=/etc/${script_name}.inc.sh}"
+	script_config_file="${script_config_file:=/usr/local/glsysbackup/etc/${script_name}.conf}"
 }
 
 checkRootPrivileges()
