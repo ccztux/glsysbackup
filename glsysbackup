@@ -230,25 +230,25 @@ includeConfig()
 
 	case "${rc}" in
 		4|5|6|7)
-			# shellcheck source=/scripts/etc/glsysbackup.inc.sh
+			# shellcheck source=/scripts/glsysbackup.inc.sh
 			source "${script_config_file}"
 			rc="${?}"
 
 			if [ "${rc}" == "0" ] ;then
 				checkRequiredBinaries
 			else
-				printf "Including config file: '%s' was not successful, exiting.\\\n" "${script_config_file}"
+				printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
 				script_exit_code="40"
 				exit
 			fi
 			;;
 		10)
-			printf "Config file: '%s' does not exist, exiting.\\\n" "${script_config_file}"
+			printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
 			script_exit_code="41"
 			exit
 			;;
 		*)
-			printf "Config file: '%s' exists, but it is not readable, exiting.\\\n" "${script_config_file}"
+			printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
 			script_exit_code="42"
 			exit
 			;;
