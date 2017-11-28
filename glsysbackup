@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-04-23
+#			2017-11-28
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -37,6 +37,7 @@
 # Bash options:
 #--------------
 
+#set -x
 set -o noclobber || { printf "Setting essential bash option: 'noclobber' was not successful, terminating...\n" ; exit 245 ; }
 set -o nounset || { printf "Setting essential bash option: 'nounset' was not successful, terminating...\n" ; exit 246 ; }
 set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not successful, terminating...\n" ; exit 247 ; }
@@ -68,7 +69,7 @@ script_version="1.0.2-alpha1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2017-04-23"
+script_last_modification_date="2017-11-28"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -80,186 +81,13 @@ script_lock_file="${script_lock_directory}${script_name}"
 
 
 
-#-------------------------
-# Configuration variables:
-#-------------------------
-
-#---------
-# Logging:
-#---------
-
-# enable log to file. (possible values: 1|0)
-log_to_file="0"
-
-# log directory
-log_directory="/var/log/"
-
-# filename of logfile
-log_filename="${script_name}.log"
-
-# enable log to stdout (possible values: 1|0)
-log_to_stdout="1"
-
-# enable log to system logfile (possible values: 1|0)
-log_to_syslog="1"
-
-# timestamp format for log messages.
-log_timestamp_format="%Y-%m-%d %H:%M:%S"
-
-
-
-#------------
-# Privileges:
-#------------
-
-# enable this to ensure glsysbackup is running with root privileges (possible values: 1|0)
-root_privileges_required="1"
-
-
-
-#--------
-# Renice:
-#--------
-
-# enable reniceing of glsysbackup and child procs (possible values: 1|0)
-re_nice_enabled="0"
-
-# set renice priority (HINT: have a look at: 'man renice')
-re_nice_priority="19"
-
-
-
-#-----------
-# Re-ionice:
-#-----------
-
-# enable re-ioniceing of glsysbackup and child procs (possible values: 1|0)
-re_ionice_enabled="0"
-
-# set re-ionice scheduling class (HINT: have a look at: 'man ionice')
-re_ionice_scheduling_class="2"
-
-# set re-ionice priority (HINT: have a look at: 'man ionice')
-re_ionice_priority="7"
-
-
-
-#----------
-# Rotation:
-#----------
-
-# enable backup rotation (possible values: 1|0)
-backup_rotation_enabled="1"
-
-# number of backup files to keep
-backup_rotation_files_to_keep="5"
-
-
-
-#--------------------
-# Installed packages:
-#--------------------
-
-# enable the creation of installed packages file (possible values: 1|0)
-installed_packages_enabled="1"
-
-# force this package manager to create installed packages file, if you have more than one package manager installed (possible values: rpm|dpkg|pacman|equery|pkgutil)
-installed_packages_forced_manager=""
-
-# file name of installed packages
-installed_packages_filename="/root/installed_syspackages.txt"
-
-
-
-#--------
-# Backup:
-#--------
-
-# enable backup compression (possible values: 1|0)
-backup_compression_enabled="1"
-
-# backup compression type (possible values: gzip|bzip2|xz|lzip|lzma|lzop)
-backup_compression_type="gzip"
-
-# enable backup verbose mode
-backup_verbose_mode_enabled="1"
-
-# set backup destination path
-backup_destination_path="/var/backups/"
-
-# set backup filename
-backup_filename="${script_name}.${script_hostname}.tar.gz"
-
-# files and folders you want to backup
-backup_items=(
-"/etc/"
-"/home/"
-"/root/"
-"/var/lib/mpd/"
-"/usr/local/bin/"
-"/boot/config.txt"
-)
-
-# exclude this items from backup (HINT: have a look at: 'man tar')
-backup_exlude_items=(
-"/old.backups"
-"/old.mysqldumps/"
-)
-
-
-
-#------------
-# Encryption:
-#------------
-
-# enable backup encryption with openssl (possible values: 1|0)
-backup_encryption_enabled="1"
-
-# set password for encryption
-backup_encryption_password="test1234"
-
-
-
-
-#-------------------
-# Pre backup script:
-#-------------------
-
-# enable pre backup script functionality (possible values: 1|0)
-pre_backup_script_enabled="1"
-
-# path to pre backup script 
-pre_backup_script="/home/pi/pre.sh"
-
-# exit glsysbackup in case execution of pre backup script was not successful
-pre_backup_exit_when_unsuccessful="1"
-
-
-
-#--------------------
-# Post backup script:
-#--------------------
-
-# enable post backup script functionality (possible values: 1|0)
-post_backup_script_enabled="1"
-
-# path to post backup script 
-post_backup_script="/home/pi/post.sh"
-
-# exit glsysbackup in case execution of post backup script was not successful
-post_backup_exit_when_unsuccessful="1"
-
-
-
 #-----------
 # Functions:
 #-----------
 
 printUsage()
 {
-	if [ "${log_to_stdout}" == "1" ] ;then
-		printf "\n"
-	fi
+	setDefaultValues
 
 	printf "Usage: %s OPTIONS\n\n" "${script_name}"
 	printf "Author:\t\t\t%s\n" "${script_author}"
@@ -268,19 +96,14 @@ printUsage()
 	printf "Description:\t\t%s\n\n" "${script_description}"
 	printf "OPTIONS:\n"
 	printf "   -h\t\tShows this help.\n"
+	printf "   -c\t\tPath to config file. (If undefined, default value: '%s' will be used.)\n" "${script_config_file}"
 	printf "   -o\t\tOverride lock in case %s was terminated abnormally.\n" "${script_name}"
 	printf "   -v\t\tShows detailed version information.\n"
-
-	if [ "${log_to_stdout}" == "1" ] ;then
-		printf "\n"
-	fi
 }
 
 printScriptInfos()
 {
-	if [ "${log_to_stdout}" == "1" ] ;then
-		printf "\n"
-	fi
+	setDefaultValues
 
 	printf "Author:\t\t\t%s\n" "${script_author}"
 	printf "Project website:\t%s\n" "${script_project_website}"
@@ -289,10 +112,6 @@ printScriptInfos()
 	printf "Version:\t\t%s\n\n" "${script_version}"
 	printf "Description:\t\t%s\n\n" "${script_description}"
 	printf "Copyright:\t\t%s\n" "${script_copyright}"
-
-	if [ "${log_to_stdout}" == "1" ] ;then
-		printf "\n"
-	fi
 }
 
 checkBin()
@@ -400,6 +219,40 @@ checkRequiredBinaries()
 		fi
 
 	fi
+}
+
+includeConfig()
+{
+	local rc=
+
+	checkFilePermissions "${script_config_file}"
+	rc="${?}"
+
+	case "${rc}" in
+		4|5|6|7)
+			# shellcheck source=/scripts/etc/glsysbackup.inc.sh
+			source "${script_config_file}"
+			rc="${?}"
+
+			if [ "${rc}" == "0" ] ;then
+				checkRequiredBinaries
+			else
+				printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
+				script_exit_code="40"
+				exit
+			fi
+			;;
+		10)
+			printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
+			script_exit_code="41"
+			exit
+			;;
+		*)
+			printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
+			script_exit_code="42"
+			exit
+			;;
+	esac
 }
 
 logHandlerSetConfig()
@@ -769,7 +622,7 @@ delUnencryptedBackupFile()
 {
 	local rc=
 
-	if [ "${backup_encryption_enabled}" == "1" ] ;then
+	if [ "${backup_encryption_enabled:-}" == "1" ] ;then
 		logHandler "Backup encryption is enabled, now we check if unencrypted backup file exists, if it is writeable and delete it..."
 		logHandler "Check if unencrypted backup file: '${backup_full_path}' exists and if it is writeable..."
 
@@ -806,7 +659,7 @@ delInstalledPackagesFile()
 {
 	local rc=
 
-	if [ "${installed_packages_enabled}" == "1" ] ;then
+	if [ "${installed_packages_enabled:-}" == "1" ] ;then
 		logHandler "Installed packages functionality is enabled, now we check if the file exists, if it is writeable and delete it..."
 		logHandler "Check if installed packages file: '${installed_packages_filename}' exists and if it is writeable..."
 
@@ -930,9 +783,7 @@ checkDirectoryPermissions()
 
 setDefaultValues()
 {
-	log_file_full_path="${log_directory}${log_filename}"
-	backup_full_path="${backup_destination_path}${backup_filename}"
-	backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
+	script_config_file="${script_config_file:=/etc/${script_name}.inc.sh}"
 }
 
 checkRootPrivileges()
@@ -1522,14 +1373,6 @@ executePostBackupScript()
 
 
 
-#-------
-# Start:
-#-------
-
-checkRequiredBinaries
-
-
-
 #-------------
 # Get options:
 #-------------
@@ -1538,7 +1381,7 @@ logHandler "Getting options..."
 
 OPTERR="0"
 
-while getopts ":hov" OPTION
+while getopts ":h.c:o.v." OPTION
    do
 	case "${OPTION}" in
 			h)
@@ -1546,6 +1389,9 @@ while getopts ":hov" OPTION
 				script_bypass_exit_routines="1"
 				script_exit_code="170"
 				exit
+				;;
+			c)
+				script_config_file="${OPTARG:-}"
 				;;
 			o)
 				script_override_lock="1"
@@ -1557,14 +1403,14 @@ while getopts ":hov" OPTION
 				exit
 				;;
 			\?)
-				logHandler "Invalid option: -${OPTARG}"
+				printf "Invalid option: -%s\\n\\n" "${OPTARG}"
 				printUsage
 				script_bypass_exit_routines="1"
 				script_exit_code="172"
 				exit
 				;;
 			:)
-				logHandler "Option: -${OPTARG} requires an argument."
+				printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
 				printUsage
 				script_bypass_exit_routines="1"
 				script_exit_code="173"
@@ -1580,6 +1426,7 @@ while getopts ":hov" OPTION
 #------
 
 setDefaultValues
+includeConfig
 checkRootPrivileges
 getUser
 checkBashVersion
