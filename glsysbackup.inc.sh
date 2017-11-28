@@ -45,7 +45,7 @@ log_to_file="0"
 log_directory="/var/log/"
 
 # filename of logfile
-log_filename="${script_name}.log"
+log_filename="glsysbackup.log"
 
 # enable log to stdout (possible values: 1|0)
 log_to_stdout="1"
@@ -138,7 +138,7 @@ backup_verbose_mode_enabled="1"
 backup_destination_path="/var/backups/"
 
 # set backup filename
-backup_filename="${script_name}.${script_hostname}.tar.gz"
+backup_filename="${script_name}.${HOSTNAME%%.*}.tar.gz"
 
 # full path to backupfile
 backup_full_path="${backup_destination_path}${backup_filename}"

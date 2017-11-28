@@ -64,7 +64,6 @@ trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXI
 
 script_pid="${BASHPID}"
 script_name="${0##*/}"
-script_hostname="${HOSTNAME%%.*}"
 script_version="1.0.2-alpha1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
