@@ -38,9 +38,9 @@
 #--------------
 
 #set -x
-set -o noclobber || { printf "Setting essential bash option: 'noclobber' was not successful, terminating...\n" ; exit 245 ; }
-set -o nounset || { printf "Setting essential bash option: 'nounset' was not successful, terminating...\n" ; exit 246 ; }
-set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not successful, terminating...\n" ; exit 247 ; }
+set -o noclobber || { printf "Setting essential bash option: 'noclobber' was not successful, terminating...\\n" ; exit 245 ; }
+set -o nounset || { printf "Setting essential bash option: 'nounset' was not successful, terminating...\\n" ; exit 246 ; }
+set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not successful, terminating...\\n" ; exit 247 ; }
 
 
 
@@ -48,13 +48,13 @@ set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not s
 # Traps:
 #-------
 
-trap 'sigHandler SIGTERM' SIGTERM || { printf "Setting essential trap for signal: 'SIGTERM' was not successful, terminating...\n" ; exit 248 ; }
-trap 'sigHandler SIGINT' SIGINT || { printf "Setting essential trap for signal: 'SIGINT' was not successful, terminating...\n" ; exit 249 ; }
-trap 'sigHandler SIGHUP' SIGHUP || { printf "Setting essential trap for signal: 'SIGHUP' was not successful, terminating...\n" ; exit 250 ; }
-trap 'sigHandler SIGABRT' SIGABRT || { printf "Setting essential trap for signal: 'SIGABRT' was not successful, terminating...\n" ; exit 251 ; }
-trap 'sigHandler SIGQUIT' SIGQUIT || { printf "Setting essential trap for signal: 'SIGQUIT' was not successful, terminating...\n" ; exit 252 ; }
-trap 'sigHandler ERR "${LINENO}" "${BASH_COMMAND}"' ERR || { printf "Setting essential trap for signal: 'ERR' was not successful, terminating...\n" ; exit 253 ; }
-trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXIT' was not successful, terminating...\n" ; exit 254 ; }
+trap 'sigHandler SIGTERM' SIGTERM || { printf "Setting essential trap for signal: 'SIGTERM' was not successful, terminating...\\n" ; exit 248 ; }
+trap 'sigHandler SIGINT' SIGINT || { printf "Setting essential trap for signal: 'SIGINT' was not successful, terminating...\\n" ; exit 249 ; }
+trap 'sigHandler SIGHUP' SIGHUP || { printf "Setting essential trap for signal: 'SIGHUP' was not successful, terminating...\\n" ; exit 250 ; }
+trap 'sigHandler SIGABRT' SIGABRT || { printf "Setting essential trap for signal: 'SIGABRT' was not successful, terminating...\\n" ; exit 251 ; }
+trap 'sigHandler SIGQUIT' SIGQUIT || { printf "Setting essential trap for signal: 'SIGQUIT' was not successful, terminating...\\n" ; exit 252 ; }
+trap 'sigHandler ERR "${LINENO}" "${BASH_COMMAND}"' ERR || { printf "Setting essential trap for signal: 'ERR' was not successful, terminating...\\n" ; exit 253 ; }
+trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXIT' was not successful, terminating...\\n" ; exit 254 ; }
 
 
 
@@ -89,29 +89,29 @@ printUsage()
 {
 	setDefaultValues
 
-	printf "Usage: %s OPTIONS\n\n" "${script_name}"
-	printf "Author:\t\t\t%s\n" "${script_author}"
-	printf "Last modification:\t%s\n" "${script_last_modification_date}"
-	printf "Version:\t\t%s\n\n" "${script_version}"
-	printf "Description:\t\t%s\n\n" "${script_description}"
-	printf "OPTIONS:\n"
-	printf "   -h\t\tShows this help.\n"
-	printf "   -c\t\tPath to config file. (If undefined, default value: '%s' will be used.)\n" "${script_config_file}"
-	printf "   -o\t\tOverride lock in case %s was terminated abnormally.\n" "${script_name}"
-	printf "   -v\t\tShows detailed version information.\n"
+	printf "Usage: %s OPTIONS\\n\\n" "${script_name}"
+	printf "Author:\\t\\t\\t%s\\n" "${script_author}"
+	printf "Last modification:\\t%s\\n" "${script_last_modification_date}"
+	printf "Version:\\t\\t%s\\n\\n" "${script_version}"
+	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
+	printf "OPTIONS:\\n"
+	printf "   -h\\t\\tShows this help.\\n"
+	printf "   -c\\t\\tPath to config file. (If undefined, default value: '%s' will be used.)\\n" "${script_config_file}"
+	printf "   -o\\t\\tOverride lock in case %s was terminated abnormally.\\n" "${script_name}"
+	printf "   -v\\t\\tShows detailed version information.\\n"
 }
 
 printScriptInfos()
 {
 	setDefaultValues
 
-	printf "Author:\t\t\t%s\n" "${script_author}"
-	printf "Project website:\t%s\n" "${script_project_website}"
-	printf "License:\t\t%s\n\n" "${script_license}"
-	printf "Last modification:\t%s\n" "${script_last_modification_date}"
-	printf "Version:\t\t%s\n\n" "${script_version}"
-	printf "Description:\t\t%s\n\n" "${script_description}"
-	printf "Copyright:\t\t%s\n" "${script_copyright}"
+	printf "Author:\\t\\t\\t%s\\n" "${script_author}"
+	printf "Project website:\\t%s\\n" "${script_project_website}"
+	printf "License:\\t\\t%s\\n\\n" "${script_license}"
+	printf "Last modification:\\t%s\\n" "${script_last_modification_date}"
+	printf "Version:\\t\\t%s\\n\\n" "${script_version}"
+	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
+	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
 }
 
 checkBin()
@@ -237,18 +237,18 @@ includeConfig()
 			if [ "${rc}" == "0" ] ;then
 				checkRequiredBinaries
 			else
-				printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
+				printf "Including config file: '%s' was not successful, exiting.\\\n" "${script_config_file}"
 				script_exit_code="40"
 				exit
 			fi
 			;;
 		10)
-			printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
+			printf "Config file: '%s' does not exist, exiting.\\\n" "${script_config_file}"
 			script_exit_code="41"
 			exit
 			;;
 		*)
-			printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
+			printf "Config file: '%s' exists, but it is not readable, exiting.\\\n" "${script_config_file}"
 			script_exit_code="42"
 			exit
 			;;
@@ -260,7 +260,7 @@ logHandlerSetConfig()
 	log_conf="$((2#0000000))"
 
 	if [ "${date_bin_printf:-}" == "1" ] ;then
-		date_cmd="${date_bin:-} '%(${log_timestamp_format})T\n'"
+		date_cmd="${date_bin:-} '%(${log_timestamp_format})T\\n'"
 	else
 		date_cmd="${date_bin:-} '+${log_timestamp_format}'"
 	fi
@@ -319,114 +319,114 @@ logHandler()
 						return
 						;;
 					9) # log to file, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					10) # log to stdout, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					11) # log to syslog, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					12) # log to file and stdout, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					13) # log to file and syslog, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					14) # log to stdout and syslog, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					15) # log to file, stdout and syslog, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\n" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					17) # log to file, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					18) # log to stdout, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					19) # log to syslog, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					20) # log to file and stdout, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					21) # log to file and syslog, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					22) # log to stdout and syslog, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					23) # log to file, stdout and syslog, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					33) # log to file, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					34) # log to stdout, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					35) # log to syslog, zero date, nonzero logger
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 					36) # log to file and stdout, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					37) # log to file and syslog, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
 						;;
 					38) # log to stdout and syslog, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
 						;;
 					39) # log to file, stdout and syslog, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[Date bin not found] %s: [%s] %s\n" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
 						;;
 					65) # log to file, nonzero date, nonzero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					66) # log to stdout, nonzero date, nonzero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					67) # log to syslog, nonzero date, nonzero logger
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 					68) # log to file and stdout, nonzero date, nonzero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					69) # log to file and syslog, nonzero date, nonzero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 					70) # log to stdout and syslog, nonzero date, nonzero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 					71) # log to file, stdout and syslog, nonzero date, nonzero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[%s] %s: [%s] %s\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
 						;;
 		esac
@@ -574,7 +574,7 @@ setLock()
 
 	logHandler "Setting lock..."
 
-	printf "%s\n" "${script_pid}" > "${script_lock_file}"
+	printf "%s\\n" "${script_pid}" > "${script_lock_file}"
 	rc="$?"
 
 	if [ "${rc}" == "0" ] ;then
