@@ -1381,6 +1381,7 @@ logHandler "Getting options..."
 
 OPTERR="0"
 
+# shellcheck disable=SC2213
 while getopts ":h.c:o.v." OPTION
    do
 	case "${OPTION}" in
