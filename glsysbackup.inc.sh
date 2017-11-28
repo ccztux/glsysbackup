@@ -47,9 +47,6 @@ log_directory="/var/log/"
 # filename of logfile
 log_filename="${script_name}.log"
 
-# full path to logfile
-log_file_full_path="${log_directory}${log_filename}"
-
 # enable log to stdout (possible values: 1|0)
 log_to_stdout="1"
 
