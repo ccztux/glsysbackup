@@ -73,6 +73,7 @@ script_description="${script_name} (Generic Linux System Backup) is an advanced 
 script_exit_code="255"
 script_another_instance_is_running="0"
 script_bypass_exit_routines="0"
+script_shutdown_in_progress="0"
 script_override_lock="0"
 
 
@@ -117,7 +118,7 @@ checkBin()
 	local rc=
 
 	_bin="$(which "${binary}" 2>&1)"
-	rc="$?"
+	rc="${?}"
 
 	if [ "${rc}" == "0" ] ;then
 		export "${binary}"_bin="${_bin}"
@@ -169,7 +170,7 @@ checkRequiredBinaries()
 	for bin in "${required_binaries[@]}"
 	   do
 		checkBin "${bin}"
-		rc="$?"
+		rc="${?}"
 
 		if [ "${rc}" != "0" ] ;then
 			binaries_not_found+=("${bin}")
@@ -199,7 +200,7 @@ checkRequiredBinaries()
 			for syspackman in "${supported_syspackage_managers[@]}"
 			   do
 				checkBin "${syspackman}"
-				rc="$?"
+				rc="${?}"
 
 				if [ "${rc}" == "0" ] ;then
 					available_syspackage_managers+=("${syspackman}")
@@ -207,7 +208,7 @@ checkRequiredBinaries()
 			   done
 		else
 			checkBin "${installed_packages_forced_manager}"
-			rc="$?"
+			rc="${?}"
 
 			if [ "${rc}" == "0" ] ;then
 				available_syspackage_managers+=("${installed_packages_forced_manager}")
@@ -439,32 +440,50 @@ sigHandler()
 
 	case "${signal}" in
 		SIGTERM)
-			logHandler "Caught: '${signal}', preparing for exiting..."
+			if [ "${script_shutdown_in_progress}" != "1" ] ;then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
 			script_exit_code="143"
 			exit
 			;;
 		SIGINT)
-			logHandler "Caught: '${signal}', preparing for exiting..."
+			if [ "${script_shutdown_in_progress}" != "1" ] ;then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
 			script_exit_code="130"
 			exit
 			;;
 		SIGHUP)
-			logHandler "Caught: '${signal}', preparing for exiting..."
+			if [ "${script_shutdown_in_progress}" != "1" ] ;then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
 			script_exit_code="129"
 			exit
 			;;
 		SIGABRT)
-			logHandler "Caught: '${signal}', preparing for exiting..."
+			if [ "${script_shutdown_in_progress}" != "1" ] ;then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
 			script_exit_code="134"
 			exit
 			;;
 		SIGQUIT)
-			logHandler "Caught: '${signal}', preparing for exiting..."
+			if [ "${script_shutdown_in_progress}" != "1" ] ;then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
 			script_exit_code="129"
 			exit
 			;;
 		ERR)
-			logHandler "Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'." 
+			if [ "${script_shutdown_in_progress}" != "1" ] ;then
+				logHandler "Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'." 
+			fi
+
 			script_exit_code="1"
 			exit
 			;;
@@ -483,7 +502,7 @@ sigHandler()
 
 				if [ "${script_another_instance_is_running}" != "1" ] ;then
 					checkLock
-					rc="$?"
+					rc="${?}"
 
 					if [ "${rc}" == "0" ] ;then
 						removeLock
@@ -508,7 +527,7 @@ sigHandler()
 			exit ${script_exit_code}
 			;;
 		*)
-			logHandler "Caught: '${signal}' in function: '${FUNCNAME[0]}' but dont know what to do with it..."
+			logHandler "Caught: '${signal}' in function: '${FUNCNAME[0]}', but dont know what to do with it..."
 			return 1
 			;;
 	esac
@@ -521,7 +540,7 @@ checkLock()
 	logHandler "Check if lock file: '${script_lock_file}' exists and if it is read and writeable..."
 
 	checkFilePermissions "${script_lock_file}"
-	rc="$?"
+	rc="${?}"
 
 	case "${rc}" in
 		6|7)
@@ -546,7 +565,7 @@ setLock()
 	logHandler "Check if script lock directory: '${script_lock_directory}' exists and permissions to set lock are ok..."
 
 	checkDirectoryPermissions "${script_lock_directory}"
-	rc="$?"
+	rc="${?}"
 
 	case "${rc}" in
 		3|7)
@@ -577,7 +596,7 @@ setLock()
 	logHandler "Setting lock..."
 
 	printf "%s\\n" "${script_pid}" > "${script_lock_file}"
-	rc="$?"
+	rc="${?}"
 
 	if [ "${rc}" == "0" ] ;then
 		logHandler "Setting lock was successful."
@@ -629,7 +648,7 @@ delUnencryptedBackupFile()
 		logHandler "Check if unencrypted backup file: '${backup_full_path}' exists and if it is writeable..."
 
 		checkFilePermissions "${backup_full_path}"
-		rc="$?"
+		rc="${?}"
 
 		case "${rc}" in
 			2|3|6|7)
@@ -666,7 +685,7 @@ delInstalledPackagesFile()
 		logHandler "Check if installed packages file: '${installed_packages_filename}' exists and if it is writeable..."
 
 		checkFilePermissions "${installed_packages_filename}"
-		rc="$?"
+		rc="${?}"
 
 		case "${rc}" in
 			2|3|6|7)
@@ -718,7 +737,7 @@ checkFilePermissions()
 	local file_permission=
 
 	checkRegularFileExists "${file}"
-	rc="$?"
+	rc="${?}"
 
 	if [ "${rc}" == "0" ] ;then
 		if [ -x "${file}" ] ;then
@@ -762,7 +781,7 @@ checkDirectoryPermissions()
 	local directory_permission=
 
 	checkDirectoryExists "${directory}"
-	rc="$?"
+	rc="${?}"
 
 	if [ "${rc}" == "0" ] ;then
 		if [ -x "${directory}" ] ;then
@@ -862,7 +881,7 @@ checkAlreadyRunningInstance()
 	logHandler "Check if another instance of: '${script_name}' is already running..."
 
 	checkLock
-	rc="$?"
+	rc="${?}"
 
 	if ([ "${rc}" != "0" ] && [ -z "${running_script_pids:-}" ]) ;then
 		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)."
@@ -1007,7 +1026,7 @@ executePreBackupScript()
 		logHandler "Check if pre backup script (${pre_backup_script}) exists and if it is executeable..."
 
 		checkFilePermissions "${pre_backup_script}"
-		rc="$?"
+		rc="${?}"
 
 		case "${rc}" in
 			1|3|5|7)
@@ -1026,7 +1045,7 @@ executePreBackupScript()
 		esac
 
 		eval "${pre_backup_script} 2>&1" | logHandler
-		rc="$?"
+		rc="${?}"
 
 		if [ "${rc}" == "0" ] ;then
 			logHandler "Execution of pre backup script was successful. rc: '${rc}'."
@@ -1058,7 +1077,7 @@ rotateHandler()
 		logHandler "Check if backup directory: '${backup_destination_path}' exists and permissions to move files are ok..."
 
 		checkDirectoryPermissions "${backup_destination_path}"
-		rc="$?"
+		rc="${?}"
 
 		case "${rc}" in
 			3|7)
@@ -1109,7 +1128,7 @@ rotateHandler()
 			logHandler "Check if file: '${file_to_handle}' exists and if it is readable..."
 
 			checkFilePermissions "${file_to_handle}"
-			rc="$?"
+			rc="${?}"
 
 			case "${rc}" in
 				4|5|6|7)
@@ -1199,7 +1218,7 @@ createInstalledPackagesFile()
 							;;
 		esac
 
-		rc="$?"
+		rc="${?}"
 
 		if [ "${rc}" == "0" ] ;then
 			logHandler "Creating installed packages file was successful, adding file to backup_items config array."
@@ -1336,7 +1355,7 @@ executePostBackupScript()
 		logHandler "Check if post backup script (${post_backup_script}) exists and if it is executeable..."
 
 		checkFilePermissions "${post_backup_script}"
-		rc="$?"
+		rc="${?}"
 
 		case "${rc}" in
 			1|3|5|7)
@@ -1355,7 +1374,7 @@ executePostBackupScript()
 		esac
 
 		eval "${post_backup_script} 2>&1" | logHandler
-		rc="$?"
+		rc="${?}"
 
 		if [ "${rc}" == "0" ] ;then
 			logHandler "Execution of post backup script was successful. rc: '${rc}'."
