@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-11-28
+#			2017-12-04
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -67,15 +67,13 @@ script_version="1.0.2-alpha1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2017-11-28"
+script_last_modification_date="2017-12-04"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
 script_another_instance_is_running="0"
 script_bypass_exit_routines="0"
 script_override_lock="0"
-script_lock_directory="/var/lock/"
-script_lock_file="${script_lock_directory}${script_name}"
 
 
 
@@ -236,18 +234,18 @@ includeConfig()
 				checkRequiredBinaries
 			else
 				printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
-				script_exit_code="40"
+				script_exit_code="10"
 				exit
 			fi
 			;;
 		10)
 			printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
-			script_exit_code="41"
+			script_exit_code="11"
 			exit
 			;;
 		*)
 			printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
-			script_exit_code="42"
+			script_exit_code="12"
 			exit
 			;;
 	esac
@@ -560,13 +558,13 @@ setLock()
 				logHandler "Creating script lock directory was successful."
 			else
 				logHandler "Creating script lock directory was not successful."
-				script_exit_code="10"
+				script_exit_code="20"
 				exit
 			fi
 			;;
 		*)
 			logHandler "Script lock directory exists but permissions are not ok, exiting."
-			script_exit_code="11"
+			script_exit_code="21"
 			exit
 			;;
 	esac
@@ -580,7 +578,7 @@ setLock()
 		logHandler "Setting lock was successful."
 	else
 		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock."
-		script_exit_code="12"
+		script_exit_code="22"
 		exit
 	fi
 }
@@ -596,7 +594,7 @@ removeLock()
 		logHandler "Removing lock was successful."
 	else
 		logHandler "Removing lock was not successful."
-		script_exit_code="20"
+		script_exit_code="30"
 		exit
 	fi
 }
@@ -640,7 +638,7 @@ delUnencryptedBackupFile()
 					logHandler "Deleting unencrypted backup file was successful."
 				else
 					logHandler "Deleting unencrypted backup file was not successful."
-					script_exit_code="30"
+					script_exit_code="40"
 				fi
 				;;
 			10)
@@ -648,7 +646,7 @@ delUnencryptedBackupFile()
 				;;
 			*)
 				logHandler "Unencrypted backup file is not writeable, we can not delete it."
-				script_exit_code="311"
+				script_exit_code="41"
 				;;
 		esac
 	fi
@@ -677,7 +675,7 @@ delInstalledPackagesFile()
 					logHandler "Deleting installed packages file was successful."
 				else
 					logHandler "Deleting installed packages file was not successful."
-					script_exit_code="40"
+					script_exit_code="50"
 				fi
 				;;
 			10)
@@ -685,7 +683,7 @@ delInstalledPackagesFile()
 				;;
 			*)
 				logHandler "Installed packages file exists, but it is not writeable, we can not delete it."
-				script_exit_code="41"
+				script_exit_code="51"
 				;;
 		esac
 	fi
@@ -796,7 +794,7 @@ checkRootPrivileges()
 			logHandler "HOORAY, we have root privileges. :)"
 		else
 			logHandler "You must run this script as root, terminating."
-			script_exit_code="50"
+			script_exit_code="60"
 			exit
 		fi
 	else
@@ -827,7 +825,7 @@ checkBashVersion()
 
 	if [ -z "${BASH_VERSINFO[0]}" ] ;then
 		logHandler "Could not determine bash version, exiting."
-		script_exit_code="60"
+		script_exit_code="70"
 		exit
 	else
 		case "${BASH_VERSINFO[0]}" in
@@ -836,7 +834,7 @@ checkBashVersion()
 						;;
 					*)
 						logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
-						script_exit_code="61"
+						script_exit_code="71"
 						exit
 						;;
 		esac
@@ -873,7 +871,7 @@ checkAlreadyRunningInstance()
 			logHandler "HINT: You can override the old left over lock by calling ${script_name} with option '-o'."
 
 			script_another_instance_is_running="1"
-			script_exit_code="70"
+			script_exit_code="80"
 			exit
 		fi
 	elif ([ "${rc}" == "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
@@ -882,7 +880,7 @@ checkAlreadyRunningInstance()
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids}' are running)."
 
 		script_another_instance_is_running="1"
-		script_exit_code="71"
+		script_exit_code="81"
 		exit
 	elif ([ "${rc}" != "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
 		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
@@ -890,7 +888,7 @@ checkAlreadyRunningInstance()
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids}' are running)."
 
 		script_another_instance_is_running="1"
-		script_exit_code="72"
+		script_exit_code="82"
 		exit
 	fi
 }
@@ -907,7 +905,7 @@ reNice()
 			logHandler "Re-nice priority: '${re_nice_priority}' is out of range."
 			logHandler "HINT: Have a look at: 'man renice'."
 
-			script_exit_code="80"
+			script_exit_code="90"
 			exit
 		else
 			logHandler "Re-nice priority: '${re_nice_priority}' is in range."
@@ -920,7 +918,7 @@ reNice()
 				logHandler "Re-niceing was successful."
 			else
 				logHandler "Re-niceing was not successful."
-				script_exit_code="81"
+				script_exit_code="91"
 				exit
 			fi
 		fi
@@ -944,7 +942,7 @@ reIONice()
 			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is out of range."
 			logHandler "HINT: Have a look at: 'man ionice'."
 
-			script_exit_code="90"
+			script_exit_code="100"
 			exit
 		else
 			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is in range."
@@ -960,7 +958,7 @@ reIONice()
 				logHandler "Re-ioniceing priority: '${re_ionice_priority}' is out of range."
 				logHandler "HINT: Have a look at: 'man ionice'."
 
-				script_exit_code="91"
+				script_exit_code="101"
 				exit
 			else
 				logHandler "Re-ioniceing priority: '${re_ionice_scheduling_class}' is in range."
@@ -985,7 +983,7 @@ reIONice()
 			logHandler "Re-ioniceing was successful."
 		else
 			logHandler "Re-ioniceing was not successful."
-			script_exit_code="92"
+			script_exit_code="102"
 			exit
 		fi
 	else
@@ -1012,12 +1010,12 @@ executePreBackupScript()
 				;;
 			10)
 				logHandler "Pre backup script doesnt exist, nothing to do."
-				script_exit_code="100"
+				script_exit_code="110"
 				exit
 				;;
 			*)
 				logHandler "Pre backup script exists, but it is not executeable, nothing to do."
-				script_exit_code="101"
+				script_exit_code="111"
 				exit
 				;;
 		esac
@@ -1032,7 +1030,7 @@ executePreBackupScript()
 
 			if [ "${pre_backup_exit_when_unsuccessful}" == "1" ] ;then
 				logHandler "Breaking, because execution of pre backup script was unsuccessful und you want it."
-				script_exit_code="102"
+				script_exit_code="112"
 				exit
 			fi
 		fi
@@ -1072,13 +1070,13 @@ rotateHandler()
 					logHandler "Creating backup directory was successful."
 				else
 					logHandler "Creating backup directory was not successful."
-					script_exit_code="110"
+					script_exit_code="120"
 					exit
 				fi
 				;;
 			*)
 				logHandler "Backup directory exists but permissions are not ok, exiting."
-				script_exit_code="111"
+				script_exit_code="121"
 				exit
 				;;
 		esac
@@ -1126,7 +1124,7 @@ rotateHandler()
 					;;
 				*)
 					logHandler "File exists but is not readable."
-					script_exit_code="112"
+					script_exit_code="122"
 					exit
 					;;
 			esac
@@ -1160,14 +1158,14 @@ createInstalledPackagesFile()
 				logHandler "HINT: You can force to use one of the supported syspackage managers by setting configuration variable: 'installed_packages_forced_manager'."
 			fi
 
-			script_exit_code="120"
+			script_exit_code="130"
 			exit
 		elif [ "${#available_syspackage_managers[*]}" -eq "1" ] ;then
 			syspackage_manager="${available_syspackage_managers[*]}"
 			logHandler "The supported system package manager we found is: '${syspackage_manager}'."
 		elif [ "${#available_syspackage_managers[*]}" -eq "0" ] ;then
 			logHandler "No supported system package manager found, exiting."
-			script_exit_code="121"
+			script_exit_code="131"
 			exit
 		fi
 
@@ -1191,7 +1189,7 @@ createInstalledPackagesFile()
 							;;
 						*)
 							logHandler "Unsupported syspackage manager used in function: '${FUNCNAME[0]}'. :( Exiting."
-							script_exit_code="122"
+							script_exit_code="132"
 							exit
 							;;
 		esac
@@ -1203,7 +1201,7 @@ createInstalledPackagesFile()
 			backup_items+=("${installed_packages_filename}")
 		else
 			logHandler "Creating installed packages file was not successful."
-			script_exit_code="123"
+			script_exit_code="133"
 			exit
 		fi
 	else
@@ -1260,7 +1258,7 @@ buildBackupOpts()
 								;;
 							*)
 								logHandler "Unsupported compression type configured, exiting."
-								script_exit_code="130"
+								script_exit_code="140"
 								exit
 								;;
 		esac
@@ -1294,7 +1292,7 @@ makeBackup()
 		script_exit_code="0"
 	else
 		logHandler "Backup job was not successful."
-		script_exit_code="140"
+		script_exit_code="150"
 		exit
 	fi
 }
@@ -1314,7 +1312,7 @@ encryptBackup()
 			script_exit_code="0"
 		else
 			logHandler "Encrypting job was not successful."
-			script_exit_code="150"
+			script_exit_code="160"
 			exit
 		fi
 	else
@@ -1341,12 +1339,12 @@ executePostBackupScript()
 				;;
 			10)
 				logHandler "Post backup script doesnt exist, nothing to do."
-				script_exit_code="160"
+				script_exit_code="170"
 				exit
 				;;
 			*)
 				logHandler "Post backup script exists, but it is not executeable, nothing to do."
-				script_exit_code="161"
+				script_exit_code="171"
 				exit
 				;;
 		esac
@@ -1361,7 +1359,7 @@ executePostBackupScript()
 
 			if [ "${post_backup_exit_when_unsuccessful}" == "1" ] ;then
 				logHandler "Breaking, because execution of post backup script was unsuccessful und you want it."
-				script_exit_code="162"
+				script_exit_code="172"
 				exit
 			fi
 		fi
@@ -1387,7 +1385,7 @@ while getopts ":h.c:o.v." OPTION
 			h)
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="170"
+				script_exit_code="180"
 				exit
 				;;
 			c)
@@ -1399,21 +1397,21 @@ while getopts ":h.c:o.v." OPTION
 			v)
 				printScriptInfos
 				script_bypass_exit_routines="1"
-				script_exit_code="171"
+				script_exit_code="181"
 				exit
 				;;
 			\?)
 				printf "Invalid option: -%s\\n\\n" "${OPTARG}"
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="172"
+				script_exit_code="182"
 				exit
 				;;
 			:)
 				printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="173"
+				script_exit_code="183"
 				exit
 				;;
 	esac
