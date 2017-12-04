@@ -497,7 +497,12 @@ sigHandler()
 			logHandler "Bye, bye..."
 
 			if [ ! -z "${kill_bin:-}" ] ;then
-				${kill_bin} -s "${signal}" "${script_pid}"
+				if [ "${signal}" != "EXIT" ] ;then
+					${kill_bin} -s "${signal}" -- -"${script_pid}"
+				else
+					script_shutdown_in_progress="1"
+					${kill_bin} -s SIGTERM -- -"${script_pid}"
+				fi
 			fi
 
 			exit ${script_exit_code}
