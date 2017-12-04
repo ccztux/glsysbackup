@@ -316,10 +316,10 @@ logHandler()
 						return
 						;;
 					9) # log to file, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					10) # log to stdout, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					11) # log to syslog, zero date, zero logger
 						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
@@ -340,11 +340,11 @@ logHandler()
 						;;
 					17) # log to file, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 						;;
 					18) # log to stdout, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					19) # log to syslog, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
@@ -352,8 +352,8 @@ logHandler()
 						;;
 					20) # log to file and stdout, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 						;;
 					21) # log to file and syslog, nonzero date, zero logger
 						log_timestamp="$(eval "${date_cmd}")"
