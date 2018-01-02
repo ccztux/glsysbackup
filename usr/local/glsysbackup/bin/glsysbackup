@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-12-04
+#			2018-01-02
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -67,7 +67,7 @@ script_version="1.0.2-alpha1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2017-12-04"
+script_last_modification_date="2018-01-02"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -93,15 +93,13 @@ printUsage()
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
-	printf "   -c\\t\\tPath to config file. (If undefined, default value: '%s' will be used.)\\n" "${script_config_file}"
+	printf "   -c\\t\\tPath to config file. The file extension has to be: '.conf'. (If undefined, default value: '%s' will be used.)\\n" "${script_config_file}"
 	printf "   -o\\t\\tOverride lock in case %s was terminated abnormally.\\n" "${script_name}"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
 
 printScriptInfos()
 {
-	setDefaultValues
-
 	printf "Author:\\t\\t\\t%s\\n" "${script_author}"
 	printf "Project website:\\t%s\\n" "${script_project_website}"
 	printf "License:\\t\\t%s\\n\\n" "${script_license}"
@@ -179,6 +177,7 @@ checkRequiredBinaries()
 
 	logHandlerSetConfig
 	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
+	logHandler "We are using config file: '${script_config_file}'."
 
 	if [ "${#binaries_not_found[*]}" -gt "1" ] ;then
 		binaries_not_found_helper="${binaries_not_found[*]}"
@@ -222,40 +221,48 @@ includeConfig()
 {
 	local rc=
 
-	checkFilePermissions "${script_config_file}"
-	rc="${?}"
+	checkFileParameters "${script_config_file}"
 
-	case "${rc}" in
-		4|5|6|7)
-			# shellcheck source=/scripts/usr/local/glsysbackup/etc/glsysbackup.conf
-			source "${script_config_file}"
-			rc="${?}"
+	if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_regular_file_is_not_empty)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ]) ;then
+		# shellcheck source=/scripts/usr/local/glsysbackup/etc/glsysbackup.conf
+		source "${script_config_file}"
+		rc="${?}"
 
-			if [ "${rc}" == "0" ] ;then
-				checkRequiredBinaries
-			else
-				printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
-				script_exit_code="10"
-				exit
-			fi
-			;;
-		10)
-			printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
-			script_exit_code="11"
+		if [ "${rc}" == "0" ] ;then
+			checkRequiredBinaries
+		else
+			printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
+			script_bypass_exit_routines="1"
+			script_exit_code="10"
 			exit
-			;;
-		*)
-			printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
-			script_exit_code="12"
-			exit
-			;;
-	esac
+		fi
+	elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
+		printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
+		script_bypass_exit_routines="1"
+		script_exit_code="11"
+		exit
+	elif [ $((file_permission & b_regular_file_is_not_empty)) -eq "0" ] ;then
+		printf "Config file: '%s' exists, but is empty, exiting.\\n" "${script_config_file}"
+		script_bypass_exit_routines="1"
+		script_exit_code="12"
+		exit
+	elif [ $((file_permission & b_permission_read)) -eq "0" ] ;then
+		printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
+		script_bypass_exit_routines="1"
+		script_exit_code="13"
+		exit
+	fi
 }
 
 logHandlerSetConfig()
 {
-	log_conf="$((2#0000000))"
 	log_file_full_path="${log_directory}${log_filename}"
+	log_conf=
+	b_log_to_file="1"
+	b_log_to_stdout="2"
+	b_log_to_syslog="4"
+	b_date_bin_available="8"
+	b_logger_bin_available="16"
 
 	if [ "${date_bin_printf:-}" == "1" ] ;then
 		date_cmd="${date_bin:-} '%(${log_timestamp_format})T\\n'"
@@ -263,32 +270,24 @@ logHandlerSetConfig()
 		date_cmd="${date_bin:-} '+${log_timestamp_format}'"
 	fi
 
-	if ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "0" ]) ;then
-		return
-	elif ([ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "0" ]) ;then
-		log_conf="$((log_conf + 2#0000001))"
-	elif ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "0" ]) ;then
-		log_conf="$((log_conf + 2#0000010))"
-	elif ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "1" ]) ;then
-		log_conf="$((log_conf + 2#0000011))"
-	elif ([ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "0" ]) ;then
-		log_conf="$((log_conf + 2#0000100))"
-	elif ([ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "1" ]) ;then
-		log_conf="$((log_conf + 2#0000101))"
-	elif ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "1" ]) ;then
-		log_conf="$((log_conf + 2#0000110))"
-	elif ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "1" ]) ;then
-		log_conf="$((log_conf + 2#0000111))"
+	if [ "${log_to_file}" == "1" ] ;then
+		log_conf="$((log_conf | b_log_to_file))"
 	fi
 
-	if ([ -z "${date_bin:-}" ] && [ -z "${logger_bin:-}" ]) ;then
-		log_conf="$((log_conf + 2#0001000))"
-	elif ([ ! -z "${date_bin:-}" ] && [ -z "${logger_bin:-}" ]) ;then
-		log_conf="$((log_conf + 2#0010000))"
-	elif ([ -z "${date_bin:-}" ] && [ ! -z "${logger_bin:-}" ]) ;then
-		log_conf="$((log_conf + 2#0100000))"
-	elif ([ ! -z "${date_bin:-}" ] && [ ! -z "${logger_bin:-}" ]) ;then
-		log_conf="$((log_conf + 2#1000000))"
+	if [ "${log_to_stdout}" == "1" ] ;then
+		log_conf="$((log_conf | b_log_to_stdout))"
+	fi
+
+	if [ "${log_to_syslog}" == "1" ] ;then
+		log_conf="$((log_conf | b_log_to_syslog))"
+	fi
+
+	if [ ! -z "${date_bin:-}" ] ;then
+		log_conf="$((log_conf | b_date_bin_available))"
+	fi
+
+	if [ ! -z "${logger_bin:-}" ] ;then
+		log_conf="$((log_conf | b_logger_bin_available))"
 	fi
 }
 
@@ -305,6 +304,10 @@ logHandler()
 	local log_message="${1:-}"
 	local log_timestamp=
 
+	if [ "${script_bypass_exit_routines}" == "1" ] ;then
+		return
+	fi
+
 	if [ -z "${log_message:-}" ] ;then
 		if [ ! -t "0" ] ;then
 			logHandlerStdinHelper
@@ -312,122 +315,35 @@ logHandler()
 	else
 		log_message="${log_message//\`/}"
 
-		case "${log_conf:-}" in
-					8|16|32|64) # log nothing
-						return
-						;;
-					9) # log to file, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						;;
-					10) # log to stdout, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					11) # log to syslog, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					12) # log to file and stdout, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					13) # log to file and syslog, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						;;
-					14) # log to stdout and syslog, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					15) # log to file, stdout and syslog, zero date, zero logger
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					17) # log to file, nonzero date, zero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						;;
-					18) # log to stdout, nonzero date, zero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					19) # log to syslog, nonzero date, zero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					20) # log to file and stdout, nonzero date, zero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					21) # log to file and syslog, nonzero date, zero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						;;
-					22) # log to stdout and syslog, nonzero date, zero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					23) # log to file, stdout and syslog, nonzero date, zero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					33) # log to file, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						;;
-					34) # log to stdout, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					35) # log to syslog, zero date, nonzero logger
-						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
-						;;
-					36) # log to file and stdout, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					37) # log to file and syslog, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
-						;;
-					38) # log to stdout and syslog, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
-						;;
-					39) # log to file, stdout and syslog, zero date, nonzero logger
-						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-						${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
-						;;
-					65) # log to file, nonzero date, nonzero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						;;
-					66) # log to stdout, nonzero date, nonzero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					67) # log to syslog, nonzero date, nonzero logger
-						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
-						;;
-					68) # log to file and stdout, nonzero date, nonzero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-						;;
-					69) # log to file and syslog, nonzero date, nonzero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
-						;;
-					70) # log to stdout and syslog, nonzero date, nonzero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
-						;;
-					71) # log to file, stdout and syslog, nonzero date, nonzero logger
-						log_timestamp="$(eval "${date_cmd}")"
-						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-						printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-						${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
-						;;
-		esac
+		if [ $((log_conf & b_log_to_stdout)) -gt "0" ] ;then
+			if [ $((log_conf & b_date_bin_available)) -gt "0" ] ;then
+				if [ -z "${log_timestamp}" ] ;then
+					log_timestamp="$(eval "${date_cmd}")"
+				fi
+
+				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+			else
+				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
+			fi
+		fi
+
+		if [ $((log_conf & b_log_to_file)) -gt "0" ] ;then
+			if [ $((log_conf & b_date_bin_available)) -gt "0" ] ;then
+				if [ -z "${log_timestamp}" ] ;then
+					log_timestamp="$(eval "${date_cmd}")"
+				fi
+
+				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+			else
+				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+			fi
+		fi
+
+		if [ $((log_conf & b_log_to_syslog)) -gt "0" ] ;then
+			if [ $((log_conf & b_logger_bin_available)) -gt "0" ] ;then
+				${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
+			fi
+		fi
 	fi
 }
 
@@ -493,6 +409,11 @@ sigHandler()
 			if [ "${script_bypass_exit_routines}" != "1" ] ;then
 				cleanUp
 
+				if ([ "${backup_encryption_enabled:-}" == "1" ] && [ "${encryption_successful:-}" == "1" ]) || ([ "${backup_encryption_enabled:-}" == "0" ] && [ "${backup_successful:-}" == "1" ]);then
+					script_exit_code="0"
+					#rotateHandler
+				fi
+
 				if [ "${script_exit_code}" == "0" ] ;then
 					logHandler "We did a great job. :)"
 				else
@@ -508,11 +429,9 @@ sigHandler()
 						removeLock
 					fi
 				fi
-			else
-				logHandler "We hope you are informed better now. :P This was a lazy job. :)"
 			fi
 
-			logHandler "Script was running: '${SECONDS}' seconds."
+			logHandler "Script was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
 			logHandler "Bye, bye..."
 
 			if [ ! -z "${kill_bin:-}" ] ;then
@@ -535,27 +454,20 @@ sigHandler()
 
 checkLock()
 {
-	local rc=
-
 	logHandler "Check if lock file: '${script_lock_file}' exists and if it is read and writeable..."
 
-	checkFilePermissions "${script_lock_file}"
-	rc="${?}"
+	checkFileParameters "${script_lock_file}"
 
-	case "${rc}" in
-		6|7)
-			logHandler "Lock file exists and it is read/writeable."
-			return 0
-			;;
-		10)
-			logHandler "Lock file doesnt exist."
-			return 1
-			;;
-		*)
-			logHandler "Lock file exists, but it is not read/writeable."
-			return 2
-			;;
-	esac
+	if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ]) ;then
+		logHandler "Lock file exists and it is read/writeable."
+		return 0
+	elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
+		logHandler "Lock file doesnt exist."
+		return 1
+	else
+		logHandler "Lock file exists, but it is not read/writeable."
+		return 2
+	fi
 }
 
 setLock()
@@ -564,34 +476,29 @@ setLock()
 
 	logHandler "Check if script lock directory: '${script_lock_directory}' exists and permissions to set lock are ok..."
 
-	checkDirectoryPermissions "${script_lock_directory}"
-	rc="${?}"
+	checkFileParameters "${script_lock_directory}"
 
-	case "${rc}" in
-		3|7)
-			logHandler "Script lock directory exists and permissions are ok."
-			;;
-		10)
-			logHandler "Script lock directory doesnt exist."
-			logHandler "Creating script lock directory..."
+	if ([ $((file_permission & b_is_directory)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ]) ;then
+		logHandler "Script lock directory exists and permissions are ok."
+	elif [ $((file_permission & b_is_directory)) -eq "0" ] ;then
+		logHandler "Script lock directory doesnt exist."
+		logHandler "Creating script lock directory..."
 
-			# shellcheck disable=SC2154
-			${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
+		# shellcheck disable=SC2154
+		${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
 
-			if [ "${PIPESTATUS[0]}" == "0" ] ;then
-				logHandler "Creating script lock directory was successful."
-			else
-				logHandler "Creating script lock directory was not successful."
-				script_exit_code="20"
-				exit
-			fi
-			;;
-		*)
-			logHandler "Script lock directory exists but permissions are not ok, exiting."
-			script_exit_code="21"
+		if [ "${PIPESTATUS[0]}" == "0" ] ;then
+			logHandler "Creating script lock directory was successful."
+		else
+			logHandler "Creating script lock directory was not successful."
+			script_exit_code="20"
 			exit
-			;;
-	esac
+		fi
+	else
+		logHandler "Script lock directory exists but permissions are not ok, exiting."
+		script_exit_code="21"
+		exit
+	fi
 
 	logHandler "Setting lock..."
 
@@ -641,170 +548,150 @@ cleanUp()
 
 delUnencryptedBackupFile()
 {
-	local rc=
-
 	if [ "${backup_encryption_enabled:-}" == "1" ] ;then
 		logHandler "Backup encryption is enabled, now we check if unencrypted backup file exists, if it is writeable and delete it..."
 		logHandler "Check if unencrypted backup file: '${backup_full_path}' exists and if it is writeable..."
 
-		checkFilePermissions "${backup_full_path}"
-		rc="${?}"
+		checkFileParameters "${backup_full_path}"
 
-		case "${rc}" in
-			2|3|6|7)
-				logHandler "Unencrypted backup file  exists and it is writeable."
-				logHandler "Deleting unencrypted backup file..."
+		if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ]) ;then
+			logHandler "Unencrypted backup file  exists and it is writeable."
+			logHandler "Deleting unencrypted backup file..."
 
-				# shellcheck disable=SC2154
-				${rm_bin} "${backup_full_path}" 2>&1 | logHandler
+			# shellcheck disable=SC2154
+			${rm_bin} "${backup_full_path}" 2>&1 | logHandler
 
-				if [ "${PIPESTATUS[0]}" == "0" ] ;then
-					logHandler "Deleting unencrypted backup file was successful."
-				else
-					logHandler "Deleting unencrypted backup file was not successful."
-					script_exit_code="40"
-				fi
-				;;
-			10)
-				logHandler "Unencrypted backup file doesnt exist, nothing to do."
-				;;
-			*)
-				logHandler "Unencrypted backup file is not writeable, we can not delete it."
-				script_exit_code="41"
-				;;
-		esac
+			if [ "${PIPESTATUS[0]}" == "0" ] ;then
+				logHandler "Deleting unencrypted backup file was successful."
+			else
+				logHandler "Deleting unencrypted backup file was not successful."
+				script_exit_code="40"
+			fi
+		elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
+			logHandler "Unencrypted backup file doesnt exist, nothing to do."
+		else
+			logHandler "Unencrypted backup file is not writeable, we can not delete it."
+			script_exit_code="41"
+		fi
 	fi
 }
 
 delInstalledPackagesFile()
 {
-	local rc=
-
 	if [ "${installed_packages_enabled:-}" == "1" ] ;then
 		logHandler "Installed packages functionality is enabled, now we check if the file exists, if it is writeable and delete it..."
 		logHandler "Check if installed packages file: '${installed_packages_filename}' exists and if it is writeable..."
 
-		checkFilePermissions "${installed_packages_filename}"
-		rc="${?}"
+		checkFileParameters "${installed_packages_filename}"
 
-		case "${rc}" in
-			2|3|6|7)
-				logHandler "Installed packages file exists and is writeable."
-				logHandler "Deleting installed packages file..."
+		if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ]) ;then
+			logHandler "Installed packages file exists and is writeable."
+			logHandler "Deleting installed packages file..."
 
-				# shellcheck disable=SC2154
-				${rm_bin} "${installed_packages_filename}" 2>&1 | logHandler
+			# shellcheck disable=SC2154
+			${rm_bin} "${installed_packages_filename}" 2>&1 | logHandler
 
-				if [ "${PIPESTATUS[0]}" == "0" ] ;then
-					logHandler "Deleting installed packages file was successful."
-				else
-					logHandler "Deleting installed packages file was not successful."
-					script_exit_code="50"
-				fi
-				;;
-			10)
-				logHandler "Installed packages file doesnt exist, nothing to do."
-				;;
-			*)
-				logHandler "Installed packages file exists, but it is not writeable, we can not delete it."
-				script_exit_code="51"
-				;;
-		esac
+			if [ "${PIPESTATUS[0]}" == "0" ] ;then
+				logHandler "Deleting installed packages file was successful."
+			else
+				logHandler "Deleting installed packages file was not successful."
+				script_exit_code="50"
+			fi
+		elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
+			logHandler "Installed packages file doesnt exist, nothing to do."
+		else
+			logHandler "Installed packages file exists, but it is not writeable, we can not delete it."
+			script_exit_code="51"
+		fi
 	fi
 }
 
-checkRegularFileExists()
+checkFileParameters()
 {
 	local file="${1:-}"
+	local file_parameters=()
+
+	file_permission=
+	b_permission_execute="1"
+	b_permission_write="2"
+	b_permission_read="4"
+	b_regular_file_exists="8"
+	b_regular_file_is_not_empty="16"
+	b_is_directory="32"
+
+	if [ -x "${file}" ] ;then
+		file_permission="$((file_permission | b_permission_execute))"
+	fi
+
+	if [ -w "${file}" ] ;then
+		file_permission="$((file_permission | b_permission_write))"
+	fi
+
+	if [ -r "${file}" ] ;then
+		file_permission="$((file_permission | b_permission_read))"
+	fi
 
 	if [ -f "${file}" ] ;then
-		return 0
-	else
-		return 1
-	fi
-}
+		file_permission="$((file_permission | b_regular_file_exists))"
 
-checkFilePermissions()
-{
-	# file doesnt exist:	rc=10
-	# read allowed:		rc=4|5|6|7
-	# write allowed:	rc=2|3|6|7
-	# execute allowed:	rc=1|3|5|7
-	# read/write allowed:	rc=6|7
-
-	local file="${1:-}"
-	local rc=
-	local file_permission=
-
-	checkRegularFileExists "${file}"
-	rc="${?}"
-
-	if [ "${rc}" == "0" ] ;then
-		if [ -x "${file}" ] ;then
-			file_permission="$((file_permission + 2#0001))"
-		fi
-
-		if [ -w "${file}" ] ;then
-			file_permission="$((file_permission + 2#0010))"
-		fi
-
-		if [ -r "${file}" ] ;then
-			file_permission="$((file_permission + 2#0100))"
+		if [ -s "${file}" ] ;then
+			file_permission="$((file_permission | b_regular_file_is_not_empty))"
 		fi
 	else
-		file_permission="$((2#1010))"
+		if [ -d "${file}" ] ;then
+			file_permission="$((file_permission | b_is_directory))"
+		fi
 	fi
 
-	return "${file_permission}"
-}
+	case 1 in
+		$(( (file_permission & b_permission_execute) >0 )) )
+							file_parameters+=("Permission: x")
+							;;&
+		$(( (file_permission & b_permission_write) >0 )) )
+							file_parameters+=("Permission: w")
+							;;&
+		$(( (file_permission & b_permission_read) >0 )) )
+							file_parameters+=("Permission: r")
+							;;&
+		$(( (file_permission & b_regular_file_exists) >0 )) )
+							file_parameters+=("Type: regular file")
+							;;&
+		$(( (file_permission & b_regular_file_is_not_empty) >0 )) )
+							file_parameters+=("Is empty: not empty")
+							;;&
+		$(( (file_permission & b_is_directory) >0 )) )
+							file_parameters+=("Type: directory")
+							;;&
+	esac
 
-checkDirectoryExists()
-{
-	local directory="${1:-}"
 
-	if [ -d "${directory}" ] ;then
-		return 0
-	else
-		return 1
-	fi
-}
-
-checkDirectoryPermissions()
-{
-	# directory doesnt exist:	rc=10
-	# read allowed:			rc=4|5|6|7
-	# write allowed:		rc=2|3|6|7
-	# execute allowed:		rc=1|3|5|7
-
-	local directory="${1:-}"
-	local rc=
-	local directory_permission=
-
-	checkDirectoryExists "${directory}"
-	rc="${?}"
-
-	if [ "${rc}" == "0" ] ;then
-		if [ -x "${directory}" ] ;then
-			directory_permission="$((directory_permission + 2#0001))"
+	for parameter in "${!file_parameters[@]}"
+	   do
+	   	if [ "${parameter}" == "0" ] ;then
+			echo -n "File parameters: "
 		fi
 
-		if [ -w "${directory}" ] ;then
-			directory_permission="$((directory_permission + 2#0010))"
-		fi
-
-		if [ -r "${directory}" ] ;then
-			directory_permission="$((directory_permission + 2#0100))"
-		fi
-	else
-		directory_permission="$((2#1010))"
-	fi
-
-	return "${directory_permission}"
+	   	echo -n "${file_parameters[${parameter}]}, "
+	   done | logHandler
 }
 
 setDefaultValues()
 {
 	script_config_file="${script_config_file:=/usr/local/glsysbackup/etc/${script_name}.conf}"
+	script_config_name="${script_config_file##*/}"
+	script_config_name="${script_config_name//.conf/}"
+}
+
+checkOpts()
+{
+	if [[ ! "${script_config_file}" =~ ^(.*).conf$ ]] ;then
+		printf "Unsupported file extension of config file: '%s', exiting.\\n\\n" "${script_config_file}"
+		printUsage
+		
+		script_bypass_exit_routines="1"
+		script_exit_code="60"
+		exit
+	fi
 }
 
 checkRootPrivileges()
@@ -1025,24 +912,19 @@ executePreBackupScript()
 		logHandler "Pre backup script functionality is enabled."
 		logHandler "Check if pre backup script (${pre_backup_script}) exists and if it is executeable..."
 
-		checkFilePermissions "${pre_backup_script}"
-		rc="${?}"
+		checkFileParameters "${pre_backup_script}"
 
-		case "${rc}" in
-			1|3|5|7)
-				logHandler "Pre backup script exists and it is executeable, so we execute it..."
-				;;
-			10)
-				logHandler "Pre backup script doesnt exist, nothing to do."
-				script_exit_code="110"
-				exit
-				;;
-			*)
-				logHandler "Pre backup script exists, but it is not executeable, nothing to do."
-				script_exit_code="111"
-				exit
-				;;
-		esac
+		if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ]) ;then
+			logHandler "Pre backup script exists and it is executeable, so we execute it..."
+		elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
+			logHandler "Pre backup script doesnt exist, nothing to do."
+			script_exit_code="110"
+			exit
+		else
+			logHandler "Pre backup script exists, but it is not executeable, nothing to do."
+			script_exit_code="111"
+			exit
+		fi
 
 		eval "${pre_backup_script} 2>&1" | logHandler
 		rc="${?}"
@@ -1076,7 +958,7 @@ rotateHandler()
 		logHandler "Backup rotation is enabled."
 		logHandler "Check if backup directory: '${backup_destination_path}' exists and permissions to move files are ok..."
 
-		checkDirectoryPermissions "${backup_destination_path}"
+		#checkDirectoryPermissions "${backup_destination_path}"
 		rc="${?}"
 
 		case "${rc}" in
@@ -1127,7 +1009,7 @@ rotateHandler()
 
 			logHandler "Check if file: '${file_to_handle}' exists and if it is readable..."
 
-			checkFilePermissions "${file_to_handle}"
+			#checkFilePermissions "${file_to_handle}"
 			rc="${?}"
 
 			case "${rc}" in
@@ -1140,6 +1022,7 @@ rotateHandler()
 					if [ "${PIPESTATUS[0]}" == "0" ] ;then
 						logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotation_files_to_keep}' was successful."
 					else
+						script_exit_code="122"
 						logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotation_files_to_keep}' was not successful."
 					fi
 					;;
@@ -1148,7 +1031,7 @@ rotateHandler()
 					;;
 				*)
 					logHandler "File exists but is not readable."
-					script_exit_code="122"
+					script_exit_code="123"
 					exit
 					;;
 			esac
@@ -1292,6 +1175,10 @@ buildBackupOpts()
 		backup_options+=("--verbose")
 	fi
 
+	if [ "${backup_show_totals}" == "1" ] ;then
+		backup_options+=("--totals")
+	fi
+
 	logHandler "We build the following backup options: '${backup_options[*]}'."
 }
 
@@ -1313,7 +1200,7 @@ makeBackup()
 
 	if [ "${PIPESTATUS[0]}" == "0" ] ;then
 		logHandler "Backup job was successful."
-		script_exit_code="0"
+		backup_successful="1"
 	else
 		logHandler "Backup job was not successful."
 		script_exit_code="150"
@@ -1333,7 +1220,7 @@ encryptBackup()
 		if [ "${PIPESTATUS[0]}" == "0" ] ;then
 			logHandler "Encrypting job was successful."
 			logHandler "HINT: To decrypt use this command: '${openssl_bin} aes-256-cbc -d -salt -in ${backup_encryption_filename} -out ${backup_full_path}'."
-			script_exit_code="0"
+			encryption_successful="1"
 		else
 			logHandler "Encrypting job was not successful."
 			script_exit_code="160"
@@ -1354,24 +1241,19 @@ executePostBackupScript()
 		logHandler "Post backup script functionality is enabled."
 		logHandler "Check if post backup script (${post_backup_script}) exists and if it is executeable..."
 
-		checkFilePermissions "${post_backup_script}"
-		rc="${?}"
+		checkFileParameters "${post_backup_script}"
 
-		case "${rc}" in
-			1|3|5|7)
-				logHandler "Post backup script exists and it is executeable, so we execute it..."
-				;;
-			10)
-				logHandler "Post backup script doesnt exist, nothing to do."
-				script_exit_code="170"
-				exit
-				;;
-			*)
-				logHandler "Post backup script exists, but it is not executeable, nothing to do."
-				script_exit_code="171"
-				exit
-				;;
-		esac
+		if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ]) ;then
+			logHandler "Post backup script exists and it is executeable, so we execute it..."
+		elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
+			logHandler "Post backup script doesnt exist, nothing to do."
+			script_exit_code="170"
+			exit
+		else
+			logHandler "Post backup script exists, but it is not executeable, nothing to do."
+			script_exit_code="171"
+			exit
+		fi
 
 		eval "${post_backup_script} 2>&1" | logHandler
 		rc="${?}"
@@ -1398,8 +1280,6 @@ executePostBackupScript()
 # Get options:
 #-------------
 
-logHandler "Getting options..."
-
 OPTERR="0"
 
 # shellcheck disable=SC2213
@@ -1413,7 +1293,7 @@ while getopts ":h.c:o.v." OPTION
 				exit
 				;;
 			c)
-				script_config_file="${OPTARG:-}"
+				script_config_file="${OPTARG}"
 				;;
 			o)
 				script_override_lock="1"
@@ -1448,6 +1328,7 @@ while getopts ":h.c:o.v." OPTION
 #------
 
 setDefaultValues
+checkOpts
 includeConfig
 checkRootPrivileges
 getUser
@@ -1456,7 +1337,6 @@ checkAlreadyRunningInstance
 reNice
 reIONice
 executePreBackupScript
-rotateHandler
 createInstalledPackagesFile
 buildExcludeOpts
 buildBackupOpts
