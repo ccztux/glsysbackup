@@ -609,7 +609,6 @@ delInstalledPackagesFile()
 checkFileParameters()
 {
 	local file="${1:-}"
-	local file_parameters=()
 
 	file_permission=
 	b_permission_execute="1"
