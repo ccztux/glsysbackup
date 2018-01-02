@@ -642,37 +642,6 @@ checkFileParameters()
 			file_permission="$((file_permission | b_is_directory))"
 		fi
 	fi
-
-	case 1 in
-		$(( (file_permission & b_permission_execute) >0 )) )
-							file_parameters+=("Permission: x")
-							;;&
-		$(( (file_permission & b_permission_write) >0 )) )
-							file_parameters+=("Permission: w")
-							;;&
-		$(( (file_permission & b_permission_read) >0 )) )
-							file_parameters+=("Permission: r")
-							;;&
-		$(( (file_permission & b_regular_file_exists) >0 )) )
-							file_parameters+=("Type: regular file")
-							;;&
-		$(( (file_permission & b_regular_file_is_not_empty) >0 )) )
-							file_parameters+=("Is empty: not empty")
-							;;&
-		$(( (file_permission & b_is_directory) >0 )) )
-							file_parameters+=("Type: directory")
-							;;&
-	esac
-
-
-	for parameter in "${!file_parameters[@]}"
-	   do
-	   	if [ "${parameter}" == "0" ] ;then
-			echo -n "File parameters: "
-		fi
-
-	   	echo -n "${file_parameters[${parameter}]}, "
-	   done | logHandler
 }
 
 setDefaultValues()
