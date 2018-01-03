@@ -148,7 +148,7 @@ checkRequiredBinaries()
 	fi
 
 	if [ "${backup_rotation_enabled}" == "1" ] ;then
-		required_binaries+=("mv")
+		required_binaries+=("cp")
 	fi
 
 	if [ "${backup_encryption_enabled}" == "1" ] ;then
@@ -265,9 +265,11 @@ logHandlerSetConfig()
 	b_logger_bin_available="16"
 
 	if [ "${date_bin_printf:-}" == "1" ] ;then
-		date_cmd="${date_bin:-} '%(${log_timestamp_format})T\\n'"
+		date_cmd_format_prefix="'%("
+		date_cmd_format_suffix=")T\\n'"
 	else
-		date_cmd="${date_bin:-} '+${log_timestamp_format}'"
+		date_cmd_format_prefix="'+"
+		date_cmd_format_suffix="'"
 	fi
 
 	if [ "${log_to_file}" == "1" ] ;then
@@ -318,7 +320,7 @@ logHandler()
 		if [ $((log_conf & b_log_to_stdout)) -gt "0" ] ;then
 			if [ $((log_conf & b_date_bin_available)) -gt "0" ] ;then
 				if [ -z "${log_timestamp}" ] ;then
-					log_timestamp="$(eval "${date_cmd}")"
+					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
 				fi
 
 				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
@@ -330,7 +332,7 @@ logHandler()
 		if [ $((log_conf & b_log_to_file)) -gt "0" ] ;then
 			if [ $((log_conf & b_date_bin_available)) -gt "0" ] ;then
 				if [ -z "${log_timestamp}" ] ;then
-					log_timestamp="$(eval "${date_cmd}")"
+					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
 				fi
 
 				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
@@ -983,15 +985,17 @@ rotateHandler()
 {
 	local rc=
 	local file=
-	local file_to_handle=
-	local file_helper=
+	local actual_weekday=
+	local actual_weekday_format="%u"
+	local rotation_daily_timestamp_format="%Y-%m-%d_%Hh%Mm_%A"
+	local rotation_weekly_timestamp_format="%Y-%m-%d_%Hh%Mm_%W"
+	local rotation_monthly_timestamp_format="%Y-%m-%d_%Hh%Mm_%B"
+	local rotation_types=("daily" "weekly" "monthly")
 
 	logHandler "Check if backup rotation is enabled..."
 
 	if [ "${backup_rotation_enabled}" == "1" ] ;then
 		logHandler "Backup rotation is enabled."
-
-		return
 
 		if [ "${backup_encryption_enabled}" == "1" ] ;then
 			file="${backup_encryption_filename}"
@@ -999,51 +1003,21 @@ rotateHandler()
 			file="${backup_full_path}"
 		fi
 
-		backup_rotation_files_to_keep=$((backup_rotation_files_to_keep - 1))
-		
-		logHandler "Rotating backup files..."
+		actual_weekday="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_weekday_format}${date_cmd_format_suffix}")"
 
-		while [ "${backup_rotation_files_to_keep}" -gt "0" ]
+		for rotation_type in "${rotation_types[@]}"
 		   do
-			file_helper=$((backup_rotation_files_to_keep - 1))
-
-			if [ "${backup_rotation_files_to_keep}" != "1" ] ;then
-				file_to_handle="${file}.${file_helper}"
-			else
-				file_to_handle="${file}"
-			fi
-
-			logHandler "Check if file: '${file_to_handle}' exists and if it is readable..."
-
-			#checkFilePermissions "${file_to_handle}"
-			rc="${?}"
-
-			case "${rc}" in
-				4|5|6|7)
-					logHandler "File exists and is readable, do rotation..."
-
-					# shellcheck disable=SC2154
-					${mv_bin} "${file_to_handle}" "${file}.${backup_rotation_files_to_keep}" 2>&1 | logHandler
-
-					if [ "${PIPESTATUS[0]}" == "0" ] ;then
-						logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotation_files_to_keep}' was successful."
-					else
-						script_exit_code="132"
-						logHandler "Rotating file: '${file_to_handle}' ==> '${file}.${backup_rotation_files_to_keep}' was not successful."
-					fi
-					;;
-				10)
-					logHandler "File doesnt exist, nothing to do."
-					;;
-				*)
-					logHandler "File exists but is not readable."
-					script_exit_code="133"
-					exit
-					;;
+		   	case "${rotation_type}" in
+						daily)
+							logHandler "Do the daily things..."
+							;;
+						weekly)
+							logHandler "Do the weekly things..."
+							;;
+						monthly)
+							logHandler "Do the monthly things..."
+							;;
 			esac
-
-			backup_rotation_files_to_keep=$((backup_rotation_files_to_keep - 1))
-
 		   done
 	else
 		logHandler "Backup rotation is not enabled."
