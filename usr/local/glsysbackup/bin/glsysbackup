@@ -411,7 +411,7 @@ sigHandler()
 
 				if ([ "${backup_encryption_enabled:-}" == "1" ] && [ "${encryption_successful:-}" == "1" ]) || ([ "${backup_encryption_enabled:-}" == "0" ] && [ "${backup_successful:-}" == "1" ]);then
 					script_exit_code="0"
-					#rotateHandler
+					rotateHandler
 				fi
 
 				if [ "${script_exit_code}" == "0" ] ;then
@@ -645,7 +645,10 @@ checkFileParameters()
 
 setDefaultValues()
 {
-	script_config_file="${script_config_file:=/usr/local/glsysbackup/etc/${script_name}.conf}"
+	script_base_path="/usr/local/${script_name}"
+	script_lock_directory="${script_base_path}/var/lock"
+	script_lock_file="${script_lock_directory}/${script_name}.lock"
+	script_config_file="${script_config_file:=${script_base_path}/etc/${script_name}.conf}"
 	script_config_name="${script_config_file##*/}"
 	script_config_name="${script_config_name//.conf/}"
 }
@@ -913,6 +916,72 @@ executePreBackupScript()
 	fi
 }
 
+checkBackupDirStructure()
+{
+	local dir_helper=
+	local backup_dirs=("daily" "weekly" "monthly" "latest")
+	backup_full_path="${backup_destination_path}/${HOSTNAME}/${script_config_name}"
+
+	logHandler "Check backup dir structure..."
+	logHandler "Check if backup directory: '${backup_destination_path}' exists and permissions to move files are ok..."
+
+	checkFileParameters "${backup_destination_path}"
+
+	if ([ $((file_permission & b_is_directory)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ]) ;then
+		logHandler "Backup directory exists and permissions are ok."
+	elif [ $((file_permission & b_is_directory)) -eq "0" ] ;then
+		logHandler "Backup directory doesnt exist."
+		logHandler "Creating backup directory..."
+
+		# shellcheck disable=SC2154
+		${mkdir_bin} -p "${backup_destination_path}" 2>&1 | logHandler
+
+		if [ "${PIPESTATUS[0]}" == "0" ] ;then
+			logHandler "Creating backup directory was successful."
+		else
+			logHandler "Creating backup directory was not successful."
+			script_exit_code="130"
+			exit
+		fi
+	else
+		logHandler "Backup directory exists but permissions are not ok, exiting."
+		script_exit_code="131"
+		exit
+	fi
+
+	for dir in "${backup_dirs[@]}"
+	   do
+	   	dir_helper="${backup_full_path}/${dir}"
+
+	   	checkFileParameters "${dir_helper}"
+
+		if ([ $((file_permission & b_is_directory)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ]) ;then
+			logHandler "Directory: '${dir_helper}' exist, nothing to do."
+		elif [ $((file_permission & b_is_directory)) -eq "0" ] ;then
+			logHandler "Directory: '${dir_helper}' doesnt exist."
+			logHandler "Creating directory..."
+
+			# shellcheck disable=SC2154
+			${mkdir_bin} -p "${dir_helper}" 2>&1 | logHandler
+
+			if [ "${PIPESTATUS[0]}" == "0" ] ;then
+				logHandler "Creating directory: '${dir_helper}' was successful."
+			else
+				logHandler "Creating directory: '${dir_helper}' was not successful."
+				script_exit_code="20"
+				exit
+			fi
+		else
+			logHandler "Directory: '${dir_helper}' exists but permissions are not ok, exiting."
+			script_exit_code="21"
+			exit
+		fi
+	   done
+
+	backup_filename="${backup_filename_prefix}.tar.gz"
+	backup_full_path="${backup_destination_path}/${HOSTNAME}/${script_config_name}/latest/${backup_filename}"
+}
+
 rotateHandler()
 {
 	local rc=
@@ -924,36 +993,8 @@ rotateHandler()
 
 	if [ "${backup_rotation_enabled}" == "1" ] ;then
 		logHandler "Backup rotation is enabled."
-		logHandler "Check if backup directory: '${backup_destination_path}' exists and permissions to move files are ok..."
 
-		#checkDirectoryPermissions "${backup_destination_path}"
-		rc="${?}"
-
-		case "${rc}" in
-			3|7)
-				logHandler "Backup directory exists and permissions are ok."
-				;;
-			10)
-				logHandler "Backup directory doesnt exist."
-				logHandler "Creating backup directory..."
-
-				# shellcheck disable=SC2154
-				${mkdir_bin} -p "${backup_destination_path}" 2>&1 | logHandler
-
-				if [ "${PIPESTATUS[0]}" == "0" ] ;then
-					logHandler "Creating backup directory was successful."
-				else
-					logHandler "Creating backup directory was not successful."
-					script_exit_code="130"
-					exit
-				fi
-				;;
-			*)
-				logHandler "Backup directory exists but permissions are not ok, exiting."
-				script_exit_code="131"
-				exit
-				;;
-		esac
+		return
 
 		if [ "${backup_encryption_enabled}" == "1" ] ;then
 			file="${backup_encryption_filename}"
@@ -1179,6 +1220,8 @@ makeBackup()
 encryptBackup()
 {
 	if [ "${backup_encryption_enabled}" == "1" ] ;then
+		backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
+
 		logHandler "Backup encryption is enabled..."
 		logHandler "Encrypting backup file: '${backup_full_path}'..."
 
@@ -1304,6 +1347,7 @@ checkBashVersion
 checkAlreadyRunningInstance
 reNice
 reIONice
+checkBackupDirStructure
 executePreBackupScript
 createInstalledPackagesFile
 buildExcludeOpts
