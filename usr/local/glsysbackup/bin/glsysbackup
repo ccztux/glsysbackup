@@ -977,9 +977,6 @@ checkBackupDirStructure()
 			exit
 		fi
 	   done
-
-	backup_filename="${backup_filename_prefix}.tar.gz"
-	backup_full_path="${backup_destination_path}/${HOSTNAME}/${script_config_name}/latest/${backup_filename}"
 }
 
 rotateHandler()
@@ -1150,27 +1147,33 @@ buildBackupOpts()
 {
 	logHandler "Building backup options..."
 
-	backup_options=("--create" "--file=${backup_full_path}")
+	backup_options=("--create")
 
 	if [ "${backup_compression_enabled}" == "1" ] ;then
 		case "${backup_compression_type}" in
 							gzip)
 								backup_options+=("--gzip")
+								backup_file_extension="tar.gz"
 								;;
 							bzip2)
 								backup_options+=("--bzip2")
+								backup_file_extension="tar.bz"
 								;;
 							xz)
 								backup_options+=("--xz")
+								backup_file_extension="tar.xz"
 								;;
 							lzip)
 								backup_options+=("--lzip")
+								backup_file_extension="tar.lz"
 								;;
 							lzma)
 								backup_options+=("--lzma")
+								backup_file_extension="tar.lzma"
 								;;
 							lzop)
 								backup_options+=("--lzop")
+								backup_file_extension="tar.lzop"
 								;;
 							*)
 								logHandler "Unsupported compression type configured, exiting."
@@ -1179,6 +1182,9 @@ buildBackupOpts()
 								;;
 		esac
 	fi
+
+	backup_full_path="${backup_destination_path}/${HOSTNAME}/${script_config_name}/latest/${backup_filename_prefix}.${backup_file_extension}"
+	backup_options+=("--file=${backup_full_path}")
 
 	if [ "${backup_verbose_mode_enabled}" == "1" ] ;then
 		backup_options+=("--verbose")
@@ -1220,7 +1226,7 @@ makeBackup()
 encryptBackup()
 {
 	if [ "${backup_encryption_enabled}" == "1" ] ;then
-		backup_encryption_filename="${backup_full_path//tar.gz/aes.tar.gz}"
+		backup_encryption_filename="${backup_full_path//${backup_file_extension}/aes.${backup_file_extension}}"
 
 		logHandler "Backup encryption is enabled..."
 		logHandler "Encrypting backup file: '${backup_full_path}'..."
