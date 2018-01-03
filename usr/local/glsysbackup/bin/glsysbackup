@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2018-01-02
+#			2018-01-03
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -63,11 +63,11 @@ trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXI
 
 script_pid="${BASHPID}"
 script_name="${0##*/}"
-script_version="1.0.2-alpha1"
+script_version="2.0.0-alpha1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2018-01-02"
+script_last_modification_date="2018-01-03"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -93,7 +93,7 @@ printUsage()
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
-	printf "   -c\\t\\tPath to config file. The file extension has to be: '.conf'. (If undefined, default value: '%s' will be used.)\\n" "${script_config_file}"
+	printf "   -c\\t\\tPath to config file. The file extension has to be: '.conf'. (If undefined, default value: '%s/etc/%s.conf' will be used.)\\n" "${script_base_path}" "${script_name}"
 	printf "   -o\\t\\tOverride lock in case %s was terminated abnormally.\\n" "${script_name}"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
