@@ -991,6 +991,7 @@ cleanTodaysOldBackups()
 	local todays_timestamp=
 	todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
 	local file_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_${todays_timestamp}"
+	# shellcheck disable=SC2206
 	local files=(${file_base_name}*)
 
 	logHandler "Check if old backups of type: '${rotation_type}' from today exists..."
@@ -1032,11 +1033,12 @@ rotateOldBackups()
 {
 	local rotation_type="${1:-}"
 	local file=
-	local file_timestamp_converted=
+	#local file_timestamp_converted=
 	local file_timestamp=
 	local file_timestamps=()
 	local timestamp=
 	local file_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_"
+	# shellcheck disable=SC2206
 	local files=(${file_base_name}*)
 	local regex="^(${file_base_name})([0-9]{4})-([0|1][0-9])-([0|1|2|3][0-9])_(.*).(${file_extension})$"
 
