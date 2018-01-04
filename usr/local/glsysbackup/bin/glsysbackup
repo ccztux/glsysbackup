@@ -129,6 +129,8 @@ checkBin()
 checkRequiredBinaries()
 {
 	local rc=
+	local bin=
+	local syspackman=
 	local required_binaries=()
 	local binaries_not_found=()
 	local binaries_not_found_helper=
@@ -552,16 +554,16 @@ delUnencryptedBackupFile()
 {
 	if [ "${backup_encryption_enabled:-}" == "1" ] ;then
 		logHandler "Backup encryption is enabled, now we check if unencrypted backup file exists, if it is writeable and delete it..."
-		logHandler "Check if unencrypted backup file: '${backup_full_path}' exists and if it is writeable..."
+		logHandler "Check if unencrypted backup file: '${backup_filename}' exists and if it is writeable..."
 
-		checkFileParameters "${backup_full_path}"
+		checkFileParameters "${backup_filename}"
 
 		if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ]) ;then
 			logHandler "Unencrypted backup file  exists and it is writeable."
 			logHandler "Deleting unencrypted backup file..."
 
 			# shellcheck disable=SC2154
-			${rm_bin} "${backup_full_path}" 2>&1 | logHandler
+			${rm_bin} "${backup_filename}" 2>&1 | logHandler
 
 			if [ "${PIPESTATUS[0]}" == "0" ] ;then
 				logHandler "Deleting unencrypted backup file was successful."
@@ -920,9 +922,10 @@ executePreBackupScript()
 
 checkBackupDirStructure()
 {
+	local dir=
 	local dir_helper=
 	local backup_dirs=("daily" "weekly" "monthly" "latest")
-	backup_full_path="${backup_destination_path}/${HOSTNAME}/${script_config_name}"
+	backup_base_directory="${backup_destination_path}/${HOSTNAME}/${script_config_name}"
 
 	logHandler "Check backup dir structure..."
 	logHandler "Check if backup directory: '${backup_destination_path}' exists and permissions to move files are ok..."
@@ -953,7 +956,7 @@ checkBackupDirStructure()
 
 	for dir in "${backup_dirs[@]}"
 	   do
-	   	dir_helper="${backup_full_path}/${dir}"
+	   	dir_helper="${backup_base_directory}/${dir}"
 
 	   	checkFileParameters "${dir_helper}"
 
@@ -981,16 +984,62 @@ checkBackupDirStructure()
 	   done
 }
 
+cleanTodaysOldBackups()
+{
+	local rotation_type="${1:-}"
+	local file=
+	local todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
+	local file_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_${todays_timestamp}"
+
+	logHandler "Check if old backups of type: '${rotation_type}' from today exists..."
+
+	for file in "${file_base_name}"*
+	   do
+	   	if [ "${file}" == "${file_base_name}*" ] ;then
+			logHandler "No old backups of type: '${rotation_type}' from today found."
+			return
+		fi
+
+	   	logHandler "File: '${file}' found..."
+		logHandler "Check if permissions of file: '${file}' are ok to delete it..."
+
+		checkFileParameters "${file}"
+
+		if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ]) ;then
+			logHandler "We have write permissions, so we can delete it."
+
+			# shellcheck disable=SC2154
+			${rm_bin} "${file}" 2>&1 | logHandler
+
+			if [ "${PIPESTATUS[0]}" == "0" ] ;then
+				logHandler "Deleting file was successful."
+			else
+				logHandler "Deleting file was not successful."
+				script_exit_code="30"
+				exit
+			fi
+		elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
+			logHandler "File doenst exist, nothing to do."
+		else
+			logHandler "We dont have write permissions, nothing to do."
+		fi
+	   done
+}
+
 rotateHandler()
 {
-	local rc=
 	local file=
+	local file_extension=
+	local file_new=
 	local actual_weekday=
 	local actual_weekday_format="%u"
-	local rotation_daily_timestamp_format="%Y-%m-%d_%Hh%Mm_%A"
-	local rotation_weekly_timestamp_format="%Y-%m-%d_%Hh%Mm_%W"
-	local rotation_monthly_timestamp_format="%Y-%m-%d_%Hh%Mm_%B"
+	local rotation_timestamp=
 	local rotation_types=("daily" "weekly" "monthly")
+	local rotation_type=
+	rotation_timestamp_base_format="%Y-%m-%d"
+	local rotation_daily_timestamp_format="${rotation_timestamp_base_format}_%Hh%Mm_%A"
+	local rotation_weekly_timestamp_format="${rotation_timestamp_base_format}_%Hh%Mm_%W"
+	local rotation_monthly_timestamp_format="${rotation_timestamp_base_format}_%Hh%Mm_%B"
 
 	logHandler "Check if backup rotation is enabled..."
 
@@ -999,8 +1048,10 @@ rotateHandler()
 
 		if [ "${backup_encryption_enabled}" == "1" ] ;then
 			file="${backup_encryption_filename}"
+			file_extension="${backup_encryption_file_extension}"
 		else
-			file="${backup_full_path}"
+			file="${backup_filename}"
+			file_extension="${backup_file_extension}"
 		fi
 
 		actual_weekday="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_weekday_format}${date_cmd_format_suffix}")"
@@ -1009,13 +1060,75 @@ rotateHandler()
 		   do
 		   	case "${rotation_type}" in
 						daily)
-							logHandler "Do the daily things..."
+							logHandler "Do the daily rotation..."
+							rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_daily_timestamp_format}${date_cmd_format_suffix}")"
+
+							if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
+								cleanTodaysOldBackups "${rotation_type}"
+							fi
+
+							file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
+
+							logHandler "Copying file: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
+							${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
+
+							if [ "${PIPESTATUS[0]}" == "0" ] ;then
+								logHandler "Copy job was successful."
+							else
+								logHandler "Copy job was not successful."
+								script_exit_code="30"
+								exit
+							fi
 							;;
 						weekly)
-							logHandler "Do the weekly things..."
+							if [ "${backup_rotation_weekly_enabled}" == "1" ] ;then
+								if [ "${actual_weekday}" == "${backup_rotation_weekly_weekday}" ] ;then
+									logHandler "Do the weekly rotation..."
+									rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_weekly_timestamp_format}${date_cmd_format_suffix}")"
+
+									if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
+										cleanTodaysOldBackups "${rotation_type}"
+									fi
+
+									file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
+
+									logHandler "Copying file: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
+									${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
+
+									if [ "${PIPESTATUS[0]}" == "0" ] ;then
+										logHandler "Copy job was successful."
+									else
+										logHandler "Copy job was not successful."
+										script_exit_code="30"
+										exit
+									fi
+								fi
+							fi
 							;;
 						monthly)
-							logHandler "Do the monthly things..."
+							if [ "${backup_rotation_monthly_enabled}" == "1" ] ;then
+								if [ "${actual_weekday}" == "${backup_rotation_monthly_weekday}" ] ;then
+									logHandler "Do the monthly rotation..."
+									rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_monthly_timestamp_format}${date_cmd_format_suffix}")"
+
+									if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
+										cleanTodaysOldBackups "${rotation_type}"
+									fi
+
+									file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
+
+									logHandler "Copying file: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
+									${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
+
+									if [ "${PIPESTATUS[0]}" == "0" ] ;then
+										logHandler "Copy job was successful."
+									else
+										logHandler "Copy job was not successful."
+										script_exit_code="30"
+										exit
+									fi
+								fi
+							fi
 							;;
 			esac
 		   done
@@ -1099,6 +1212,7 @@ createInstalledPackagesFile()
 buildExcludeOpts()
 {
 	local rc=
+	local item=
 
 	logHandler "Check if we need to build excluding options..."
 
@@ -1157,8 +1271,8 @@ buildBackupOpts()
 		esac
 	fi
 
-	backup_full_path="${backup_destination_path}/${HOSTNAME}/${script_config_name}/latest/${backup_filename_prefix}.${backup_file_extension}"
-	backup_options+=("--file=${backup_full_path}")
+	backup_filename="${backup_base_directory}/latest/${backup_filename_prefix}.${backup_file_extension}"
+	backup_options+=("--file=${backup_filename}")
 
 	if [ "${backup_verbose_mode_enabled}" == "1" ] ;then
 		backup_options+=("--verbose")
@@ -1200,17 +1314,18 @@ makeBackup()
 encryptBackup()
 {
 	if [ "${backup_encryption_enabled}" == "1" ] ;then
-		backup_encryption_filename="${backup_full_path//${backup_file_extension}/aes.${backup_file_extension}}"
+		backup_encryption_file_extension="aes.${backup_file_extension}"
+		backup_encryption_filename="${backup_filename//${backup_file_extension}/${backup_encryption_file_extension}}"
 
 		logHandler "Backup encryption is enabled..."
-		logHandler "Encrypting backup file: '${backup_full_path}'..."
+		logHandler "Encrypting backup file: '${backup_filename}'..."
 
 		# shellcheck disable=SC2154
-		${openssl_bin} aes-256-cbc -salt -in "${backup_full_path}" -out "${backup_encryption_filename}" -k "${backup_encryption_password}" 2>&1 | logHandler
+		${openssl_bin} aes-256-cbc -salt -in "${backup_filename}" -out "${backup_encryption_filename}" -k "${backup_encryption_password}" 2>&1 | logHandler
 
 		if [ "${PIPESTATUS[0]}" == "0" ] ;then
 			logHandler "Encrypting job was successful."
-			logHandler "HINT: To decrypt use this command: '${openssl_bin} aes-256-cbc -d -salt -in ${backup_encryption_filename} -out ${backup_full_path}'."
+			logHandler "HINT: To decrypt use this command: '${openssl_bin} aes-256-cbc -d -salt -in ${backup_encryption_filename} -out ${backup_filename}'."
 			encryption_successful="1"
 		else
 			logHandler "Encrypting job was not successful."
