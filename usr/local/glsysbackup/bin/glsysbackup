@@ -149,7 +149,7 @@ checkRequiredBinaries()
 		fi
 	fi
 
-	if [ "${backup_rotation_enabled}" == "1" ] ;then
+	if ([ "${backup_rotation_daily_enabled}" == "1" ] || [ "${backup_rotation_weekly_enabled}" == "1" ] || [ "${backup_rotation_monthly_enabled}" == "1" ]) ;then
 		required_binaries+=("cp")
 	fi
 
@@ -991,12 +991,13 @@ cleanTodaysOldBackups()
 	local todays_timestamp=
 	todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
 	local file_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_${todays_timestamp}"
+	local files=(${file_base_name}*)
 
 	logHandler "Check if old backups of type: '${rotation_type}' from today exists..."
 
-	for file in "${file_base_name}"*
+	for file in "${files[@]}"
 	   do
-	   	if [ "${file}" == "${file_base_name}*" ] ;then
+	   	if [ "${file}" == "${file_base_name[*]}" ] ;then
 			logHandler "No old backups of type: '${rotation_type}' from today found."
 			return
 		fi
@@ -1027,10 +1028,73 @@ cleanTodaysOldBackups()
 	   done
 }
 
+rotateOldBackups()
+{
+	local rotation_type="${1:-}"
+	local file=
+	local file_timestamp_converted=
+	local file_timestamp=
+	local file_timestamps=()
+	local timestamp=
+	local file_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_"
+	local files=(${file_base_name}*)
+	local regex="^(${file_base_name})([0-9]{4})-([0|1][0-9])-([0|1|2|3][0-9])_(.*).(${file_extension})$"
+
+	logHandler "Check if rotation of ${rotation_type} backups is necessary..."
+
+	case "${rotation_type}" in
+				daily)
+					if [ "${#files[*]}" -gt "${backup_rotation_daily_max_backups}" ] ;then
+						logHandler "Rotation of ${rotation_type} backups is necessary (Number of ${rotation_type} backup files: '${#files[*]}' >= max ${rotation_type} backup files: '${backup_rotation_daily_max_backups}')."
+					else
+						logHandler "Rotation of ${rotation_type} backups is not necessary (Number of ${rotation_type} backup files: '${#files[*]}' < max ${rotation_type} backup files: '${backup_rotation_daily_max_backups}')."
+						return
+					fi
+					;;
+				weekly)
+					if [ "${#files[*]}" -gt "${backup_rotation_weekly_max_backups}" ] ;then
+						logHandler "Rotation of ${rotation_type} backups is necessary (Number of ${rotation_type} backup files: '${#files[*]}' >= max ${rotation_type} backup files: '${backup_rotation_weekly_max_backups}')."
+					else
+						logHandler "Rotation of ${rotation_type} backups is not necessary (Number of ${rotation_type} backup files: '${#files[*]}' < max ${rotation_type} backup files: '${backup_rotation_weekly_max_backups}')."
+						return
+					fi
+					;;
+				monthly)
+					if [ "${#files[*]}" -gt "${backup_rotation_monthly_max_backups}" ] ;then
+						logHandler "Rotation of ${rotation_type} backups is necessary (Number of ${rotation_type} backup files: '${#files[*]}' >= max ${rotation_type} backup files: '${backup_rotation_monthly_max_backups}')."
+					else
+						logHandler "Rotation of ${rotation_type} backups is not necessary (Number of ${rotation_type} backup files: '${#files[*]}' < max ${rotation_type} backup files: '${backup_rotation_monthly_max_backups}')."
+						return
+					fi
+					;;
+	esac
+
+	for file in "${files[@]}"
+	   do
+	   	if [ "${file}" == "${file_base_name[*]}" ] ;then
+			logHandler "No old backups of type: '${rotation_type}' found."
+			return
+		fi
+
+		if [[ "${file}" =~ $regex ]] ;then
+	   		logHandler "File: '${file}' found..."
+
+			file_timestamp="${BASH_REMATCH[2]}-${BASH_REMATCH[3]}-${BASH_REMATCH[4]}"
+			#file_timestmap_converted="$(eval "${date_bin} ${date_cmd_format_prefix}${file_timestamp}${date_cmd_format_suffix}")"
+			file_timestamps+=("${file_timestamp}")
+		fi
+	   done
+
+	for timestamp in "${file_timestamps[@]}"
+	   do
+		logHandler "files found: ${timestamp}"
+	   done
+}
+
 rotateHandler()
 {
 	local file=
-	local file_extension=
+	file_extension=
 	local file_new=
 	local actual_weekday=
 	local actual_weekday_format="%u"
@@ -1044,7 +1108,7 @@ rotateHandler()
 
 	logHandler "Check if backup rotation is enabled..."
 
-	if [ "${backup_rotation_enabled}" == "1" ] ;then
+	if ([ "${backup_rotation_daily_enabled}" == "1" ] || [ "${backup_rotation_weekly_enabled}" == "1" ] || [ "${backup_rotation_monthly_enabled}" == "1" ]) ;then
 		logHandler "Backup rotation is enabled."
 
 		if [ "${backup_encryption_enabled}" == "1" ] ;then
@@ -1061,26 +1125,28 @@ rotateHandler()
 		   do
 		   	case "${rotation_type}" in
 						daily)
-							logHandler "Do the daily rotation..."
-							rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_daily_timestamp_format}${date_cmd_format_suffix}")"
+							if [ "${backup_rotation_weekly_enabled}" == "1" ] ;then
+								logHandler "Do the daily rotation..."
+								rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_daily_timestamp_format}${date_cmd_format_suffix}")"
 
-							if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
-								cleanTodaysOldBackups "${rotation_type}"
-							fi
+								if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
+									cleanTodaysOldBackups "${rotation_type}"
+								fi
 
-							file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
+								file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
 
-							logHandler "Copying file: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
+								logHandler "Copying actual backup file: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
 
-							# shellcheck disable=SC2154
-							${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
+								# shellcheck disable=SC2154
+								${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
 
-							if [ "${PIPESTATUS[0]}" == "0" ] ;then
-								logHandler "Copy job was successful."
-							else
-								logHandler "Copy job was not successful."
-								script_exit_code="30"
-								exit
+								if [ "${PIPESTATUS[0]}" == "0" ] ;then
+									logHandler "Copy job was successful."
+								else
+									logHandler "Copy job was not successful."
+									script_exit_code="30"
+									exit
+								fi
 							fi
 							;;
 						weekly)
@@ -1095,7 +1161,7 @@ rotateHandler()
 
 									file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
 
-									logHandler "Copying file: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
+									logHandler "Copying actual backup file: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
 
 									# shellcheck disable=SC2154
 									${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
@@ -1122,7 +1188,7 @@ rotateHandler()
 
 									file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
 
-									logHandler "Copying file: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
+									logHandler "Copying actual backup file: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
 
 									# shellcheck disable=SC2154
 									${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
@@ -1138,6 +1204,8 @@ rotateHandler()
 							fi
 							;;
 			esac
+
+			rotateOldBackups "${rotation_type}"
 		   done
 	else
 		logHandler "Backup rotation is not enabled."
