@@ -988,7 +988,8 @@ cleanTodaysOldBackups()
 {
 	local rotation_type="${1:-}"
 	local file=
-	local todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
+	local todays_timestamp=
+	todays_timestmp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
 	local file_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_${todays_timestamp}"
 
 	logHandler "Check if old backups of type: '${rotation_type}' from today exists..."
@@ -1070,6 +1071,8 @@ rotateHandler()
 							file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
 
 							logHandler "Copying file: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
+
+							# shellcheck disable=SC2154
 							${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
 
 							if [ "${PIPESTATUS[0]}" == "0" ] ;then
@@ -1093,6 +1096,8 @@ rotateHandler()
 									file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
 
 									logHandler "Copying file: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
+
+									# shellcheck disable=SC2154
 									${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
 
 									if [ "${PIPESTATUS[0]}" == "0" ] ;then
@@ -1118,6 +1123,8 @@ rotateHandler()
 									file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
 
 									logHandler "Copying file: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
+
+									# shellcheck disable=SC2154
 									${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
 
 									if [ "${PIPESTATUS[0]}" == "0" ] ;then
