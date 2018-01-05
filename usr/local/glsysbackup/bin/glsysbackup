@@ -986,7 +986,7 @@ checkBackupDirStructure()
 
 bubbleSort()
 {
-	local array=(${@})
+	local array=("${@}")
 	local elements="${#array[@]}"
 	local i="$((elements - 1))"
 	local j=
@@ -1018,15 +1018,15 @@ cleanTodaysOldBackups()
 	local file=
 	local todays_timestamp=
 	todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
-	local file_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_${todays_timestamp}*.${file_extension}"
+	local backup_files_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_${todays_timestamp}*.${file_extension}"
 	# shellcheck disable=SC2206
-	local files=(${file_base_name})
+	local backup_files=(${backup_files_base_name})
 
 	logHandler "Check if old backups of type: '${rotation_type}' from today exists..."
 
-	for file in "${files[@]}"
+	for file in "${backup_files[@]}"
 	   do
-	   	if [ "${file}" == "${files[*]}" ] ;then
+	   	if [ "${file}" == "${backup_files[*]}" ] ;then
 			logHandler "No old backups of type: '${rotation_type}' from today found."
 			return
 		fi
@@ -1060,62 +1060,63 @@ cleanTodaysOldBackups()
 rotateOldBackups()
 {
 	local file=
-	local file_timestamp=
-	local file_timestamps=()
-	local file_timestamps_sorted=()
+	local backup_files_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_"
+	local backup_files=(${backup_files_base_name}*.${file_extension})
+	local backup_files_count="${#backup_files[*]}"
+	local backup_file_timestamp=
+	local backup_file_timestamps=()
+	local backup_file_timestamps_sorted=()
 	local timestamp=
-	local file_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_"
 	# shellcheck disable=SC2206
-	local files=(${file_base_name}*.${file_extension})
-	local file_name_regex="^(${file_base_name})([0-9]{4})-([0|1][0-9])-([0|1|2|3][0-9])_(.*).(${file_extension})$"
+	local backup_filename_regex="^(${backup_files_base_name})([0-9]{4})-([0|1][0-9])-([0|1|2|3][0-9])_(.*).(${file_extension})$"
 	#local backups_to_delete=()
-	#local backups_to_delete_counter="0"
+	local backups_to_delete_counter=
 
 	logHandler "Check if rotation of ${rotation_type} backups is necessary..."
 
 	case "${rotation_type}" in
 				daily)
-					if [ "${#files[*]}" -gt "${backup_rotation_daily_max_backups}" ] ;then
-						backups_to_delete_counter="$((${#files[*]} - ${backup_rotation_daily_max_backups}))"
-						logHandler "Rotation of ${rotation_type} backups is necessary (Number of ${rotation_type} backup files: '${#files[*]}' > max ${rotation_type} backup files: '${backup_rotation_daily_max_backups}')."
+					if [ "${backup_files_count}" -gt "${backup_rotation_daily_max_backups}" ] ;then
+						backups_to_delete_counter="$((backup_files_count - ${backup_rotation_daily_max_backups}))"
+						logHandler "Rotation of ${rotation_type} backups is necessary (Number of ${rotation_type} backup files: '${backup_files_count}' > max ${rotation_type} backup files: '${backup_rotation_daily_max_backups}')."
 					else
-						logHandler "Rotation of ${rotation_type} backups is not necessary (Number of ${rotation_type} backup files: '${#files[*]}' <= max ${rotation_type} backup files: '${backup_rotation_daily_max_backups}')."
+						logHandler "Rotation of ${rotation_type} backups is not necessary (Number of ${rotation_type} backup files: '${backup_files_count}' <= max ${rotation_type} backup files: '${backup_rotation_daily_max_backups}')."
 						return
 					fi
 					;;
 				weekly)
-					if [ "${#files[*]}" -gt "${backup_rotation_weekly_max_backups}" ] ;then
-						backups_to_delete_counter="$((${#files[*]} - ${backup_rotation_weekly_max_backups}))"
-						logHandler "Rotation of ${rotation_type} backups is necessary (Number of ${rotation_type} backup files: '${#files[*]}' > max ${rotation_type} backup files: '${backup_rotation_weekly_max_backups}')."
+					if [ "${backup_files_count}" -gt "${backup_rotation_weekly_max_backups}" ] ;then
+						backups_to_delete_counter="$((backup_files_count - ${backup_rotation_weekly_max_backups}))"
+						logHandler "Rotation of ${rotation_type} backups is necessary (Number of ${rotation_type} backup files: '${backup_files_count}' > max ${rotation_type} backup files: '${backup_rotation_weekly_max_backups}')."
 					else
-						logHandler "Rotation of ${rotation_type} backups is not necessary (Number of ${rotation_type} backup files: '${#files[*]}' <= max ${rotation_type} backup files: '${backup_rotation_weekly_max_backups}')."
+						logHandler "Rotation of ${rotation_type} backups is not necessary (Number of ${rotation_type} backup files: '${backup_files_count}' <= max ${rotation_type} backup files: '${backup_rotation_weekly_max_backups}')."
 						return
 					fi
 					;;
 				monthly)
-					if [ "${#files[*]}" -gt "${backup_rotation_monthly_max_backups}" ] ;then
-						backups_to_delete_counter="$((${#files[*]} - ${backup_rotation_monthly_max_backups}))"
-						logHandler "Rotation of ${rotation_type} backups is necessary (Number of ${rotation_type} backup files: '${#files[*]}' > max ${rotation_type} backup files: '${backup_rotation_monthly_max_backups}')."
+					if [ "${backup_files_count}" -gt "${backup_rotation_monthly_max_backups}" ] ;then
+						backups_to_delete_counter="$((backup_files_count - ${backup_rotation_monthly_max_backups}))"
+						logHandler "Rotation of ${rotation_type} backups is necessary (Number of ${rotation_type} backup files: '${backup_files_count}' > max ${rotation_type} backup files: '${backup_rotation_monthly_max_backups}')."
 					else
-						logHandler "Rotation of ${rotation_type} backups is not necessary (Number of ${rotation_type} backup files: '${#files[*]}' <= max ${rotation_type} backup files: '${backup_rotation_monthly_max_backups}')."
+						logHandler "Rotation of ${rotation_type} backups is not necessary (Number of ${rotation_type} backup files: '${backup_files_count}' <= max ${rotation_type} backup files: '${backup_rotation_monthly_max_backups}')."
 						return
 					fi
 					;;
 	esac
 
-	for file in "${files[@]}"
+	for file in "${backup_files[@]}"
 	   do
-		if [[ "${file}" =~ $file_name_regex ]] ;then
+		if [[ "${file}" =~ $backup_filename_regex ]] ;then
 	   		logHandler "File: '${file}' found..."
 
-			file_timestamp="${BASH_REMATCH[2]}-${BASH_REMATCH[3]}-${BASH_REMATCH[4]}"
-			file_timestamps+=("${file_timestamp}")
+			backup_file_timestamp="${BASH_REMATCH[2]}-${BASH_REMATCH[3]}-${BASH_REMATCH[4]}"
+			backup_file_timestamps+=("${backup_file_timestamp}")
 		fi
 	   done
 
-	file_timestamps_sorted=("$(bubbleSort "${file_timestamps[@]}")")
+	backup_file_timestamps_sorted=($(bubbleSort "${backup_file_timestamps[@]}"))
 	
-	for timestamp in "${file_timestamps_sorted[@]}"
+	for timestamp in "${backup_file_timestamps_sorted[@]}"
 	   do
 	   	logHandler "timestamp_sorted: $timestamp"
 	   done
