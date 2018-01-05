@@ -1060,7 +1060,6 @@ cleanTodaysOldBackups()
 rotateOldBackups()
 {
 	local file=
-	#local file_timestamp_converted=
 	local file_timestamp=
 	local file_timestamps=()
 	local file_timestamps_sorted=()
@@ -1069,8 +1068,8 @@ rotateOldBackups()
 	# shellcheck disable=SC2206
 	local files=(${file_base_name}*.${file_extension})
 	local file_name_regex="^(${file_base_name})([0-9]{4})-([0|1][0-9])-([0|1|2|3][0-9])_(.*).(${file_extension})$"
-	local backups_to_delete=()
-	local backups_to_delete_counter="0"
+	#local backups_to_delete=()
+	#local backups_to_delete_counter="0"
 
 	logHandler "Check if rotation of ${rotation_type} backups is necessary..."
 
@@ -1114,7 +1113,7 @@ rotateOldBackups()
 		fi
 	   done
 
-	file_timestamps_sorted=($(bubbleSort "${file_timestamps[@]}"))
+	file_timestamps_sorted=("$(bubbleSort "${file_timestamps[@]}")")
 	
 	for timestamp in "${file_timestamps_sorted[@]}"
 	   do
