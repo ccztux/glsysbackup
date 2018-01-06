@@ -1065,7 +1065,6 @@ removeOldBackups()
 	local backup_files=(${backup_files_base_name}*.${file_extension})
 	local backup_files_sorted=($(bubbleSort "${backup_files[@]}"))
 	local backup_files_count="${#backup_files[*]}"
-	local backups_to_delete=()
 	local backups_to_delete_counter=
 
 	logHandler "Check if rotation of ${rotation_type} backups is necessary..."
@@ -1101,7 +1100,7 @@ removeOldBackups()
 	esac
 
 	if [ ! -z "${backups_to_delete_counter}" ] ;then
-		for file in "${backup_files[@]}"
+		for file in "${backup_files_sorted[@]}"
 		   do
 		   	if [ "${backups_to_delete_counter}" -gt "0" ] ;then
 				logHandler "Backup to delete: '${file}' found..."
