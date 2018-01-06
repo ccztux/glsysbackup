@@ -59,7 +59,7 @@ Usage: glsysbackup OPTIONS
 
 Author:			Christian Zettel (ccztux)
 Last modification:	2018-01-06
-Version:		2.0.0-alpha1
+Version:		2.0.0
 
 Description:		glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
 
