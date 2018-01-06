@@ -973,12 +973,12 @@ checkBackupDirStructure()
 				logHandler "Creating directory: '${dir_helper}' was successful."
 			else
 				logHandler "Creating directory: '${dir_helper}' was not successful."
-				script_exit_code="20"
+				script_exit_code="132"
 				exit
 			fi
 		else
 			logHandler "Directory: '${dir_helper}' exists but permissions are not ok, exiting."
-			script_exit_code="21"
+			script_exit_code="133"
 			exit
 		fi
 	   done
@@ -1018,7 +1018,7 @@ removeTodaysOldBackups()
 	local file=
 	local todays_timestamp=
 	todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
-	local backup_files_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_${todays_timestamp}*.${file_extension}"
+	local backup_files_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_base_filename}_${todays_timestamp}*.${file_extension}"
 	# shellcheck disable=SC2206
 	local backup_files=(${backup_files_base_name})
 
@@ -1046,7 +1046,7 @@ removeTodaysOldBackups()
 				logHandler "Deleting file was successful."
 			else
 				logHandler "Deleting file was not successful."
-				script_exit_code="30"
+				script_exit_code="140"
 				exit
 			fi
 		elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
@@ -1060,7 +1060,7 @@ removeTodaysOldBackups()
 removeOldBackups()
 {
 	local file=
-	local backup_files_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_"
+	local backup_files_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_base_filename}_"
 	# shellcheck disable=SC2206
 	local backup_files=(${backup_files_base_name}*.${file_extension})
 	# shellcheck disable=SC2207
@@ -1074,27 +1074,27 @@ removeOldBackups()
 				daily)
 					if [ "${backup_files_count}" -gt "${backup_rotation_daily_max_backups}" ] ;then
 						backups_to_delete_counter="$((backup_files_count - backup_rotation_daily_max_backups))"
-						logHandler "Rotation of ${rotation_type} backups is necessary (Number of ${rotation_type} backup files: '${backup_files_count}' > max ${rotation_type} backup files: '${backup_rotation_daily_max_backups}')."
+						logHandler "Rotation of ${rotation_type} backups is necessary (backup_files_count: '${backup_files_count}' > backup_rotation_daily_max_backups: '${backup_rotation_daily_max_backups}')."
 					else
-						logHandler "Rotation of ${rotation_type} backups is not necessary (Number of ${rotation_type} backup files: '${backup_files_count}' <= max ${rotation_type} backup files: '${backup_rotation_daily_max_backups}')."
+						logHandler "Rotation of ${rotation_type} backups is not necessary (backup_files_count: '${backup_files_count}' <= backup_rotation_daily_max_backups: '${backup_rotation_daily_max_backups}')."
 						return
 					fi
 					;;
 				weekly)
 					if [ "${backup_files_count}" -gt "${backup_rotation_weekly_max_backups}" ] ;then
 						backups_to_delete_counter="$((backup_files_count - backup_rotation_weekly_max_backups))"
-						logHandler "Rotation of ${rotation_type} backups is necessary (Number of ${rotation_type} backup files: '${backup_files_count}' > max ${rotation_type} backup files: '${backup_rotation_weekly_max_backups}')."
+						logHandler "Rotation of ${rotation_type} backups is necessary (backup_files_count: '${backup_files_count}' > backup_rotation_weekly_max_backups: '${backup_rotation_weekly_max_backups}')."
 					else
-						logHandler "Rotation of ${rotation_type} backups is not necessary (Number of ${rotation_type} backup files: '${backup_files_count}' <= max ${rotation_type} backup files: '${backup_rotation_weekly_max_backups}')."
+						logHandler "Rotation of ${rotation_type} backups is not necessary (backup_files_count: '${backup_files_count}' <= backup_rotation_weekly_max_backups: '${backup_rotation_weekly_max_backups}')."
 						return
 					fi
 					;;
 				monthly)
 					if [ "${backup_files_count}" -gt "${backup_rotation_monthly_max_backups}" ] ;then
 						backups_to_delete_counter="$((backup_files_count - backup_rotation_monthly_max_backups))"
-						logHandler "Rotation of ${rotation_type} backups is necessary (Number of ${rotation_type} backup files: '${backup_files_count}' > max ${rotation_type} backup files: '${backup_rotation_monthly_max_backups}')."
+						logHandler "Rotation of ${rotation_type} backups is necessary (backup_files_count: '${backup_files_count}' > backup_rotation_monthly_max_backups: '${backup_rotation_monthly_max_backups}')."
 					else
-						logHandler "Rotation of ${rotation_type} backups is not necessary (Number of ${rotation_type} backup files: '${backup_files_count}' <= max ${rotation_type} backup files: '${backup_rotation_monthly_max_backups}')."
+						logHandler "Rotation of ${rotation_type} backups is not necessary (backup_files_count: '${backup_files_count}' <= backup_rotation_monthly_max_backups: '${backup_rotation_monthly_max_backups}')."
 						return
 					fi
 					;;
@@ -1119,7 +1119,7 @@ removeOldBackups()
 						logHandler "Deleting file was successful."
 					else
 						logHandler "Deleting file was not successful."
-						script_exit_code="30"
+						script_exit_code="150"
 						exit
 					fi
 				elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
@@ -1153,6 +1153,13 @@ rotateHandler()
 
 	if ([ "${backup_rotation_daily_enabled}" == "1" ] || [ "${backup_rotation_weekly_enabled}" == "1" ] || [ "${backup_rotation_monthly_enabled}" == "1" ]) ;then
 		logHandler "Backup rotation is enabled."
+		logHandler "Check if only one backup per day is enabled..."
+
+		if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
+			logHandler "Only one backup per day is enabled."
+		else
+			logHandler "Only one backup per day is not enabled."
+		fi
 
 		if [ "${backup_encryption_enabled}" == "1" ] ;then
 			file="${backup_encryption_filename}"
@@ -1169,14 +1176,13 @@ rotateHandler()
 		   	case "${rotation_type}" in
 						daily)
 							if [ "${backup_rotation_weekly_enabled}" == "1" ] ;then
-								logHandler "Do the daily rotation..."
 								rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_daily_timestamp_format}${date_cmd_format_suffix}")"
 
 								if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
 									removeTodaysOldBackups
 								fi
 
-								file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
+								file_new="${rotation_type}_${backup_base_filename}_${rotation_timestamp}.${file_extension}"
 
 								logHandler "Copying actual backup: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
 
@@ -1187,22 +1193,25 @@ rotateHandler()
 									logHandler "Copy job was successful."
 								else
 									logHandler "Copy job was not successful."
-									script_exit_code="30"
+									script_exit_code="160"
 									exit
 								fi
 							fi
 							;;
 						weekly)
 							if [ "${backup_rotation_weekly_enabled}" == "1" ] ;then
+								logHandler "Check if today is the day, where ${rotation_type} backups should be rotated..."
+
 								if [ "${actual_weekday}" == "${backup_rotation_weekly_weekday}" ] ;then
-									logHandler "Do the weekly rotation..."
+									logHandler "Today is the day, where we should rotate the ${rotation_type} backups (actual_weekday: '${actual_weekday}' == backup_rotation_weekly_weekday: '${backup_rotation_weekly_weekday}')."
+
 									rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_weekly_timestamp_format}${date_cmd_format_suffix}")"
 
 									if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
 										removeTodaysOldBackups
 									fi
 
-									file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
+									file_new="${rotation_type}_${backup_base_filename}_${rotation_timestamp}.${file_extension}"
 
 									logHandler "Copying actual backup: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
 
@@ -1213,23 +1222,28 @@ rotateHandler()
 										logHandler "Copy job was successful."
 									else
 										logHandler "Copy job was not successful."
-										script_exit_code="30"
+										script_exit_code="161"
 										exit
 									fi
+								else
+									logHandler "Today is not the day, where we should rotate the ${rotation_type} backups (actual_weekday: '${actual_weekday}' != backup_rotation_weekly_weekday: '${backup_rotation_weekly_weekday}')."
 								fi
 							fi
 							;;
 						monthly)
 							if [ "${backup_rotation_monthly_enabled}" == "1" ] ;then
+								logHandler "Check if today is the day, where ${rotation_type} backups should be rotated..."
+
 								if [ "${actual_weekday}" == "${backup_rotation_monthly_weekday}" ] ;then
-									logHandler "Do the monthly rotation..."
+									logHandler "Today is the day, where we should rotate the ${rotation_type} backups (actual_weekday: '${actual_weekday}' == backup_rotation_monthly_weekday: '${backup_rotation_monthly_weekday}')."
+
 									rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_monthly_timestamp_format}${date_cmd_format_suffix}")"
 
 									if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
 										removeTodaysOldBackups
 									fi
 
-									file_new="${rotation_type}_${backup_filename_prefix}_${rotation_timestamp}.${file_extension}"
+									file_new="${rotation_type}_${backup_base_filename}_${rotation_timestamp}.${file_extension}"
 
 									logHandler "Copying actual backup: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
 
@@ -1240,9 +1254,11 @@ rotateHandler()
 										logHandler "Copy job was successful."
 									else
 										logHandler "Copy job was not successful."
-										script_exit_code="30"
+										script_exit_code="162"
 										exit
 									fi
+								else
+									logHandler "Today is not the day, where we should rotate the ${rotation_type} backups (actual_weekday: '${actual_weekday}' != backup_rotation_monthly_weekday: '${backup_rotation_monthly_weekday}')."
 								fi
 							fi
 							;;
@@ -1276,14 +1292,14 @@ createInstalledPackagesFile()
 				logHandler "HINT: You can force to use one of the supported syspackage managers by setting configuration variable: 'installed_packages_forced_manager'."
 			fi
 
-			script_exit_code="140"
+			script_exit_code="170"
 			exit
 		elif [ "${#available_syspackage_managers[*]}" -eq "1" ] ;then
 			syspackage_manager="${available_syspackage_managers[*]}"
 			logHandler "The supported system package manager we found is: '${syspackage_manager}'."
 		elif [ "${#available_syspackage_managers[*]}" -eq "0" ] ;then
 			logHandler "No supported system package manager found, exiting."
-			script_exit_code="141"
+			script_exit_code="171"
 			exit
 		fi
 
@@ -1307,7 +1323,7 @@ createInstalledPackagesFile()
 							;;
 						*)
 							logHandler "Unsupported syspackage manager used in function: '${FUNCNAME[0]}'. :( Exiting."
-							script_exit_code="142"
+							script_exit_code="172"
 							exit
 							;;
 		esac
@@ -1319,7 +1335,7 @@ createInstalledPackagesFile()
 			backup_items+=("${installed_packages_filename}")
 		else
 			logHandler "Creating installed packages file was not successful."
-			script_exit_code="143"
+			script_exit_code="173"
 			exit
 		fi
 	else
@@ -1383,13 +1399,13 @@ buildBackupOpts()
 								;;
 							*)
 								logHandler "Unsupported compression type configured, exiting."
-								script_exit_code="150"
+								script_exit_code="180"
 								exit
 								;;
 		esac
 	fi
 
-	backup_filename="${backup_base_directory}/latest/${backup_filename_prefix}.${backup_file_extension}"
+	backup_filename="${backup_base_directory}/latest/${backup_base_filename}.${backup_file_extension}"
 	backup_options+=("--file=${backup_filename}")
 
 	if [ "${backup_verbose_mode_enabled}" == "1" ] ;then
@@ -1424,7 +1440,7 @@ makeBackup()
 		backup_successful="1"
 	else
 		logHandler "Backup job was not successful."
-		script_exit_code="160"
+		script_exit_code="190"
 		exit
 	fi
 }
@@ -1447,7 +1463,7 @@ encryptBackup()
 			encryption_successful="1"
 		else
 			logHandler "Encrypting job was not successful."
-			script_exit_code="170"
+			script_exit_code="200"
 			exit
 		fi
 	else
@@ -1471,11 +1487,11 @@ executePostBackupScript()
 			logHandler "Post backup script exists and it is executeable, so we execute it..."
 		elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
 			logHandler "Post backup script doesnt exist, nothing to do."
-			script_exit_code="180"
+			script_exit_code="210"
 			exit
 		else
 			logHandler "Post backup script exists, but it is not executeable, nothing to do."
-			script_exit_code="181"
+			script_exit_code="211"
 			exit
 		fi
 
@@ -1489,7 +1505,7 @@ executePostBackupScript()
 
 			if [ "${post_backup_exit_when_unsuccessful}" == "1" ] ;then
 				logHandler "Breaking, because execution of post backup script was unsuccessful und you want it."
-				script_exit_code="182"
+				script_exit_code="212"
 				exit
 			fi
 		fi
@@ -1513,7 +1529,7 @@ while getopts ":h.c:o.v." OPTION
 			h)
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="190"
+				script_exit_code="220"
 				exit
 				;;
 			c)
@@ -1525,21 +1541,21 @@ while getopts ":h.c:o.v." OPTION
 			v)
 				printScriptInfos
 				script_bypass_exit_routines="1"
-				script_exit_code="191"
+				script_exit_code="221"
 				exit
 				;;
 			\?)
 				printf "Invalid option: -%s\\n\\n" "${OPTARG}"
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="192"
+				script_exit_code="222"
 				exit
 				;;
 			:)
 				printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="193"
+				script_exit_code="223"
 				exit
 				;;
 	esac
