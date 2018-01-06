@@ -1018,8 +1018,8 @@ removeTodaysOldBackups()
 	local file=
 	local todays_timestamp=
 	todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
-	# shellcheck disable=SC2206
 	local backup_files_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_${todays_timestamp}*.${file_extension}"
+	# shellcheck disable=SC2206
 	local backup_files=(${backup_files_base_name})
 
 	logHandler "Check if old backups of type: '${rotation_type}' from today exists..."
@@ -1063,6 +1063,7 @@ removeOldBackups()
 	local backup_files_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_filename_prefix}_"
 	# shellcheck disable=SC2206
 	local backup_files=(${backup_files_base_name}*.${file_extension})
+	# shellcheck disable=SC2207
 	local backup_files_sorted=($(bubbleSort "${backup_files[@]}"))
 	local backup_files_count="${#backup_files[*]}"
 	local backups_to_delete_counter=
