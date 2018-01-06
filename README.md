@@ -26,7 +26,7 @@ cd ccztux-glsysbackup-*
 Copy the files:
 
 ```bash
-cp -av ./usr/local/glsysbackup/ /usr/local/glsysbackup/
+cp -av ./usr/local/glsysbackup/ /usr/local/
 ```
 
 
@@ -40,14 +40,14 @@ chown -R root:root /usr/local/glsysbackup/
 Edit the config for your benefits:
 
 ```bash
-vim /usr/local/glsysbackup/etc/glsysbackup.conf"
+vim /usr/local/glsysbackup/etc/glsysbackup.conf
 ```
 
 
 Start glsysbackup:
 
 ```bash
-/usr/local/glsysbackup/bin/glsysbackup -c /usr/local/glsysbackup/etc/glsysbackup.conf"
+/usr/local/glsysbackup/bin/glsysbackup -c /usr/local/glsysbackup/etc/glsysbackup.conf
 ```
 
 
