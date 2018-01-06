@@ -1,13 +1,54 @@
 [![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/master.svg?label=build%20%28master%29)](https://travis-ci.org/ccztux/glsysbackup)
 [![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/devel.svg?label=build%20%28devel%29)](https://travis-ci.org/ccztux/glsysbackup)
 [![Latest Release](https://img.shields.io/github/release/ccztux/glsysbackup.svg?label=latest%20release)](https://github.com/ccztux/glsysbackup/releases/latest)
-[![Latest Pre-release](https://img.shields.io/badge/latest%20pre--release-v1.0.1--beta1-orange.svg)](https://github.com/ccztux/glsysbackup/releases/tag/1.0.1-beta1)
+[![Latest Pre-release](https://img.shields.io/badge/latest%20pre--release-v2.0.0--alpha1-orange.svg)](https://github.com/ccztux/glsysbackup/releases/tag/2.0.0-alpha1)
 [![GitHub license](https://img.shields.io/badge/license-AGPL-blue.svg)](https://github.com/ccztux/glsysbackup/blob/master/LICENSE)
 
 
 
 # glsysbackup
 (**g**eneric **l**inux **sys**tem **backup**) is an advanced backup tool written in bash.
+
+
+
+## Installation:
+
+Download the latest tarball and extract it:
+
+```bash
+cd /tmp
+wget "https://api.github.com/repos/ccztux/glsysbackup/tarball" -O glsysbackup.master.tar.gz
+tar -xvzf glsysbackup.master.tar.gz
+cd ccztux-glsysbackup-*
+```
+
+
+Copy the files:
+
+```bash
+cp -av ./usr/local/glsysbackup/ /usr/local/glsysbackup/
+```
+
+
+Change the file ownership for your benefits:
+
+```bash
+chown -R root:root /usr/local/glsysbackup/
+```
+
+
+Edit the config for your benefits:
+
+```bash
+vim /usr/local/glsysbackup/etc/glsysbackup.conf"
+```
+
+
+Start glsysbackup:
+
+```bash
+/usr/local/glsysbackup/bin/glsysbackup -c /usr/local/glsysbackup/etc/glsysbackup.conf"
+```
 
 
 
