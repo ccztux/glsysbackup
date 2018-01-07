@@ -1368,9 +1368,9 @@ buildExcludeOpts()
 	fi
 }
 
-buildBackupOpts()
+buildBackupCmd()
 {
-	logHandler "Building backup options..."
+	logHandler "Building backup command..."
 
 	backup_options=("--create")
 
@@ -1427,21 +1427,19 @@ buildBackupOpts()
 		backup_options+=("${backup_individual_options[@]}")
 	fi
 
-	logHandler "We build the following backup options: '${backup_options[*]}'."
-}
-
-makeBackup()
-{
-	local backup_cmd=
-
 	if [ -z "${exclude_string[*]:-}" ] ;then
 		# shellcheck disable=SC2154
 		backup_cmd="${tar_bin} ${backup_options[*]} ${backup_items[*]}"
 	else
 		# shellcheck disable=SC2154
-		backup_cmd="${tar_bin} ${backup_options[*]} ${backup_items[*]} ${exclude_string[*]}"
+		backup_cmd="${tar_bin} ${backup_options[*]} ${exclude_string[*]} ${backup_items[*]}"
 	fi
 
+	logHandler "We build the following backup command: '${backup_cmd}'."
+}
+
+makeBackup()
+{
 	logHandler "Starting backup job..."
 
 	${backup_cmd} 2>&1 | logHandler
@@ -1591,7 +1589,7 @@ checkBackupDirStructure
 executePreBackupScript
 createInstalledPackagesFile
 buildExcludeOpts
-buildBackupOpts
+buildBackupCmd
 makeBackup
 encryptBackup
 executePostBackupScript
