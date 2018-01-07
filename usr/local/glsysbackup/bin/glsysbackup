@@ -268,7 +268,7 @@ logHandlerSetConfig()
 
 	if [ "${date_bin_printf:-}" == "1" ] ;then
 		date_cmd_format_prefix="'%("
-		date_cmd_format_suffix=")T\\n'"
+		date_cmd_format_suffix=")T\\n' -1"
 	else
 		date_cmd_format_prefix="'+"
 		date_cmd_format_suffix="'"
