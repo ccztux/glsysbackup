@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2018-01-06
+#			2018-01-07
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -67,7 +67,7 @@ script_version="2.0.0"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2018-01-06"
+script_last_modification_date="2018-01-07"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -1423,7 +1423,7 @@ buildBackupOpts()
 		backup_options+=("--ignore-failed-read")
 	fi
 
-	if [ ! -z "${backup_individual_options[@]}" ] ;then
+	if [ ! -z "${backup_individual_options[*]}" ] ;then
 		backup_options+=("${backup_individual_options[@]}")
 	fi
 
