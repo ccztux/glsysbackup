@@ -308,10 +308,6 @@ logHandler()
 	local log_message="${1:-}"
 	local log_timestamp=
 
-	if [ "${script_bypass_exit_routines}" == "1" ] ;then
-		return
-	fi
-
 	if [ -z "${log_message:-}" ] ;then
 		if [ ! -t "0" ] ;then
 			logHandlerStdinHelper
@@ -416,13 +412,8 @@ sigHandler()
 				if ([ "${backup_encryption_enabled:-}" == "1" ] && [ "${encryption_successful:-}" == "1" ]) || ([ "${backup_encryption_enabled:-}" == "0" ] && [ "${backup_successful:-}" == "1" ]);then
 					script_exit_code="0"
 					rotateHandler
-				fi
-
-				if [ "${script_exit_code}" == "0" ] ;then
-					logHandler "We did a great job. :)"
 				else
-					logHandler "Ooops!!! Something went wrong. :("
-					logHandler "Read the log or output to determine what exactly went wrong."
+					logHandler "The backup job was not successful, so we dont rotate backup files."
 				fi
 
 				if [ "${script_another_instance_is_running}" != "1" ] ;then
@@ -433,6 +424,13 @@ sigHandler()
 						removeLock
 					fi
 				fi
+			fi
+
+			if [ "${script_exit_code}" == "0" ] ;then
+				logHandler "We did a great job. :)"
+			else
+				logHandler "Ooops!!! Something went wrong. :("
+				logHandler "Read the log or output to determine what exactly went wrong."
 			fi
 
 			logHandler "Script was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
@@ -720,6 +718,8 @@ checkBashVersion()
 						;;
 					*)
 						logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
+
+						script_bypass_exit_routines="1"
 						script_exit_code="81"
 						exit
 						;;
@@ -757,6 +757,7 @@ checkAlreadyRunningInstance()
 			logHandler "HINT: You can override the old left over lock by calling ${script_name} with option '-o'."
 
 			script_another_instance_is_running="1"
+			script_bypass_exit_routines="1"
 			script_exit_code="90"
 			exit
 		fi
@@ -766,6 +767,7 @@ checkAlreadyRunningInstance()
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids}' are running)."
 
 		script_another_instance_is_running="1"
+		script_bypass_exit_routines="1"
 		script_exit_code="91"
 		exit
 	elif ([ "${rc}" != "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
@@ -774,6 +776,7 @@ checkAlreadyRunningInstance()
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids}' are running)."
 
 		script_another_instance_is_running="1"
+		script_bypass_exit_routines="1"
 		script_exit_code="92"
 		exit
 	fi
@@ -1414,6 +1417,14 @@ buildBackupOpts()
 
 	if [ "${backup_show_totals}" == "1" ] ;then
 		backup_options+=("--totals")
+	fi
+
+	if [ "${backup_ignore_failed_read}" == "1" ] ;then
+		backup_options+=("--ignore-failed-read")
+	fi
+
+	if [ ! -z "${backup_individual_options[@]}" ] ;then
+		backup_options+=("${backup_individual_options[@]}")
 	fi
 
 	logHandler "We build the following backup options: '${backup_options[*]}'."
