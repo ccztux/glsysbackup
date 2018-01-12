@@ -1178,7 +1178,7 @@ rotateHandler()
 		   do
 		   	case "${rotation_type}" in
 						daily)
-							if [ "${backup_rotation_weekly_enabled}" == "1" ] ;then
+							if [ "${backup_rotation_daily_enabled}" == "1" ] ;then
 								rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_daily_timestamp_format}${date_cmd_format_suffix}")"
 
 								if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
