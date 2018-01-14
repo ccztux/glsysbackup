@@ -1144,6 +1144,8 @@ rotateHandler()
 	local file_new=
 	local actual_weekday=
 	local actual_weekday_format="%u"
+	local actual_day_of_month=
+	local actual_day_of_month_format="%m"
 	local rotation_timestamp=
 	local rotation_types=("daily" "weekly" "monthly")
 	rotation_type=
@@ -1172,7 +1174,6 @@ rotateHandler()
 			file_extension="${backup_file_extension}"
 		fi
 
-		actual_weekday="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_weekday_format}${date_cmd_format_suffix}")"
 
 		for rotation_type in "${rotation_types[@]}"
 		   do
@@ -1204,6 +1205,7 @@ rotateHandler()
 						weekly)
 							if [ "${backup_rotation_weekly_enabled}" == "1" ] ;then
 								logHandler "Check if today is the day, where ${rotation_type} backups should be rotated..."
+								actual_weekday="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_weekday_format}${date_cmd_format_suffix}")"
 
 								if [ "${actual_weekday}" == "${backup_rotation_weekly_weekday}" ] ;then
 									logHandler "Today is the day, where we should rotate the ${rotation_type} backups (actual_weekday: '${actual_weekday}' == backup_rotation_weekly_weekday: '${backup_rotation_weekly_weekday}')."
@@ -1236,9 +1238,10 @@ rotateHandler()
 						monthly)
 							if [ "${backup_rotation_monthly_enabled}" == "1" ] ;then
 								logHandler "Check if today is the day, where ${rotation_type} backups should be rotated..."
+								actual_day_of_month="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_day_of_month_format}${date_cmd_format_suffix}")"
 
-								if [ "${actual_weekday}" == "${backup_rotation_monthly_day_of_month}" ] ;then
-									logHandler "Today is the day, where we should rotate the ${rotation_type} backups (actual_weekday: '${actual_weekday}' == backup_rotation_monthly_day_of_month: '${backup_rotation_monthly_day_of_month}')."
+								if [ "${actual_day_of_month}" == "${backup_rotation_monthly_day_of_month}" ] ;then
+									logHandler "Today is the day, where we should rotate the ${rotation_type} backups (actual_day_of_month: '${actual_day_of_month}' == backup_rotation_monthly_day_of_month: '${backup_rotation_monthly_day_of_month}')."
 
 									rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_monthly_timestamp_format}${date_cmd_format_suffix}")"
 
@@ -1261,7 +1264,7 @@ rotateHandler()
 										exit
 									fi
 								else
-									logHandler "Today is not the day, where we should rotate the ${rotation_type} backups (actual_weekday: '${actual_weekday}' != backup_rotation_monthly_day_of_month: '${backup_rotation_monthly_day_of_month}')."
+									logHandler "Today is not the day, where we should rotate the ${rotation_type} backups (actual_day_of_month: '${actual_day_of_month}' != backup_rotation_monthly_day_of_month: '${backup_rotation_monthly_day_of_month}')."
 								fi
 							fi
 							;;
