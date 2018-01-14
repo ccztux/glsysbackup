@@ -1016,6 +1016,76 @@ bubbleSort()
 	printf "%s\\n" "${array[@]}"
 }
 
+isLeapYear()
+{
+	local year="${1}"
+
+	if ([ "$((year % 4))" -eq "0" ] && ([ "$((year % 100))" -ne "0" ] || [ "$((year % 400))" -eq "0" ])) ;then
+		return 0
+	else
+		return 1
+	fi
+}
+
+getLastDayOfMonth()
+{
+	local actual_year="${1}"
+	local actual_month="${2}"
+	local rc=
+	local month=
+	local months=("01" "02" "03" "04" "05" "06" "07" "08" "09" "10" "11" "12")
+	last_day_of_month=
+
+	for month in "${months[@]}"
+	   do
+		case "${month}" in
+				01)
+					last_day_of_month="31"
+					;;
+				02)
+					isLeapYear "${year}"
+					rc="${?}"
+
+					if [ "${rc}" == "0" ] ;then
+						last_day_of_month="29"
+					else
+						last_day_of_month="28"
+					fi
+					;;
+				03)
+					last_day_of_month="31"
+					;;
+				04)
+					last_day_of_month="30"
+					;;
+				05)
+					last_day_of_month="31"
+					;;
+				06)
+					last_day_of_month="30"
+					;;
+				07)
+					last_day_of_month="31"
+					;;
+				08)
+					last_day_of_month="31"
+					;;
+				09)
+					last_day_of_month="30"
+					;;
+				10)
+					last_day_of_month="31"
+					;;
+				11)
+					last_day_of_month="30"
+					;;
+				12)
+					last_day_of_month="31"
+					;;
+		esac
+	   done
+}
+
 removeTodaysOldBackups()
 {
 	local file=
@@ -1145,7 +1215,11 @@ rotateHandler()
 	local actual_weekday=
 	local actual_weekday_format="%u"
 	local actual_day_of_month=
-	local actual_day_of_month_format="%m"
+	local actual_day_of_month_format="%d"
+	local actual_month=
+	local actual_month_format="%m"
+	local actual_year=
+	local actual_year_format="%Y"
 	local rotation_timestamp=
 	local rotation_types=("daily" "weekly" "monthly")
 	rotation_type=
@@ -1239,9 +1313,36 @@ rotateHandler()
 							if [ "${backup_rotation_monthly_enabled}" == "1" ] ;then
 								logHandler "Check if today is the day, where ${rotation_type} backups should be rotated..."
 								actual_day_of_month="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_day_of_month_format}${date_cmd_format_suffix}")"
+								actual_month="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_month_format}${date_cmd_format_suffix}")"
+								actual_year="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_year_format}${date_cmd_format_suffix}")"
+
+								getLastDayOfMonth "${actual_year}" "${actual_month}"
 
 								if [ "${actual_day_of_month}" == "${backup_rotation_monthly_day_of_month}" ] ;then
 									logHandler "Today is the day, where we should rotate the ${rotation_type} backups (actual_day_of_month: '${actual_day_of_month}' == backup_rotation_monthly_day_of_month: '${backup_rotation_monthly_day_of_month}')."
+
+									rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_monthly_timestamp_format}${date_cmd_format_suffix}")"
+
+									if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
+										removeTodaysOldBackups
+									fi
+
+									file_new="${rotation_type}_${backup_base_filename}_${rotation_timestamp}.${file_extension}"
+
+									logHandler "Copying actual backup: '${file}' ==> '${backup_base_directory}/${rotation_type}/${file_new}'."
+
+									# shellcheck disable=SC2154
+									${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
+
+									if [ "${PIPESTATUS[0]}" == "0" ] ;then
+										logHandler "Copy job was successful."
+									else
+										logHandler "Copy job was not successful."
+										script_exit_code="162"
+										exit
+									fi
+								elif [ "${actual_day_of_month}" == "${last_day_of_month}" ] ;then
+									logHandler "Today is not the day, where we should rotate the ${rotation_type} backups, but it is the last day of month, so we prepone it (actual_day_of_month: '${actual_day_of_month}' == last_day_of_month: '${last_day_of_month}')."
 
 									rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_monthly_timestamp_format}${date_cmd_format_suffix}")"
 
