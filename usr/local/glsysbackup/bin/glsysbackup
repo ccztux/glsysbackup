@@ -1277,10 +1277,10 @@ rotateHandler()
 											;;
 								esac
 
-								if ([ "${actual_day_of_month}" == "${backup_rotation_monthly_day_of_month}" ] || ([ "${backup_rotation_monthly_day_of_month}" -le "28" ] && [ "${actual_day_of_month}" == "${last_day_of_month}" ])) ;then
+								if ([ "${actual_day_of_month}" == "${backup_rotation_monthly_day_of_month}" ] || ([ "${backup_rotation_monthly_day_of_month}" -ge "28" ] && [ "${actual_day_of_month}" == "${last_day_of_month}" ])) ;then
 									if [ "${actual_day_of_month}" == "${backup_rotation_monthly_day_of_month}" ] ;then
 										logHandler "Today is the day, where we should rotate the ${rotation_type} backups (actual_day_of_month: '${actual_day_of_month}' == backup_rotation_monthly_day_of_month: '${backup_rotation_monthly_day_of_month}')."
-									elif [ "${actual_day_of_month}" == "${backup_rotation_monthly_day_of_month}" ] ;then
+									elif [ "${actual_day_of_month}" == "${last_day_of_month}" ] ;then
 										logHandler "Today is not the day, where we should rotate the ${rotation_type} backups, but it is the last day of month, so we prepone the rotation (actual_day_of_month: '${actual_day_of_month}' == last_day_of_month: '${last_day_of_month}')."
 									fi
 
