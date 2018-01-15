@@ -1038,37 +1038,37 @@ removeTodaysOldBackups()
 
 	logHandler "Check if old backups of type: '${rotation_type}' from today exists..."
 
-	for file in "${backup_files[@]}"
-	   do
-	   	if [ "${file}" == "${backup_files[*]}" ] ;then
-			logHandler "No old backups of type: '${rotation_type}' from today found."
-			return
-		fi
+	if [ "${#backup_files[@]}" == "0" ] ;then
+		logHandler "No old backups of type: '${rotation_type}' from today found."
+		return
+	else
+		for file in "${backup_files[@]}"
+		   do
+			logHandler "Backup from today: '${file}' found..."
+			logHandler "Check if permissions of file: '${file}' are ok to delete it..."
 
-	   	logHandler "Backup from today: '${file}' found..."
-		logHandler "Check if permissions of file: '${file}' are ok to delete it..."
+			checkFileParameters "${file}"
 
-		checkFileParameters "${file}"
+			if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ]) ;then
+				logHandler "We have write permissions, so we can delete it."
 
-		if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ]) ;then
-			logHandler "We have write permissions, so we can delete it."
+				# shellcheck disable=SC2154
+				${rm_bin} "${file}" 2>&1 | logHandler
 
-			# shellcheck disable=SC2154
-			${rm_bin} "${file}" 2>&1 | logHandler
-
-			if [ "${PIPESTATUS[0]}" == "0" ] ;then
-				logHandler "Deleting file was successful."
+				if [ "${PIPESTATUS[0]}" == "0" ] ;then
+					logHandler "Deleting file was successful."
+				else
+					logHandler "Deleting file was not successful."
+					script_exit_code="140"
+					exit
+				fi
+			elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
+				logHandler "File doenst exist, nothing to do."
 			else
-				logHandler "Deleting file was not successful."
-				script_exit_code="140"
-				exit
+				logHandler "We dont have write permissions, nothing to do."
 			fi
-		elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
-			logHandler "File doenst exist, nothing to do."
-		else
-			logHandler "We dont have write permissions, nothing to do."
-		fi
-	   done
+		   done
+	fi
 }
 
 removeOldBackups()
