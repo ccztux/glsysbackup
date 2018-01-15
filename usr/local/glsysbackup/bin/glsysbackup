@@ -1027,65 +1027,6 @@ isLeapYear()
 	fi
 }
 
-getLastDayOfMonth()
-{
-	local actual_year="${1}"
-	local actual_month="${2}"
-	local rc=
-	local month=
-	local months=("01" "02" "03" "04" "05" "06" "07" "08" "09" "10" "11" "12")
-	last_day_of_month=
-
-	for month in "${months[@]}"
-	   do
-		case "${month}" in
-				01)
-					last_day_of_month="31"
-					;;
-				02)
-					isLeapYear "${year}"
-					rc="${?}"
-
-					if [ "${rc}" == "0" ] ;then
-						last_day_of_month="29"
-					else
-						last_day_of_month="28"
-					fi
-					;;
-				03)
-					last_day_of_month="31"
-					;;
-				04)
-					last_day_of_month="30"
-					;;
-				05)
-					last_day_of_month="31"
-					;;
-				06)
-					last_day_of_month="30"
-					;;
-				07)
-					last_day_of_month="31"
-					;;
-				08)
-					last_day_of_month="31"
-					;;
-				09)
-					last_day_of_month="30"
-					;;
-				10)
-					last_day_of_month="31"
-					;;
-				11)
-					last_day_of_month="30"
-					;;
-				12)
-					last_day_of_month="31"
-					;;
-		esac
-	   done
-}
-
 removeTodaysOldBackups()
 {
 	local file=
@@ -1209,6 +1150,7 @@ removeOldBackups()
 
 rotateHandler()
 {
+	local rc=
 	local file=
 	file_extension=
 	local file_new=
@@ -1316,7 +1258,24 @@ rotateHandler()
 								actual_month="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_month_format}${date_cmd_format_suffix}")"
 								actual_year="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_year_format}${date_cmd_format_suffix}")"
 
-								getLastDayOfMonth "${actual_year}" "${actual_month}"
+								case "${actual_month}" in
+										01|03|05|07|08|10|12)
+											last_day_of_month="31"
+											;;
+										02)
+											isLeapYear "${actual_year}"
+											rc="${?}"
+
+											if [ "${rc}" == "0" ] ;then
+												last_day_of_month="29"
+											else
+												last_day_of_month="28"
+											fi
+											;;
+										04|06|09|11)
+											last_day_of_month="30"
+											;;
+								esac
 
 								if [ "${actual_day_of_month}" == "${backup_rotation_monthly_day_of_month}" ] ;then
 									logHandler "Today is the day, where we should rotate the ${rotation_type} backups (actual_day_of_month: '${actual_day_of_month}' == backup_rotation_monthly_day_of_month: '${backup_rotation_monthly_day_of_month}')."
