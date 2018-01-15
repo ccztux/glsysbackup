@@ -1463,10 +1463,6 @@ buildBackupCmd()
 		backup_options+=("--totals")
 	fi
 
-	if [ "${backup_ignore_failed_read}" == "1" ] ;then
-		backup_options+=("--ignore-failed-read")
-	fi
-
 	if [ ! -z "${backup_individual_options[*]}" ] ;then
 		backup_options+=("${backup_individual_options[@]}")
 	fi
