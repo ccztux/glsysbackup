@@ -93,7 +93,7 @@ printUsage()
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
-	printf "   -c\\t\\tPath to config file. The file extension has to be: '.conf'. (If undefined, default value: '%s/etc/%s.conf' will be used.)\\n" "${script_base_path}" "${script_name}"
+	printf "   -c\\t\\tPath to config file. Example: '%s/etc/%s.conf'. (The file extension has to be: '.conf'.)\\n" "${script_base_path}" "${script_name}"
 	printf "   -o\\t\\tOverride lock in case %s was terminated abnormally.\\n" "${script_name}"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
@@ -404,37 +404,39 @@ sigHandler()
 			exit
 			;;
 		EXIT)
-			logHandler "Caught: '${signal}', exiting script..."
+			if [ ! -z "${script_config_file:-}" ] ;then
+				logHandler "Caught: '${signal}', exiting script..."
 
-			if [ "${script_bypass_exit_routines}" -ne "1" ] ;then
-				cleanUp
+				if [ "${script_bypass_exit_routines}" -ne "1" ] ;then
+					cleanUp
 
-				if ([ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ]) || ([ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ]);then
-					script_exit_code="0"
-					rotateHandler
-				else
-					logHandler "The backup job was not successful, so we dont rotate backup files."
-				fi
+					if ([ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ]) || ([ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ]);then
+						script_exit_code="0"
+						rotateHandler
+					else
+						logHandler "The backup job was not successful, so we dont rotate backup files."
+					fi
 
-				if [ "${script_another_instance_is_running}" -ne "1" ] ;then
-					checkLock
-					rc="${?}"
+					if [ "${script_another_instance_is_running}" -ne "1" ] ;then
+						checkLock
+						rc="${?}"
 
-					if [ "${rc}" -eq "0" ] ;then
-						removeLock
+						if [ "${rc}" -eq "0" ] ;then
+							removeLock
+						fi
 					fi
 				fi
-			fi
 
-			if [ "${script_exit_code}" -eq "0" ] ;then
-				logHandler "We did a great job. :)"
-			else
-				logHandler "Ooops!!! Something went wrong. :("
-				logHandler "Read the log or output to determine what exactly went wrong."
-			fi
+				if [ "${script_exit_code}" -eq "0" ] ;then
+					logHandler "We did a great job. :)"
+				else
+					logHandler "Ooops!!! Something went wrong. :("
+					logHandler "Read the log or output to determine what exactly went wrong."
+				fi
 
-			logHandler "Script was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
-			logHandler "Bye, bye..."
+				logHandler "Script was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
+				logHandler "Bye, bye..."
+			fi
 
 			if [ ! -z "${kill_bin:-}" ] ;then
 				if [ "${signal}" != "EXIT" ] ;then
@@ -648,21 +650,33 @@ checkFileParameters()
 setDefaultValues()
 {
 	script_base_path="/usr/local/${script_name}"
-	script_config_file="${script_config_file:=${script_base_path}/etc/${script_name}.conf}"
-	script_config_name="${script_config_file##*/}"
-	script_config_name="${script_config_name//.conf/}"
 	script_lock_directory="${script_base_path}/var/lock"
-	script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
+	#script_config_file="${script_config_file:=${script_base_path}/etc/${script_name}.conf}"
+
+	if [ ! -z "${script_config_file:-}" ] ;then
+		script_config_name="${script_config_file##*/}"
+		script_config_name="${script_config_name//.conf/}"
+		script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
+	fi
 }
 
 checkOpts()
 {
-	if [[ ! "${script_config_file}" =~ ^(.*).conf$ ]] ;then
-		printf "Unsupported file extension of config file: '%s', exiting.\\n\\n" "${script_config_file}"
+	if [ ! -z "${script_config_file:-}" ] ;then
+		if [[ ! "${script_config_file}" =~ ^(.*).conf$ ]] ;then
+			printf "Unsupported file extension of config file: '%s', exiting.\\n\\n" "${script_config_file}"
+			printUsage
+			
+			script_bypass_exit_routines="1"
+			script_exit_code="60"
+			exit
+		fi
+	else
+		printf "Mandatory argument: '-c' (Config file) not supplied, exiting.\\n\\n"
 		printUsage
 		
 		script_bypass_exit_routines="1"
-		script_exit_code="60"
+		script_exit_code="61"
 		exit
 	fi
 }
@@ -1605,8 +1619,8 @@ while getopts ":h.c:o.v." OPTION
 # Main:
 #------
 
-setDefaultValues
 checkOpts
+setDefaultValues
 includeConfig
 checkRootPrivileges
 getUser
