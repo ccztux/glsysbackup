@@ -1016,15 +1016,21 @@ bubbleSort()
 	printf "%s\\n" "${array[@]}"
 }
 
-isLeapYear()
+getDaysOfMonth()
 {
 	local year="${1}"
+	local month="${2##*0}"
+	local days_of_month="$(( 30 + (month + month / 8) % 2))"
 
-	if ([ "$((year % 4))" -eq "0" ] && ([ "$((year % 100))" -ne "0" ] || [ "$((year % 400))" -eq "0" ])) ;then
-		return 0
-	else
-		return 1
+	if [ "${month}" -eq "2" ] ;then
+		days_of_month="$((days_of_month - 2))"
+
+		if ([ "$((year % 4))" -eq "0" ] && ([ "$((year % 100))" -ne "0" ] || [ "$((year % 400))" -eq "0" ])) ;then
+			days_of_month="$((days_of_month + 1))"
+		fi
 	fi
+
+	printf "%d" "${days_of_month}"
 }
 
 removeTodaysOldBackups()
@@ -1162,6 +1168,7 @@ rotateHandler()
 	local actual_month_format="%m"
 	local actual_year=
 	local actual_year_format="%Y"
+	local last_day_of_month=
 	local rotation_timestamp=
 	local rotation_types=("daily" "weekly" "monthly")
 	rotation_type=
@@ -1257,25 +1264,7 @@ rotateHandler()
 								actual_day_of_month="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_day_of_month_format}${date_cmd_format_suffix}")"
 								actual_month="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_month_format}${date_cmd_format_suffix}")"
 								actual_year="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_year_format}${date_cmd_format_suffix}")"
-
-								case "${actual_month}" in
-										01|03|05|07|08|10|12)
-											last_day_of_month="31"
-											;;
-										02)
-											isLeapYear "${actual_year}"
-											rc="${?}"
-
-											if [ "${rc}" == "0" ] ;then
-												last_day_of_month="29"
-											else
-												last_day_of_month="28"
-											fi
-											;;
-										04|06|09|11)
-											last_day_of_month="30"
-											;;
-								esac
+								last_day_of_month="$(getDaysOfMonth "${actual_year}" "${actual_month}")"
 
 								if ([ "${actual_day_of_month}" == "${backup_rotation_monthly_day_of_month}" ] || ([ "${backup_rotation_monthly_day_of_month}" -ge "28" ] && [ "${actual_day_of_month}" == "${last_day_of_month}" ])) ;then
 									if [ "${actual_day_of_month}" == "${backup_rotation_monthly_day_of_month}" ] ;then
