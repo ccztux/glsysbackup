@@ -746,7 +746,7 @@ checkAlreadyRunningInstance()
 	local running_script_pids=
 
 	# shellcheck disable=SC2154
-	running_script_pids="$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_name}(.*)$")"
+	running_script_pids="$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_name}(.*)${script_config_file}(.*)$")"
 	running_script_pids="${running_script_pids//${script_pid}/}"
 
 	# shellcheck disable=SC2154
