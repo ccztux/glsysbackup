@@ -648,11 +648,11 @@ checkFileParameters()
 setDefaultValues()
 {
 	script_base_path="/usr/local/${script_name}"
-	script_lock_directory="${script_base_path}/var/lock"
-	script_lock_file="${script_lock_directory}/${script_name}.lock"
 	script_config_file="${script_config_file:=${script_base_path}/etc/${script_name}.conf}"
 	script_config_name="${script_config_file##*/}"
 	script_config_name="${script_config_name//.conf/}"
+	script_lock_directory="${script_base_path}/var/lock"
+	script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
 }
 
 checkOpts()
