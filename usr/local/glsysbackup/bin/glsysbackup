@@ -118,7 +118,7 @@ checkBin()
 	_bin="$(which "${binary}" 2>&1)"
 	rc="${?}"
 
-	if [ "${rc}" == "0" ] ;then
+	if [ "${rc}" -eq "0" ] ;then
 		export "${binary}"_bin="${_bin}"
 		return 0
 	else
@@ -136,11 +136,11 @@ checkRequiredBinaries()
 	local binaries_not_found_helper=
 	local supported_syspackage_managers=("rpm" "dpkg" "pacman" "equery" "pkgutil")
 
-	if [ "${log_to_syslog}" == "1" ] ;then
+	if [ "${log_to_syslog}" -eq "1" ] ;then
 		required_binaries+=("logger")
 	fi
 
-	if ([ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ]) ;then
+	if ([ "${log_to_file}" -eq "1" ] || [ "${log_to_stdout}" -eq "1" ]) ;then
 		if ([ "${BASH_VERSINFO[0]}" -ge "4" ] && [ "${BASH_VERSINFO[1]}" -ge "2" ]) ;then
 			date_bin_printf="1"
 			date_bin="printf"
@@ -149,19 +149,19 @@ checkRequiredBinaries()
 		fi
 	fi
 
-	if ([ "${backup_rotation_daily_enabled}" == "1" ] || [ "${backup_rotation_weekly_enabled}" == "1" ] || [ "${backup_rotation_monthly_enabled}" == "1" ]) ;then
+	if ([ "${backup_rotation_daily_enabled}" -eq "1" ] || [ "${backup_rotation_weekly_enabled}" -eq "1" ] || [ "${backup_rotation_monthly_enabled}" -eq "1" ]) ;then
 		required_binaries+=("cp")
 	fi
 
-	if [ "${backup_encryption_enabled}" == "1" ] ;then
+	if [ "${backup_encryption_enabled}" -eq "1" ] ;then
 		required_binaries+=("openssl")
 	fi
 
-	if [ "${re_nice_enabled}" == "1" ] ;then
+	if [ "${re_nice_enabled}" -eq "1" ] ;then
 		required_binaries+=("renice")
 	fi
 
-	if [ "${re_ionice_enabled}" == "1" ] ;then
+	if [ "${re_ionice_enabled}" -eq "1" ] ;then
 		required_binaries+=("ionice")
 	fi
 
@@ -172,7 +172,7 @@ checkRequiredBinaries()
 		checkBin "${bin}"
 		rc="${?}"
 
-		if [ "${rc}" != "0" ] ;then
+		if [ "${rc}" -ne "0" ] ;then
 			binaries_not_found+=("${bin}")
 		fi
 	   done
@@ -194,7 +194,7 @@ checkRequiredBinaries()
 		exit
 	fi
 
-	if [ "${installed_packages_enabled}" == "1" ] ;then
+	if [ "${installed_packages_enabled}" -eq "1" ] ;then
 		available_syspackage_managers=()
 
 		if [ -z "${installed_packages_forced_manager}" ] ;then
@@ -203,7 +203,7 @@ checkRequiredBinaries()
 				checkBin "${syspackman}"
 				rc="${?}"
 
-				if [ "${rc}" == "0" ] ;then
+				if [ "${rc}" -eq "0" ] ;then
 					available_syspackage_managers+=("${syspackman}")
 				fi
 			   done
@@ -211,7 +211,7 @@ checkRequiredBinaries()
 			checkBin "${installed_packages_forced_manager}"
 			rc="${?}"
 
-			if [ "${rc}" == "0" ] ;then
+			if [ "${rc}" -eq "0" ] ;then
 				available_syspackage_managers+=("${installed_packages_forced_manager}")
 			fi
 		fi
@@ -230,7 +230,7 @@ includeConfig()
 		source "${script_config_file}"
 		rc="${?}"
 
-		if [ "${rc}" == "0" ] ;then
+		if [ "${rc}" -eq "0" ] ;then
 			checkRequiredBinaries
 		else
 			printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
@@ -266,7 +266,7 @@ logHandlerSetConfig()
 	b_date_bin_available="8"
 	b_logger_bin_available="16"
 
-	if [ "${date_bin_printf:-}" == "1" ] ;then
+	if [ "${date_bin_printf:-}" -eq "1" ] ;then
 		date_cmd_format_prefix="'%("
 		date_cmd_format_suffix=")T\\n' -1"
 	else
@@ -274,15 +274,15 @@ logHandlerSetConfig()
 		date_cmd_format_suffix="'"
 	fi
 
-	if [ "${log_to_file}" == "1" ] ;then
+	if [ "${log_to_file}" -eq "1" ] ;then
 		log_conf="$((log_conf | b_log_to_file))"
 	fi
 
-	if [ "${log_to_stdout}" == "1" ] ;then
+	if [ "${log_to_stdout}" -eq "1" ] ;then
 		log_conf="$((log_conf | b_log_to_stdout))"
 	fi
 
-	if [ "${log_to_syslog}" == "1" ] ;then
+	if [ "${log_to_syslog}" -eq "1" ] ;then
 		log_conf="$((log_conf | b_log_to_syslog))"
 	fi
 
@@ -321,9 +321,9 @@ logHandler()
 					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
 				fi
 
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+				printf "[%s] %s: [%d] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
 			else
-				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
+				printf "[Date bin not found] %s: [%d] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
 			fi
 		fi
 
@@ -333,9 +333,9 @@ logHandler()
 					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
 				fi
 
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+				printf "[%s] %s: [%d] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 			else
-				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+				printf "[Date bin not found] %s: [%d] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
 			fi
 		fi
 
@@ -356,7 +356,7 @@ sigHandler()
 
 	case "${signal}" in
 		SIGTERM)
-			if [ "${script_shutdown_in_progress}" != "1" ] ;then
+			if [ "${script_shutdown_in_progress}" -ne "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
 			fi
 
@@ -364,7 +364,7 @@ sigHandler()
 			exit
 			;;
 		SIGINT)
-			if [ "${script_shutdown_in_progress}" != "1" ] ;then
+			if [ "${script_shutdown_in_progress}" -ne "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
 			fi
 
@@ -372,7 +372,7 @@ sigHandler()
 			exit
 			;;
 		SIGHUP)
-			if [ "${script_shutdown_in_progress}" != "1" ] ;then
+			if [ "${script_shutdown_in_progress}" -ne "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
 			fi
 
@@ -380,7 +380,7 @@ sigHandler()
 			exit
 			;;
 		SIGABRT)
-			if [ "${script_shutdown_in_progress}" != "1" ] ;then
+			if [ "${script_shutdown_in_progress}" -ne "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
 			fi
 
@@ -388,7 +388,7 @@ sigHandler()
 			exit
 			;;
 		SIGQUIT)
-			if [ "${script_shutdown_in_progress}" != "1" ] ;then
+			if [ "${script_shutdown_in_progress}" -ne "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
 			fi
 
@@ -396,7 +396,7 @@ sigHandler()
 			exit
 			;;
 		ERR)
-			if [ "${script_shutdown_in_progress}" != "1" ] ;then
+			if [ "${script_shutdown_in_progress}" -ne "1" ] ;then
 				logHandler "Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'." 
 			fi
 
@@ -406,27 +406,27 @@ sigHandler()
 		EXIT)
 			logHandler "Caught: '${signal}', exiting script..."
 
-			if [ "${script_bypass_exit_routines}" != "1" ] ;then
+			if [ "${script_bypass_exit_routines}" -ne "1" ] ;then
 				cleanUp
 
-				if ([ "${backup_encryption_enabled:-}" == "1" ] && [ "${encryption_successful:-}" == "1" ]) || ([ "${backup_encryption_enabled:-}" == "0" ] && [ "${backup_successful:-}" == "1" ]);then
+				if ([ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ]) || ([ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ]);then
 					script_exit_code="0"
 					rotateHandler
 				else
 					logHandler "The backup job was not successful, so we dont rotate backup files."
 				fi
 
-				if [ "${script_another_instance_is_running}" != "1" ] ;then
+				if [ "${script_another_instance_is_running}" -ne "1" ] ;then
 					checkLock
 					rc="${?}"
 
-					if [ "${rc}" == "0" ] ;then
+					if [ "${rc}" -eq "0" ] ;then
 						removeLock
 					fi
 				fi
 			fi
 
-			if [ "${script_exit_code}" == "0" ] ;then
+			if [ "${script_exit_code}" -eq "0" ] ;then
 				logHandler "We did a great job. :)"
 			else
 				logHandler "Ooops!!! Something went wrong. :("
@@ -489,7 +489,7 @@ setLock()
 		# shellcheck disable=SC2154
 		${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
 
-		if [ "${PIPESTATUS[0]}" == "0" ] ;then
+		if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 			logHandler "Creating script lock directory was successful."
 		else
 			logHandler "Creating script lock directory was not successful."
@@ -504,10 +504,10 @@ setLock()
 
 	logHandler "Setting lock..."
 
-	printf "%s\\n" "${script_pid}" > "${script_lock_file}"
+	printf "%d" "${script_pid}" > "${script_lock_file}"
 	rc="${?}"
 
-	if [ "${rc}" == "0" ] ;then
+	if [ "${rc}" -eq "0" ] ;then
 		logHandler "Setting lock was successful."
 	else
 		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock."
@@ -523,7 +523,7 @@ removeLock()
 	# shellcheck disable=SC2154
 	${rm_bin} "${script_lock_file}" 2>&1 | logHandler
 
-	if [ "${PIPESTATUS[0]}" == "0" ] ;then
+	if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 		logHandler "Removing lock was successful."
 	else
 		logHandler "Removing lock was not successful."
@@ -550,7 +550,7 @@ cleanUp()
 
 delUnencryptedBackupFile()
 {
-	if [ "${backup_encryption_enabled:-}" == "1" ] ;then
+	if [ "${backup_encryption_enabled:-}" -eq "1" ] ;then
 		logHandler "Backup encryption is enabled, now we check if unencrypted backup file exists, if it is writeable and delete it..."
 		logHandler "Check if unencrypted backup file: '${backup_filename}' exists and if it is writeable..."
 
@@ -563,7 +563,7 @@ delUnencryptedBackupFile()
 			# shellcheck disable=SC2154
 			${rm_bin} "${backup_filename}" 2>&1 | logHandler
 
-			if [ "${PIPESTATUS[0]}" == "0" ] ;then
+			if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 				logHandler "Deleting unencrypted backup file was successful."
 			else
 				logHandler "Deleting unencrypted backup file was not successful."
@@ -580,7 +580,7 @@ delUnencryptedBackupFile()
 
 delInstalledPackagesFile()
 {
-	if [ "${installed_packages_enabled:-}" == "1" ] ;then
+	if [ "${installed_packages_enabled:-}" -eq "1" ] ;then
 		logHandler "Installed packages functionality is enabled, now we check if the file exists, if it is writeable and delete it..."
 		logHandler "Check if installed packages file: '${installed_packages_filename}' exists and if it is writeable..."
 
@@ -593,7 +593,7 @@ delInstalledPackagesFile()
 			# shellcheck disable=SC2154
 			${rm_bin} "${installed_packages_filename}" 2>&1 | logHandler
 
-			if [ "${PIPESTATUS[0]}" == "0" ] ;then
+			if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 				logHandler "Deleting installed packages file was successful."
 			else
 				logHandler "Deleting installed packages file was not successful."
@@ -671,10 +671,10 @@ checkRootPrivileges()
 {
 	logHandler "Check if root priviliges are required..."
 
-	if [ "${root_privileges_required}" == "1" ] ;then
+	if [ "${root_privileges_required}" -eq "1" ] ;then
 		logHandler "Root privileges are required, checking privileges..."
 
-		if [ "$UID" == "0" ] ;then
+		if [ "$UID" -eq "0" ] ;then
 			logHandler "HOORAY, we have root privileges. :)"
 		else
 			logHandler "You must run this script as root, terminating."
@@ -745,13 +745,13 @@ checkAlreadyRunningInstance()
 	checkLock
 	rc="${?}"
 
-	if ([ "${rc}" != "0" ] && [ -z "${running_script_pids:-}" ]) ;then
+	if ([ "${rc}" -ne "0" ] && [ -z "${running_script_pids:-}" ]) ;then
 		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)."
 		setLock
-	elif ([ "${rc}" == "0" ] && [ -z "${running_script_pids:-}" ]) ;then
+	elif ([ "${rc}" -eq "0" ] && [ -z "${running_script_pids:-}" ]) ;then
 		logHandler "Another instance of: '${script_name}' seems to be running (Lockfile: '${script_lock_file}' exists and no processes are running). Maybe ${script_name} was terminated abnormally."
 
-		if [ "${script_override_lock}" == "1" ] ;then
+		if [ "${script_override_lock}" -eq "1" ] ;then
 			overrideLock
 		else
 			logHandler "HINT: You can override the old left over lock by calling ${script_name} with option '-o'."
@@ -761,7 +761,7 @@ checkAlreadyRunningInstance()
 			script_exit_code="90"
 			exit
 		fi
-	elif ([ "${rc}" == "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
+	elif ([ "${rc}" -eq "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
 		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
 
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids}' are running)."
@@ -770,7 +770,7 @@ checkAlreadyRunningInstance()
 		script_bypass_exit_routines="1"
 		script_exit_code="91"
 		exit
-	elif ([ "${rc}" != "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
+	elif ([ "${rc}" -ne "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
 		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
 
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids}' are running)."
@@ -786,7 +786,7 @@ reNice()
 {
 	logHandler "Check if re-niceing is enabled..."
 
-	if [ "${re_nice_enabled}" == "1" ] ;then
+	if [ "${re_nice_enabled}" -eq "1" ] ;then
 		logHandler "Re-niceing is enabled."
 		logHandler "Check if renice priority is in range..."
 
@@ -803,7 +803,7 @@ reNice()
 			# shellcheck disable=SC2154
 			${renice_bin} -n ${re_nice_priority} -p ${script_pid} 2>&1 | logHandler
 			
-			if [ "${PIPESTATUS[0]}" == "0" ] ;then
+			if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 				logHandler "Re-niceing was successful."
 			else
 				logHandler "Re-niceing was not successful."
@@ -823,7 +823,7 @@ reIONice()
 
 	logHandler "Check if re-ioniceing is enabled..."
 
-	if [ "${re_ionice_enabled}" == "1" ] ;then
+	if [ "${re_ionice_enabled}" -eq "1" ] ;then
 		logHandler "Re-ioniceing is enabled."
 		logHandler "Check if re-ioniceing parameters are in range..."
 
@@ -837,7 +837,7 @@ reIONice()
 			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is in range."
 		fi
 
-		if ([ "${re_ionice_scheduling_class}" == "1" ] || [ "${re_ionice_scheduling_class}" == "2" ]) ;then
+		if ([ "${re_ionice_scheduling_class}" -eq "1" ] || [ "${re_ionice_scheduling_class}" -eq "2" ]) ;then
 			logHandler "Selected re-ioniceing scheduling class: '${re_ionice_scheduling_class}' requires re-ioniceing priority."
 			logHandler "Check if re-ioniceing priority is in range..."
 
@@ -858,7 +858,7 @@ reIONice()
 
 		logHandler "Re-ioniceing..."
 
-		if [ "${re_ionice_priority_required}" == "1" ] ;then
+		if [ "${re_ionice_priority_required}" -eq "1" ] ;then
 			# shellcheck disable=SC2154
 			re_ionice_cmd="${ionice_bin} -c ${re_ionice_scheduling_class} -n ${re_ionice_priority} -p ${script_pid}"
 		else
@@ -868,7 +868,7 @@ reIONice()
 
 		${re_ionice_cmd}  2>&1 | logHandler
 		
-		if [ "${PIPESTATUS[0]}" == "0" ] ;then
+		if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 			logHandler "Re-ioniceing was successful."
 		else
 			logHandler "Re-ioniceing was not successful."
@@ -886,7 +886,7 @@ executePreBackupScript()
 
 	logHandler "Check if pre backup script functionality is enabled..."
 
-	if [ "${pre_backup_script_enabled}" == "1" ] ;then
+	if [ "${pre_backup_script_enabled}" -eq "1" ] ;then
 		logHandler "Pre backup script functionality is enabled."
 		logHandler "Check if pre backup script (${pre_backup_script}) exists and if it is executeable..."
 
@@ -907,12 +907,12 @@ executePreBackupScript()
 		eval "${pre_backup_script} 2>&1" | logHandler
 		rc="${?}"
 
-		if [ "${rc}" == "0" ] ;then
+		if [ "${rc}" -eq "0" ] ;then
 			logHandler "Execution of pre backup script was successful. rc: '${rc}'."
 		else
 			logHandler "Execution of pre backup script was unsuccessful. rc: '${rc}'."
 
-			if [ "${pre_backup_exit_when_unsuccessful}" == "1" ] ;then
+			if [ "${pre_backup_exit_when_unsuccessful}" -eq "1" ] ;then
 				logHandler "Breaking, because execution of pre backup script was unsuccessful und you want it."
 				script_exit_code="122"
 				exit
@@ -944,7 +944,7 @@ checkBackupDirStructure()
 		# shellcheck disable=SC2154
 		${mkdir_bin} -p "${backup_destination_path}" 2>&1 | logHandler
 
-		if [ "${PIPESTATUS[0]}" == "0" ] ;then
+		if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 			logHandler "Creating backup directory was successful."
 		else
 			logHandler "Creating backup directory was not successful."
@@ -972,7 +972,7 @@ checkBackupDirStructure()
 			# shellcheck disable=SC2154
 			${mkdir_bin} -p "${dir_helper}" 2>&1 | logHandler
 
-			if [ "${PIPESTATUS[0]}" == "0" ] ;then
+			if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 				logHandler "Creating directory: '${dir_helper}' was successful."
 			else
 				logHandler "Creating directory: '${dir_helper}' was not successful."
@@ -1044,7 +1044,7 @@ removeTodaysOldBackups()
 
 	logHandler "Check if old backups of type: '${rotation_type}' from today exists..."
 
-	if [ "${#backup_files[@]}" == "0" ] ;then
+	if [ "${#backup_files[@]}" -eq "0" ] ;then
 		logHandler "No old backups of type: '${rotation_type}' from today found."
 		return
 	else
@@ -1061,7 +1061,7 @@ removeTodaysOldBackups()
 				# shellcheck disable=SC2154
 				${rm_bin} "${file}" 2>&1 | logHandler
 
-				if [ "${PIPESTATUS[0]}" == "0" ] ;then
+				if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 					logHandler "Deleting file was successful."
 				else
 					logHandler "Deleting file was not successful."
@@ -1135,7 +1135,7 @@ removeOldBackups()
 					# shellcheck disable=SC2154
 					${rm_bin} "${file}" 2>&1 | logHandler
 
-					if [ "${PIPESTATUS[0]}" == "0" ] ;then
+					if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 						logHandler "Deleting file was successful."
 					else
 						logHandler "Deleting file was not successful."
@@ -1179,7 +1179,7 @@ rotateHandler()
 
 	logHandler "Check if backup rotation is enabled..."
 
-	if ([ "${backup_rotation_daily_enabled}" == "1" ] || [ "${backup_rotation_weekly_enabled}" == "1" ] || [ "${backup_rotation_monthly_enabled}" == "1" ]) ;then
+	if ([ "${backup_rotation_daily_enabled}" -eq "1" ] || [ "${backup_rotation_weekly_enabled}" -eq "1" ] || [ "${backup_rotation_monthly_enabled}" -eq "1" ]) ;then
 		logHandler "Backup rotation is enabled."
 		logHandler "Check if only one backup per day is enabled..."
 
@@ -1189,7 +1189,7 @@ rotateHandler()
 			logHandler "Only one backup per day is not enabled."
 		fi
 
-		if [ "${backup_encryption_enabled}" == "1" ] ;then
+		if [ "${backup_encryption_enabled}" -eq "1" ] ;then
 			file="${backup_encryption_filename}"
 			file_extension="${backup_encryption_file_extension}"
 		else
@@ -1202,7 +1202,7 @@ rotateHandler()
 		   do
 		   	case "${rotation_type}" in
 						daily)
-							if [ "${backup_rotation_daily_enabled}" == "1" ] ;then
+							if [ "${backup_rotation_daily_enabled}" -eq "1" ] ;then
 								rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_daily_timestamp_format}${date_cmd_format_suffix}")"
 
 								if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
@@ -1216,7 +1216,7 @@ rotateHandler()
 								# shellcheck disable=SC2154
 								${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
 
-								if [ "${PIPESTATUS[0]}" == "0" ] ;then
+								if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 									logHandler "Copy job was successful."
 								else
 									logHandler "Copy job was not successful."
@@ -1226,11 +1226,11 @@ rotateHandler()
 							fi
 							;;
 						weekly)
-							if [ "${backup_rotation_weekly_enabled}" == "1" ] ;then
+							if [ "${backup_rotation_weekly_enabled}" -eq "1" ] ;then
 								logHandler "Check if today is the day, where ${rotation_type} backups should be rotated..."
 								actual_weekday="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_weekday_format}${date_cmd_format_suffix}")"
 
-								if [ "${actual_weekday}" == "${backup_rotation_weekly_weekday}" ] ;then
+								if [ "${actual_weekday}" -eq "${backup_rotation_weekly_weekday}" ] ;then
 									logHandler "Today is the day, where we should rotate the ${rotation_type} backups (actual_weekday: '${actual_weekday}' == backup_rotation_weekly_weekday: '${backup_rotation_weekly_weekday}')."
 
 									rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_weekly_timestamp_format}${date_cmd_format_suffix}")"
@@ -1246,7 +1246,7 @@ rotateHandler()
 									# shellcheck disable=SC2154
 									${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
 
-									if [ "${PIPESTATUS[0]}" == "0" ] ;then
+									if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 										logHandler "Copy job was successful."
 									else
 										logHandler "Copy job was not successful."
@@ -1259,17 +1259,17 @@ rotateHandler()
 							fi
 							;;
 						monthly)
-							if [ "${backup_rotation_monthly_enabled}" == "1" ] ;then
+							if [ "${backup_rotation_monthly_enabled}" -eq "1" ] ;then
 								logHandler "Check if today is the day, where ${rotation_type} backups should be rotated..."
 								actual_day_of_month="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_day_of_month_format}${date_cmd_format_suffix}")"
 								actual_month="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_month_format}${date_cmd_format_suffix}")"
 								actual_year="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_year_format}${date_cmd_format_suffix}")"
 								last_day_of_month="$(getDaysOfMonth "${actual_year}" "${actual_month}")"
 
-								if ([ "${actual_day_of_month}" == "${backup_rotation_monthly_day_of_month}" ] || ([ "${backup_rotation_monthly_day_of_month}" -ge "28" ] && [ "${actual_day_of_month}" == "${last_day_of_month}" ])) ;then
-									if [ "${actual_day_of_month}" == "${backup_rotation_monthly_day_of_month}" ] ;then
+								if ([ "${actual_day_of_month}" -eq "${backup_rotation_monthly_day_of_month}" ] || ([ "${backup_rotation_monthly_day_of_month}" -ge "28" ] && [ "${actual_day_of_month}" -eq "${last_day_of_month}" ])) ;then
+									if [ "${actual_day_of_month}" -eq "${backup_rotation_monthly_day_of_month}" ] ;then
 										logHandler "Today is the day, where we should rotate the ${rotation_type} backups (actual_day_of_month: '${actual_day_of_month}' == backup_rotation_monthly_day_of_month: '${backup_rotation_monthly_day_of_month}')."
-									elif [ "${actual_day_of_month}" == "${last_day_of_month}" ] ;then
+									elif [ "${actual_day_of_month}" -eq "${last_day_of_month}" ] ;then
 										logHandler "Today is not the day, where we should rotate the ${rotation_type} backups, but it is the last day of month, so we prepone the rotation (actual_day_of_month: '${actual_day_of_month}' == last_day_of_month: '${last_day_of_month}')."
 									fi
 
@@ -1286,7 +1286,7 @@ rotateHandler()
 									# shellcheck disable=SC2154
 									${cp_bin} -a "${file}" "${backup_base_directory}/${rotation_type}/${file_new}" 2>&1 | logHandler
 
-									if [ "${PIPESTATUS[0]}" == "0" ] ;then
+									if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 										logHandler "Copy job was successful."
 									else
 										logHandler "Copy job was not successful."
@@ -1315,7 +1315,7 @@ createInstalledPackagesFile()
 
 	logHandler "Check if installed packages are enabled..."
 
-	if [ "${installed_packages_enabled}" == "1" ] ;then
+	if [ "${installed_packages_enabled}" -eq "1" ] ;then
 		logHandler "Installed packages are enabled."
 
 		if [ "${#available_syspackage_managers[*]}" -gt "1" ] ;then
@@ -1366,7 +1366,7 @@ createInstalledPackagesFile()
 
 		rc="${?}"
 
-		if [ "${rc}" == "0" ] ;then
+		if [ "${rc}" -eq "0" ] ;then
 			logHandler "Creating installed packages file was successful, adding file to backup_items config array."
 			backup_items+=("${installed_packages_filename}")
 		else
@@ -1407,7 +1407,7 @@ buildBackupCmd()
 
 	backup_options=("--create")
 
-	if [ "${backup_compression_enabled}" == "1" ] ;then
+	if [ "${backup_compression_enabled}" -eq "1" ] ;then
 		case "${backup_compression_type}" in
 							gzip)
 								backup_options+=("--gzip")
@@ -1444,11 +1444,11 @@ buildBackupCmd()
 	backup_filename="${backup_base_directory}/latest/${backup_base_filename}.${backup_file_extension}"
 	backup_options+=("--file=${backup_filename}")
 
-	if [ "${backup_verbose_mode_enabled}" == "1" ] ;then
+	if [ "${backup_verbose_mode_enabled}" -eq "1" ] ;then
 		backup_options+=("--verbose")
 	fi
 
-	if [ "${backup_show_totals}" == "1" ] ;then
+	if [ "${backup_show_totals}" -eq "1" ] ;then
 		backup_options+=("--totals")
 	fi
 
@@ -1473,7 +1473,7 @@ makeBackup()
 
 	${backup_cmd} 2>&1 | logHandler
 
-	if [ "${PIPESTATUS[0]}" == "0" ] ;then
+	if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 		logHandler "Backup job was successful."
 		backup_successful="1"
 	else
@@ -1485,7 +1485,7 @@ makeBackup()
 
 encryptBackup()
 {
-	if [ "${backup_encryption_enabled}" == "1" ] ;then
+	if [ "${backup_encryption_enabled}" -eq "1" ] ;then
 		backup_encryption_file_extension="aes.${backup_file_extension}"
 		backup_encryption_filename="${backup_filename//${backup_file_extension}/${backup_encryption_file_extension}}"
 
@@ -1495,7 +1495,7 @@ encryptBackup()
 		# shellcheck disable=SC2154
 		${openssl_bin} aes-256-cbc -salt -in "${backup_filename}" -out "${backup_encryption_filename}" -k "${backup_encryption_password}" 2>&1 | logHandler
 
-		if [ "${PIPESTATUS[0]}" == "0" ] ;then
+		if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
 			logHandler "Encrypting job was successful."
 			logHandler "HINT: To decrypt use this command: '${openssl_bin} aes-256-cbc -d -salt -in ${backup_encryption_filename} -out ${backup_filename}'."
 			encryption_successful="1"
@@ -1515,7 +1515,7 @@ executePostBackupScript()
 
 	logHandler "Check if post backup script functionality is enabled..."
 
-	if [ "${post_backup_script_enabled}" == "1" ] ;then
+	if [ "${post_backup_script_enabled}" -eq "1" ] ;then
 		logHandler "Post backup script functionality is enabled."
 		logHandler "Check if post backup script (${post_backup_script}) exists and if it is executeable..."
 
@@ -1536,12 +1536,12 @@ executePostBackupScript()
 		eval "${post_backup_script} 2>&1" | logHandler
 		rc="${?}"
 
-		if [ "${rc}" == "0" ] ;then
+		if [ "${rc}" -eq "0" ] ;then
 			logHandler "Execution of post backup script was successful. rc: '${rc}'."
 		else
 			logHandler "Execution of post backup script was unsuccessful. rc: '${rc}'."
 
-			if [ "${post_backup_exit_when_unsuccessful}" == "1" ] ;then
+			if [ "${post_backup_exit_when_unsuccessful}" -eq "1" ] ;then
 				logHandler "Breaking, because execution of post backup script was unsuccessful und you want it."
 				script_exit_code="212"
 				exit
