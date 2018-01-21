@@ -667,15 +667,14 @@ checkOpts()
 			printf "Unsupported file extension of config file: '%s', exiting.\\n\\n" "${script_config_file}"
 			printUsage
 			
-			script_bypass_exit_routines="1"
+			script_config_file=
 			script_exit_code="60"
 			exit
 		fi
 	else
 		printf "Mandatory argument: '-c' (Config file) not supplied, exiting.\\n\\n"
 		printUsage
-		
-		script_bypass_exit_routines="1"
+
 		script_exit_code="61"
 		exit
 	fi
