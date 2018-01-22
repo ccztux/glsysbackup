@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2018-01-15
+#			2018-01-22
 #
 #  Description:		Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -67,7 +67,7 @@ script_version="2.0.0-beta.1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2018-01-15"
+script_last_modification_date="2018-01-22"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -258,7 +258,6 @@ includeConfig()
 
 logHandlerSetConfig()
 {
-	log_file_full_path="${log_directory}${log_filename}"
 	log_conf=
 	b_log_to_file="1"
 	b_log_to_stdout="2"
@@ -333,9 +332,9 @@ logHandler()
 					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
 				fi
 
-				printf "[%s] %s: [%d] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+				printf "[%s] %s: [%d] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${script_log_file}"
 			else
-				printf "[Date bin not found] %s: [%d] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
+				printf "[Date bin not found] %s: [%d] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${script_log_file}"
 			fi
 		fi
 
@@ -651,12 +650,13 @@ setDefaultValues()
 {
 	script_base_path="/usr/local/${script_name}"
 	script_lock_directory="${script_base_path}/var/lock"
-	#script_config_file="${script_config_file:=${script_base_path}/etc/${script_name}.conf}"
+	script_log_directory="${script_base_path}/var/log"
 
 	if [ ! -z "${script_config_file:-}" ] ;then
 		script_config_name="${script_config_file##*/}"
 		script_config_name="${script_config_name//.conf/}"
 		script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
+		script_log_file="${script_log_directory}/${script_name}.${script_config_name}.log"
 	fi
 }
 
