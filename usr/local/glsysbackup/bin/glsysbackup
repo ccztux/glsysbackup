@@ -1325,6 +1325,7 @@ createInstalledPackagesFile()
 	local rc=
 	local syspackage_manager=
 	local available_syspackage_managers_helper=
+	installed_packages_filename="${installed_packages_directory}/${script_name}.${script_config_name}.installed_packges.txt"
 
 	logHandler "Check if installed packages are enabled..."
 
