@@ -547,6 +547,7 @@ cleanUp()
 
 	delUnencryptedBackupFile
 	delInstalledPackagesFile
+	delOldLeftoverLatestBackups
 }
 
 delUnencryptedBackupFile()
@@ -1523,7 +1524,7 @@ encryptBackup()
 	fi
 }
 
-removeOldLeftoverLatestBackups()
+delOldLeftoverLatestBackups()
 {
 	logHandler "Checking for old, leftover backups in latest folder..."
 
@@ -1684,7 +1685,6 @@ buildExcludeOpts
 buildBackupCmd
 makeBackup
 encryptBackup
-removeOldLeftoverLatestBackups
 executePostBackupScript
 
 exit
