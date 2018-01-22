@@ -181,14 +181,14 @@ checkRequiredBinaries()
 	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
 	logHandler "We are using config file: '${script_config_file}'."
 
-	if [ "${#binaries_not_found[*]}" -gt "1" ] ;then
+	if [ "${#binaries_not_found[@]}" -gt "1" ] ;then
 		binaries_not_found_helper="${binaries_not_found[*]}"
 		binaries_not_found_helper="${binaries_not_found_helper//\ /\,\ }"
 
 		logHandler "Required binaries: '${binaries_not_found_helper}' not found, exiting."
 		script_exit_code="127"
 		exit
-	elif [ "${#binaries_not_found[*]}" -eq "1" ] ;then
+	elif [ "${#binaries_not_found[@]}" -eq "1" ] ;then
 		logHandler "Required binary: '${binaries_not_found[*]}' not found, exiting."
 		script_exit_code="127"
 		exit
@@ -1098,7 +1098,7 @@ removeOldBackups()
 	local backup_files=(${backup_files_base_name}*.${file_extension})
 	# shellcheck disable=SC2207
 	local backup_files_sorted=($(bubbleSort "${backup_files[@]}"))
-	local backup_files_count="${#backup_files[*]}"
+	local backup_files_count="${#backup_files[@]}"
 	local backups_to_delete_counter=
 
 	logHandler "Check if rotation of ${rotation_type} backups is necessary..."
@@ -1332,7 +1332,7 @@ createInstalledPackagesFile()
 	if [ "${installed_packages_enabled}" -eq "1" ] ;then
 		logHandler "Installed packages are enabled."
 
-		if [ "${#available_syspackage_managers[*]}" -gt "1" ] ;then
+		if [ "${#available_syspackage_managers[@]}" -gt "1" ] ;then
 			available_syspackage_managers_helper="${available_syspackage_managers[*]}"
 			available_syspackage_managers_helper="${available_syspackage_managers_helper//\ /\,\ }"
 
@@ -1344,10 +1344,10 @@ createInstalledPackagesFile()
 
 			script_exit_code="170"
 			exit
-		elif [ "${#available_syspackage_managers[*]}" -eq "1" ] ;then
+		elif [ "${#available_syspackage_managers[@]}" -eq "1" ] ;then
 			syspackage_manager="${available_syspackage_managers[*]}"
 			logHandler "The supported system package manager we found is: '${syspackage_manager}'."
-		elif [ "${#available_syspackage_managers[*]}" -eq "0" ] ;then
+		elif [ "${#available_syspackage_managers[@]}" -eq "0" ] ;then
 			logHandler "No supported system package manager found, exiting."
 			script_exit_code="171"
 			exit
@@ -1687,13 +1687,4 @@ encryptBackup
 removeOldLeftoverLatestBackups
 executePostBackupScript
 
-exit
-
-
-
-#-------------------------
-# Should never be reached:
-#-------------------------
-
-logHandler "Ooops!!! Something went terribly wrong... :( Exiting."
 exit
