@@ -1499,10 +1499,10 @@ makeBackup()
 
 encryptBackup()
 {
-	if [ "${backup_encryption_enabled}" -eq "1" ] ;then
-		backup_encryption_file_extension="aes.${backup_file_extension}"
-		backup_encryption_filename="${backup_filename//${backup_file_extension}/${backup_encryption_file_extension}}"
+	backup_encryption_file_extension="aes.${backup_file_extension}"
+	backup_encryption_filename="${backup_filename//${backup_file_extension}/${backup_encryption_file_extension}}"
 
+	if [ "${backup_encryption_enabled}" -eq "1" ] ;then
 		logHandler "Backup encryption is enabled..."
 		logHandler "Encrypting backup file: '${backup_filename}'..."
 
@@ -1523,6 +1523,55 @@ encryptBackup()
 	fi
 }
 
+removeOldLeftoverLatestBackups()
+{
+	logHandler "Checking for old, leftover backups in latest folder..."
+
+	if [ "${backup_encryption_enabled}" -eq "0" ] ;then
+		checkFileParameters "${backup_encryption_filename}"
+
+		if ([ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]) ;then
+			logHandler "Old, leftover encrypted backup found in latest folder: '${backup_encryption_filename}' and we have write permission, so we delete it."
+
+			# shellcheck disable=SC2154
+			${rm_bin} "${backup_encryption_filename}" 2>&1 | logHandler
+
+			if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
+				logHandler "Deleting file was successful."
+			else
+				logHandler "Deleting file was not successful."
+				script_exit_code="210"
+				exit
+			fi
+		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ] ;then
+			logHandler "No old, leftover encrypted backup found in latest folder."
+		else
+			logHandler "Old, leftover encrypted backup found in latest folder: '${backup_encryption_filename}', but we dont have write permissions, nothing to do."
+		fi
+	else
+		checkFileParameters "${backup_filename}"
+
+		if ([ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]) ;then
+			logHandler "Old, leftover unencrypted backup found in latest folder: '${backup_filename}' and we have write permission, so we delete it."
+
+			# shellcheck disable=SC2154
+			${rm_bin} "${backup_filename}" 2>&1 | logHandler
+
+			if [ "${PIPESTATUS[0]}" -eq "0" ] ;then
+				logHandler "Deleting file was successful."
+			else
+				logHandler "Deleting file was not successful."
+				script_exit_code="211"
+				exit
+			fi
+		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ] ;then
+			logHandler "No old, leftover unencrypted backup found in latest folder."
+		else
+			logHandler "Old, leftover unencrypted backup found in latest folder: '${backup_filename}', but we dont have write permissions, nothing to do."
+		fi
+	fi
+}
+
 executePostBackupScript()
 {
 	local rc=
@@ -1539,11 +1588,11 @@ executePostBackupScript()
 			logHandler "Post backup script exists and it is executeable, so we execute it..."
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ] ;then
 			logHandler "Post backup script doesnt exist, nothing to do."
-			script_exit_code="210"
+			script_exit_code="220"
 			exit
 		else
 			logHandler "Post backup script exists, but it is not executeable, nothing to do."
-			script_exit_code="211"
+			script_exit_code="221"
 			exit
 		fi
 
@@ -1557,7 +1606,7 @@ executePostBackupScript()
 
 			if [ "${post_backup_exit_when_unsuccessful}" -eq "1" ] ;then
 				logHandler "Breaking, because execution of post backup script was unsuccessful und you want it."
-				script_exit_code="212"
+				script_exit_code="222"
 				exit
 			fi
 		fi
@@ -1581,7 +1630,7 @@ while getopts ":h.c:o.v." OPTION
 			h)
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="220"
+				script_exit_code="230"
 				exit
 				;;
 			c)
@@ -1593,21 +1642,21 @@ while getopts ":h.c:o.v." OPTION
 			v)
 				printScriptInfos
 				script_bypass_exit_routines="1"
-				script_exit_code="221"
+				script_exit_code="231"
 				exit
 				;;
 			\?)
 				printf "Invalid option: -%s\\n\\n" "${OPTARG}"
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="222"
+				script_exit_code="232"
 				exit
 				;;
 			:)
 				printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="223"
+				script_exit_code="233"
 				exit
 				;;
 	esac
@@ -1635,6 +1684,7 @@ buildExcludeOpts
 buildBackupCmd
 makeBackup
 encryptBackup
+removeOldLeftoverLatestBackups
 executePostBackupScript
 
 exit
