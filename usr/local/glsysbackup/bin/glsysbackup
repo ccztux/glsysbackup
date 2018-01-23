@@ -84,7 +84,7 @@ script_override_lock="0"
 
 printUsage()
 {
-	setDefaultValues
+	setCommonVars
 
 	printf "Usage: %s OPTIONS\\n\\n" "${script_name}"
 	printf "Author:\\t\\t\\t%s\\n" "${script_author}"
@@ -254,6 +254,12 @@ includeConfig()
 		script_exit_code="13"
 		exit
 	fi
+}
+
+checkConfig()
+{
+	# todo
+	return
 }
 
 logHandlerSetConfig()
@@ -545,12 +551,12 @@ cleanUp()
 {
 	logHandler "Now we are doing some cleanup jobs..."
 
-	delUnencryptedBackupFile
-	delInstalledPackagesFile
-	delOldLeftoverLatestBackups
+	removeUnencryptedBackupFile
+	removeInstalledPackagesFile
+	removeOldLeftoverLatestBackups
 }
 
-delUnencryptedBackupFile()
+removeUnencryptedBackupFile()
 {
 	if [ "${backup_encryption_enabled:-}" -eq "1" ] ;then
 		logHandler "Backup encryption is enabled, now we check if unencrypted backup file exists, if it is writeable and delete it..."
@@ -580,7 +586,7 @@ delUnencryptedBackupFile()
 	fi
 }
 
-delInstalledPackagesFile()
+removeInstalledPackagesFile()
 {
 	if [ "${installed_packages_enabled:-}" -eq "1" ] ;then
 		logHandler "Installed packages functionality is enabled, now we check if the file exists, if it is writeable and delete it..."
@@ -647,7 +653,50 @@ checkFileParameters()
 	fi
 }
 
-setDefaultValues()
+setDefaultConfig()
+{
+	log_to_file="1"
+	log_to_stdout="1"
+	log_to_syslog="0"
+	log_timestamp_format="%Y-%m-%d %H:%M:%S"
+	root_privileges_required="1"
+	re_nice_enabled="0"
+	re_nice_priority="19"
+	re_ionice_enabled="0"
+	re_ionice_scheduling_class="2"
+	re_ionice_priority="7"
+	backup_rotation_one_backup_per_day_only="1"
+	backup_rotation_daily_enabled="1"
+	backup_rotation_daily_max_backups="10"
+	backup_rotation_weekly_enabled="1"
+	backup_rotation_weekly_weekday="1"
+	backup_rotation_weekly_max_backups="8"
+	backup_rotation_monthly_enabled="1"
+	backup_rotation_monthly_day_of_month="1"
+	backup_rotation_monthly_max_backups="6"
+	installed_packages_enabled="1"
+	installed_packages_forced_manager=""
+	installed_packages_directory="/root"
+	backup_compression_enabled="1"
+	backup_compression_type="gzip"
+	backup_verbose_mode_enabled="1"
+	backup_show_totals="1"
+	backup_individual_options=("")
+	backup_destination_path="/var/backups"
+	backup_base_filename="my_backup"
+	backup_items=("")
+	backup_exlude_items=("")
+	backup_encryption_enabled="0"
+	backup_encryption_password="test1234"
+	pre_backup_script_enabled="0"
+	pre_backup_script="/home/pi/pre.sh"
+	pre_backup_exit_when_unsuccessful="1"
+	post_backup_script_enabled="0"
+	post_backup_script="/home/pi/post.sh"
+	post_backup_exit_when_unsuccessful="1"
+}
+
+setCommonVars()
 {
 	script_base_path="/usr/local/${script_name}"
 	script_lock_directory="${script_base_path}/var/lock"
@@ -999,6 +1048,17 @@ checkBackupDirStructure()
 			exit
 		fi
 	   done
+}
+
+isInteger()
+{
+	local value="${1}"
+
+	if ([ "${value}" -ge "0" ] || [ "${value}" -lt "0" ]) 2>/dev/null ;then
+		return 0
+	else
+		return 1
+	fi
 }
 
 bubbleSort()
@@ -1524,7 +1584,7 @@ encryptBackup()
 	fi
 }
 
-delOldLeftoverLatestBackups()
+removeOldLeftoverLatestBackups()
 {
 	logHandler "Checking for old, leftover backups in latest folder..."
 
@@ -1670,8 +1730,10 @@ while getopts ":h.c:o.v." OPTION
 #------
 
 checkOpts
-setDefaultValues
+setDefaultConfig
+setCommonVars
 includeConfig
+checkConfig
 checkRootPrivileges
 getUser
 checkBashVersion
