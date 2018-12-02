@@ -286,11 +286,11 @@ logHandlerSetConfig()
 		log_conf="$((log_conf | b_log_to_syslog))"
 	fi
 
-	if [ ! -z "${date_bin:-}" ] ;then
+	if [ -n "${date_bin:-}" ] ;then
 		log_conf="$((log_conf | b_date_bin_available))"
 	fi
 
-	if [ ! -z "${logger_bin:-}" ] ;then
+	if [ -n "${logger_bin:-}" ] ;then
 		log_conf="$((log_conf | b_logger_bin_available))"
 	fi
 }
@@ -438,7 +438,7 @@ sigHandler()
 			logHandler "Script was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
 			logHandler "Bye, bye..."
 
-			if [ ! -z "${kill_bin:-}" ] ;then
+			if [ -n "${kill_bin:-}" ] ;then
 				if [ "${signal}" != "EXIT" ] ;then
 					${kill_bin} -s "${signal}" -- -"${script_pid}"
 				else
@@ -695,7 +695,7 @@ getUser()
 
 	logHandler "Get user which starts the script..."
 
-	if [ ! -z "${SUDO_USER:-}" ] ;then
+	if [ -n "${SUDO_USER:-}" ] ;then
 		script_exec_user="$SUDO_USER"
 	else
 		# shellcheck disable=SC2154
@@ -760,7 +760,7 @@ checkAlreadyRunningInstance()
 			script_exit_code="90"
 			exit
 		fi
-	elif ([ "${rc}" == "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
+	elif ([ "${rc}" == "0" ] && [ -n "${running_script_pids:-}" ]) ;then
 		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
 
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids}' are running)."
@@ -768,7 +768,7 @@ checkAlreadyRunningInstance()
 		script_another_instance_is_running="1"
 		script_exit_code="91"
 		exit
-	elif ([ "${rc}" != "0" ] && [ ! -z "${running_script_pids:-}" ]) ;then
+	elif ([ "${rc}" != "0" ] && [ -n "${running_script_pids:-}" ]) ;then
 		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
 
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids}' are running)."
@@ -1100,7 +1100,7 @@ removeOldBackups()
 					;;
 	esac
 
-	if [ ! -z "${backups_to_delete_counter}" ] ;then
+	if [ -n "${backups_to_delete_counter}" ] ;then
 		for file in "${backup_files_sorted[@]}"
 		   do
 		   	if [ "${backups_to_delete_counter}" -gt "0" ] ;then
@@ -1350,7 +1350,7 @@ buildExcludeOpts()
 
 	logHandler "Check if we need to build excluding options..."
 
-	if [ ! -z "${backup_exlude_items[*]:-}" ] ;then
+	if [ -n "${backup_exlude_items[*]:-}" ] ;then
 		logHandler "Building of excluding options is enabled."
 		exclude_string=()
 
