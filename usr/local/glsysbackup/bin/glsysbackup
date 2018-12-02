@@ -1055,7 +1055,7 @@ isInteger()
 {
 	local value="${1}"
 
-	if [ "${value}" -ge "0" ] || [ "${value}" -lt "0" ] 2>/dev/null ;then
+	if [ "${value}" -ge "0" 2>/dev/null ] || [ "${value}" -lt "0" 2>/dev/null ] ;then
 		return 0
 	else
 		return 1
