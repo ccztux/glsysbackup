@@ -58,8 +58,8 @@ Start glsysbackup:
 Usage: glsysbackup OPTIONS
 
 Author:			Christian Zettel (ccztux)
-Last modification:	2018-01-06
-Version:		2.0.0-alpha1
+Last modification:	2018-12-02
+Version:		2.0.0-beta1
 
 Description:		glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
 
@@ -216,8 +216,6 @@ backup_items=(
 
 # exclude this items from backup (HINT: have a look at: 'man tar')
 backup_exlude_items=(
-"/old.backups"
-"/old.mysqldumps/"
 )
 
 
@@ -239,7 +237,7 @@ backup_encryption_password="test1234"
 #-------------------
 
 # enable pre backup script functionality (possible values: 1|0)
-pre_backup_script_enabled="1"
+pre_backup_script_enabled="0"
 
 # path to pre backup script 
 pre_backup_script="/home/pi/pre.sh"
@@ -254,7 +252,7 @@ pre_backup_exit_when_unsuccessful="1"
 #--------------------
 
 # enable post backup script functionality (possible values: 1|0)
-post_backup_script_enabled="1"
+post_backup_script_enabled="0"
 
 # path to post backup script 
 post_backup_script="/home/pi/post.sh"
