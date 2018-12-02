@@ -115,7 +115,7 @@ checkBin()
 	local _bin=
 	local rc=
 
-	_bin="$(which "${binary}" 2>&1)"
+	_bin="$(command -v "${binary}" 2>&1)"
 	rc="${?}"
 
 	if [ "${rc}" == "0" ] ;then
