@@ -1,7 +1,7 @@
 [![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/master.svg?label=shellcheck%20%28master%29)](https://travis-ci.org/ccztux/glsysbackup)
 [![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/devel.svg?label=shellcheck%20%28devel%29)](https://travis-ci.org/ccztux/glsysbackup)
 [![Latest Release](https://img.shields.io/github/release/ccztux/glsysbackup.svg?label=latest%20release)](https://github.com/ccztux/glsysbackup/releases/latest)
-[![Latest Pre-release](https://img.shields.io/badge/latest%20pre--release-v2.0.0--beta1-orange.svg)](https://github.com/ccztux/glsysbackup/releases/tag/2.0.0-beta1)
+[![Latest Pre-release](https://img.shields.io/badge/latest%20pre--release-v2.0.0--beta2-orange.svg)](https://github.com/ccztux/glsysbackup/releases/tag/2.0.0-beta2)
 [![GitHub license](https://img.shields.io/badge/license-AGPL-blue.svg)](https://github.com/ccztux/glsysbackup/blob/master/LICENSE)
 
 
@@ -59,7 +59,7 @@ Usage: glsysbackup OPTIONS
 
 Author:			Christian Zettel (ccztux)
 Last modification:	2018-12-02
-Version:		2.0.0
+Version:		2.0.0-beta2
 
 Description:		glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
 
@@ -266,7 +266,7 @@ post_backup_exit_when_unsuccessful="1"
 ## Example job output (initial run with default config):
 ```
 15:15:57 [pi@localhost]:~$ sudo ./glsysbackup 
-[2018-01-06 15:15:57] glsysbackup: [10111] glsysbackup 2.0.0 starting... (PID=10111)
+[2018-01-06 15:15:57] glsysbackup: [10111] glsysbackup 2.0.0-beta2 starting... (PID=10111)
 [2018-01-06 15:15:57] glsysbackup: [10111] We are using config file: '/usr/local/glsysbackup/etc/glsysbackup.conf'.
 [2018-01-06 15:15:57] glsysbackup: [10111] Check if root priviliges are required...
 [2018-01-06 15:15:57] glsysbackup: [10111] Root privileges are required, checking privileges...
