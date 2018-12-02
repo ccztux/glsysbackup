@@ -140,8 +140,8 @@ checkRequiredBinaries()
 		required_binaries+=("logger")
 	fi
 
-	if ([ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ]) ;then
-		if ([ "${BASH_VERSINFO[0]}" -ge "4" ] && [ "${BASH_VERSINFO[1]}" -ge "2" ]) ;then
+	if [ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ] ;then
+		if [ "${BASH_VERSINFO[0]}" -ge "4" ] && [ "${BASH_VERSINFO[1]}" -ge "2" ] ;then
 			date_bin_printf="1"
 			date_bin="printf"
 		else
@@ -149,7 +149,7 @@ checkRequiredBinaries()
 		fi
 	fi
 
-	if ([ "${backup_rotation_daily_enabled}" == "1" ] || [ "${backup_rotation_weekly_enabled}" == "1" ] || [ "${backup_rotation_monthly_enabled}" == "1" ]) ;then
+	if [ "${backup_rotation_daily_enabled}" == "1" ] || [ "${backup_rotation_weekly_enabled}" == "1" ] || [ "${backup_rotation_monthly_enabled}" == "1" ] ;then
 		required_binaries+=("cp")
 	fi
 
@@ -225,7 +225,7 @@ includeConfig()
 
 	checkFileParameters "${script_config_file}"
 
-	if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_regular_file_is_not_empty)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ]) ;then
+	if [ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_regular_file_is_not_empty)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] ;then
 		# shellcheck source=/scripts/usr/local/glsysbackup/etc/glsysbackup.conf
 		source "${script_config_file}"
 		rc="${?}"
@@ -413,7 +413,7 @@ sigHandler()
 			if [ "${script_bypass_exit_routines}" != "1" ] ;then
 				cleanUp
 
-				if ([ "${backup_encryption_enabled:-}" == "1" ] && [ "${encryption_successful:-}" == "1" ]) || ([ "${backup_encryption_enabled:-}" == "0" ] && [ "${backup_successful:-}" == "1" ]);then
+				if [ "${backup_encryption_enabled:-}" == "1" ] && [ "${encryption_successful:-}" == "1" ] || [ "${backup_encryption_enabled:-}" == "0" ] && [ "${backup_successful:-}" == "1" ];then
 					script_exit_code="0"
 					rotateHandler
 				fi
@@ -462,7 +462,7 @@ checkLock()
 
 	checkFileParameters "${script_lock_file}"
 
-	if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ]) ;then
+	if [ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ] ;then
 		logHandler "Lock file exists and it is read/writeable."
 		return 0
 	elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
@@ -482,7 +482,7 @@ setLock()
 
 	checkFileParameters "${script_lock_directory}"
 
-	if ([ $((file_permission & b_is_directory)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ]) ;then
+	if [ $((file_permission & b_is_directory)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ] ;then
 		logHandler "Script lock directory exists and permissions are ok."
 	elif [ $((file_permission & b_is_directory)) -eq "0" ] ;then
 		logHandler "Script lock directory doesnt exist."
@@ -558,7 +558,7 @@ delUnencryptedBackupFile()
 
 		checkFileParameters "${backup_filename}"
 
-		if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ]) ;then
+		if [ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ] ;then
 			logHandler "Unencrypted backup file  exists and it is writeable."
 			logHandler "Deleting unencrypted backup file..."
 
@@ -588,7 +588,7 @@ delInstalledPackagesFile()
 
 		checkFileParameters "${installed_packages_filename}"
 
-		if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ]) ;then
+		if [ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ] ;then
 			logHandler "Installed packages file exists and is writeable."
 			logHandler "Deleting installed packages file..."
 
@@ -745,10 +745,10 @@ checkAlreadyRunningInstance()
 	checkLock
 	rc="${?}"
 
-	if ([ "${rc}" != "0" ] && [ -z "${running_script_pids:-}" ]) ;then
+	if [ "${rc}" != "0" ] && [ -z "${running_script_pids:-}" ] ;then
 		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)."
 		setLock
-	elif ([ "${rc}" == "0" ] && [ -z "${running_script_pids:-}" ]) ;then
+	elif [ "${rc}" == "0" ] && [ -z "${running_script_pids:-}" ] ;then
 		logHandler "Another instance of: '${script_name}' seems to be running (Lockfile: '${script_lock_file}' exists and no processes are running). Maybe ${script_name} was terminated abnormally."
 
 		if [ "${script_override_lock}" == "1" ] ;then
@@ -760,7 +760,7 @@ checkAlreadyRunningInstance()
 			script_exit_code="90"
 			exit
 		fi
-	elif ([ "${rc}" == "0" ] && [ -n "${running_script_pids:-}" ]) ;then
+	elif [ "${rc}" == "0" ] && [ -n "${running_script_pids:-}" ] ;then
 		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
 
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids}' are running)."
@@ -768,7 +768,7 @@ checkAlreadyRunningInstance()
 		script_another_instance_is_running="1"
 		script_exit_code="91"
 		exit
-	elif ([ "${rc}" != "0" ] && [ -n "${running_script_pids:-}" ]) ;then
+	elif [ "${rc}" != "0" ] && [ -n "${running_script_pids:-}" ] ;then
 		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
 
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids}' are running)."
@@ -787,7 +787,7 @@ reNice()
 		logHandler "Re-niceing is enabled."
 		logHandler "Check if renice priority is in range..."
 
-		if ([ "${re_nice_priority}" -lt "-20" ] || [ "${re_nice_priority}" -gt "19" ]) ;then
+		if [ "${re_nice_priority}" -lt "-20" ] || [ "${re_nice_priority}" -gt "19" ] ;then
 			logHandler "Re-nice priority: '${re_nice_priority}' is out of range."
 			logHandler "HINT: Have a look at: 'man renice'."
 
@@ -824,7 +824,7 @@ reIONice()
 		logHandler "Re-ioniceing is enabled."
 		logHandler "Check if re-ioniceing parameters are in range..."
 
-		if ([ "${re_ionice_scheduling_class}" -gt "3" ] || [ "${re_ionice_scheduling_class}" -lt "1" ]) ;then
+		if [ "${re_ionice_scheduling_class}" -gt "3" ] || [ "${re_ionice_scheduling_class}" -lt "1" ] ;then
 			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is out of range."
 			logHandler "HINT: Have a look at: 'man ionice'."
 
@@ -834,13 +834,13 @@ reIONice()
 			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is in range."
 		fi
 
-		if ([ "${re_ionice_scheduling_class}" == "1" ] || [ "${re_ionice_scheduling_class}" == "2" ]) ;then
+		if [ "${re_ionice_scheduling_class}" == "1" ] || [ "${re_ionice_scheduling_class}" == "2" ] ;then
 			logHandler "Selected re-ioniceing scheduling class: '${re_ionice_scheduling_class}' requires re-ioniceing priority."
 			logHandler "Check if re-ioniceing priority is in range..."
 
 			re_ionice_priority_required="1"
 
-			if ([ "${re_ionice_priority}" -gt "7" ] || [ "${re_ionice_priority}" -lt "0" ]) ;then
+			if [ "${re_ionice_priority}" -gt "7" ] || [ "${re_ionice_priority}" -lt "0" ] ;then
 				logHandler "Re-ioniceing priority: '${re_ionice_priority}' is out of range."
 				logHandler "HINT: Have a look at: 'man ionice'."
 
@@ -889,7 +889,7 @@ executePreBackupScript()
 
 		checkFileParameters "${pre_backup_script}"
 
-		if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ]) ;then
+		if [ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ] ;then
 			logHandler "Pre backup script exists and it is executeable, so we execute it..."
 		elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
 			logHandler "Pre backup script doesnt exist, nothing to do."
@@ -932,7 +932,7 @@ checkBackupDirStructure()
 
 	checkFileParameters "${backup_destination_path}"
 
-	if ([ $((file_permission & b_is_directory)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ]) ;then
+	if [ $((file_permission & b_is_directory)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ] ;then
 		logHandler "Backup directory exists and permissions are ok."
 	elif [ $((file_permission & b_is_directory)) -eq "0" ] ;then
 		logHandler "Backup directory doesnt exist."
@@ -960,7 +960,7 @@ checkBackupDirStructure()
 
 	   	checkFileParameters "${dir_helper}"
 
-		if ([ $((file_permission & b_is_directory)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ]) ;then
+		if [ $((file_permission & b_is_directory)) -gt "0" ] && [ $((file_permission & b_permission_read)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ] ;then
 			logHandler "Directory: '${dir_helper}' exist, nothing to do."
 		elif [ $((file_permission & b_is_directory)) -eq "0" ] ;then
 			logHandler "Directory: '${dir_helper}' doesnt exist."
@@ -1036,7 +1036,7 @@ removeTodaysOldBackups()
 
 		checkFileParameters "${file}"
 
-		if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ]) ;then
+		if [ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ] ;then
 			logHandler "We have write permissions, so we can delete it."
 
 			# shellcheck disable=SC2154
@@ -1109,7 +1109,7 @@ removeOldBackups()
 
 				checkFileParameters "${file}"
 
-				if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ]) ;then
+				if [ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_write)) -gt "0" ] ;then
 					logHandler "We have write permissions, so we can delete it."
 
 					# shellcheck disable=SC2154
@@ -1151,7 +1151,7 @@ rotateHandler()
 
 	logHandler "Check if backup rotation is enabled..."
 
-	if ([ "${backup_rotation_daily_enabled}" == "1" ] || [ "${backup_rotation_weekly_enabled}" == "1" ] || [ "${backup_rotation_monthly_enabled}" == "1" ]) ;then
+	if [ "${backup_rotation_daily_enabled}" == "1" ] || [ "${backup_rotation_weekly_enabled}" == "1" ] || [ "${backup_rotation_monthly_enabled}" == "1" ] ;then
 		logHandler "Backup rotation is enabled."
 		logHandler "Check if only one backup per day is enabled..."
 
@@ -1483,7 +1483,7 @@ executePostBackupScript()
 
 		checkFileParameters "${post_backup_script}"
 
-		if ([ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ]) ;then
+		if [ $((file_permission & b_regular_file_exists)) -gt "0" ] && [ $((file_permission & b_permission_execute)) -gt "0" ] ;then
 			logHandler "Post backup script exists and it is executeable, so we execute it..."
 		elif [ $((file_permission & b_regular_file_exists)) -eq "0" ] ;then
 			logHandler "Post backup script doesnt exist, nothing to do."
