@@ -1257,7 +1257,7 @@ rotateHandler()
 		logHandler "Backup rotation is enabled."
 		logHandler "Check if only one backup per day is enabled..."
 
-		if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
+		if [ "${backup_rotation_one_backup_per_day_only}" -eq "1" ] ;then
 			logHandler "Only one backup per day is enabled."
 		else
 			logHandler "Only one backup per day is not enabled."
@@ -1279,7 +1279,7 @@ rotateHandler()
 							if [ "${backup_rotation_daily_enabled}" -eq "1" ] ;then
 								rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_daily_timestamp_format}${date_cmd_format_suffix}")"
 
-								if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
+								if [ "${backup_rotation_one_backup_per_day_only}" -eq "1" ] ;then
 									removeTodaysOldBackups
 								fi
 
@@ -1309,7 +1309,7 @@ rotateHandler()
 
 									rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_weekly_timestamp_format}${date_cmd_format_suffix}")"
 
-									if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
+									if [ "${backup_rotation_one_backup_per_day_only}" -eq "1" ] ;then
 										removeTodaysOldBackups
 									fi
 
@@ -1349,7 +1349,7 @@ rotateHandler()
 
 									rotation_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_monthly_timestamp_format}${date_cmd_format_suffix}")"
 
-									if [ "${backup_rotation_one_backup_per_day_only}" ] ;then
+									if [ "${backup_rotation_one_backup_per_day_only}" -eq "1" ] ;then
 										removeTodaysOldBackups
 									fi
 
