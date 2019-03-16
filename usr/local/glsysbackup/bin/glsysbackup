@@ -479,7 +479,7 @@ sigHandler()
 				then
 					cleanUp
 
-					if ([ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ]) || ([ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ])
+					if [ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ] || [ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ]
 					then
 						script_exit_code="0"
 						rotateHandler
@@ -1197,7 +1197,7 @@ getDaysOfMonth()
 	then
 		days_of_month="$((days_of_month - 2))"
 
-		if ([ "$((year % 4))" -eq "0" ] && ([ "$((year % 100))" -ne "0" ] || [ "$((year % 400))" -eq "0" ]))
+		if [ "$((year % 4))" -eq "0" ] && [ "$((year % 100))" -ne "0" ] || [ "$((year % 400))" -eq "0" ]
 		then
 			days_of_month="$((days_of_month + 1))"
 		fi
@@ -1453,7 +1453,7 @@ rotateHandler()
 						actual_year="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_year_format}${date_cmd_format_suffix}")"
 						last_day_of_month="$(getDaysOfMonth "${actual_year}" "${actual_month}")"
 
-						if ([ "${actual_day_of_month}" -eq "${backup_rotation_monthly_day_of_month}" ] || ([ "${backup_rotation_monthly_day_of_month}" -ge "28" ] && [ "${actual_day_of_month}" -eq "${last_day_of_month}" ]))
+						if [ "${actual_day_of_month}" -eq "${backup_rotation_monthly_day_of_month}" ] || [ "${backup_rotation_monthly_day_of_month}" -ge "28" ] && [ "${actual_day_of_month}" -eq "${last_day_of_month}" ]
 						then
 							if [ "${actual_day_of_month}" -eq "${backup_rotation_monthly_day_of_month}" ]
 							then
@@ -1896,6 +1896,6 @@ then
 	main "${@}"
 	exit
 else
-	printf "\\nThis is NOT a bash library. Execute it directly!\\n\\n" "${script_name}"
+	printf "\\nThis is NOT a bash library. Execute it directly!\\n\\n"
 	exit 1
 fi
