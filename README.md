@@ -59,7 +59,7 @@ Usage: glsysbackup OPTIONS
 
 Author:			Christian Zettel (ccztux)
 Last modification:	2018-12-02
-Version:		2.0.0-beta2
+Version:		2.0.0
 
 Description:		glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
 
@@ -266,7 +266,7 @@ post_backup_exit_when_unsuccessful="1"
 ## Example job output (initial run with default config):
 ```
 15:15:57 [pi@localhost]:~$ sudo ./glsysbackup 
-[2018-01-06 15:15:57] glsysbackup: [10111] glsysbackup 2.0.0-beta2 starting... (PID=10111)
+[2018-01-06 15:15:57] glsysbackup: [10111] glsysbackup 2.0.0 starting... (PID=10111)
 [2018-01-06 15:15:57] glsysbackup: [10111] We are using config file: '/usr/local/glsysbackup/etc/glsysbackup.conf'.
 [2018-01-06 15:15:57] glsysbackup: [10111] Check if root priviliges are required...
 [2018-01-06 15:15:57] glsysbackup: [10111] Root privileges are required, checking privileges...
