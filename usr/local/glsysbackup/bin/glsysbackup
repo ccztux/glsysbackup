@@ -295,12 +295,6 @@ includeConfig()
 	fi
 }
 
-checkConfig()
-{
-	# todo
-	return
-}
-
 logHandlerSetConfig()
 {
 	log_conf=
@@ -1810,7 +1804,6 @@ main()
 	setCommonVars
 	setRequiredBashOptions
 	includeConfig
-	checkConfig
 	checkRootPrivileges
 	getUser
 	checkBashVersion
