@@ -388,7 +388,7 @@ logHandler()
 		then
 			if [ "$((log_conf & b_log_to_file_truncate))" -gt "0" ] && [ "${script_log_file_truncated}" -ne "1" ]
 			then
-				if >|"${script_log_file}"
+				if true >|"${script_log_file}"
 				then
 					script_log_file_truncated="1"
 				fi
@@ -765,7 +765,7 @@ setDefaultConfig()
 	log_to_stdout="1"
 	log_to_syslog="0"
 	log_timestamp_format="%Y-%m-%d %H:%M:%S"
-	log_to_file_truncate="1"
+	log_to_file_truncate="0"
 	root_privileges_required="1"
 	re_nice_enabled="0"
 	re_nice_priority="19"

@@ -17,8 +17,8 @@ Download the latest tarball and extract it:
 
 ```bash
 cd /tmp
-wget "https://api.github.com/repos/ccztux/glsysbackup/tarball" -O glsysbackup.master.tar.gz
-tar -xvzf glsysbackup.master.tar.gz
+wget "https://api.github.com/repos/ccztux/glsysbackup/tarball" -O glsysbackup.latest.tar.gz
+tar -xvzf glsysbackup.latest.tar.gz
 cd ccztux-glsysbackup-*
 ```
 
