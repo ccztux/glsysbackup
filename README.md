@@ -27,6 +27,7 @@ Copy the files:
 
 ```bash
 cp -av ./usr/local/glsysbackup/ /usr/local/
+cp -av etc/logrotate.d/glsysbackup /etc/logrotate.d/
 ```
 
 
@@ -34,6 +35,8 @@ Change the file ownership for your benefits:
 
 ```bash
 chown -R root:root /usr/local/glsysbackup/
+chown root:root /etc/logrotate.d/glsysbackup
+chmod 644 /etc/logrotate.d/glsysbackup
 ```
 
 
