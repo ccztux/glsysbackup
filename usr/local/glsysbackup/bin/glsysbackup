@@ -13,6 +13,8 @@
 #  Last Modification:	Christian Zettel (ccztux)
 #						2019-03-19
 #
+#  Version				2.0.0-beta3
+#
 #  Description:			Generic Linux System Backup is an advanced backup tool written in bash.
 #
 #  License:				GNU GPLv3
@@ -65,7 +67,7 @@ trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXI
 
 script_pid="${BASHPID}"
 script_name="${0##*/}"
-script_version="2.0.0-beta.1"
+script_version="2.0.0-beta3"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
@@ -94,9 +96,8 @@ printUsage()
 	printf "Version:\\t\\t%s\\n\\n" "${script_version}"
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "OPTIONS:\\n"
+	printf "   -c\\t\\tPath to config file. Example: '%s/etc/%s.conf'. (The file extension has to be: '.conf')\\n" "${script_base_path}" "${script_name}"
 	printf "   -h\\t\\tShows this help.\\n"
-	printf "   -c\\t\\tPath to config file. Example: '%s/etc/%s.conf'. (The file extension has to be: '.conf'.)\\n" "${script_base_path}" "${script_name}"
-	printf "   -o\\t\\tOverride lock in case %s was terminated abnormally.\\n" "${script_name}"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
 
@@ -839,7 +840,7 @@ checkCliOptions()
 			exit
 		fi
 	else
-		printf "Mandatory argument: '-c' (Config file) not supplied, exiting.\\n\\n"
+		printf "Mandatory argument: '-c' (Config file) missing, exiting.\\n\\n"
 		printUsage
 
 		script_exit_code="61"
