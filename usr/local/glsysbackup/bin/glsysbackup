@@ -13,7 +13,7 @@
 #  Last Modification:	Christian Zettel (ccztux)
 #						2019-03-19
 #
-#  Version				2.0.0-beta4
+#  Version				2.0.0-beta3
 #
 #  Description:			Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -916,11 +916,8 @@ checkAlreadyRunningInstance()
 	local running_script_pids=
 
 	# shellcheck disable=SC2154
-	running_script_pids="$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_name}(.*)${script_config_file}(.*)$")"
+	running_script_pids="$(${pgrep_bin} -d " " -f "^bash(.*)${script_base_path}/bin/${script_name}(.*)${script_config_file}(.*)$")"
 	running_script_pids="${running_script_pids//${script_pid}/}"
-
-	# shellcheck disable=SC2154
-	running_script_pids="${running_script_pids//$(${pgrep_bin} -d " " -P "${script_pid}")/}"
 	running_script_pids="${running_script_pids//\ /\,\ }"
 
 	logHandler "Check if another instance of: '${script_name}' is already running..."
@@ -932,7 +929,7 @@ checkAlreadyRunningInstance()
 			logHandler "Old, leftover lockfile: '${script_lock_file}', but no running processes detected. Maybe ${script_name} was terminated abnormally."
 			removeLeftoverLock
 		else
-			running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
+			running_script_pids="${running_script_pids:0:-2}"
 
 			logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' and the following, running processes: '${running_script_pids}' detected)."
 
@@ -947,7 +944,7 @@ checkAlreadyRunningInstance()
 			logHandler "No other instance of: '${script_name}' is currently running (Neither lockfile: '${script_lock_file}' nor running processes detected)."
 			setLock
 		else
-			running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
+			running_script_pids="${running_script_pids:0:-2}"
 
 			logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist, but the following, running processes: '${running_script_pids}' detected)."
 			setLock
@@ -1701,14 +1698,19 @@ buildBackupCmd()
 
 makeBackup()
 {
+	local rc=
+
 	logHandler "Starting backup job..."
 
-	if ${backup_cmd} 2>&1 | logHandler
+	${backup_cmd} 2>&1 | logHandler
+	rc="${?}"
+
+	if [ "${rc}" -eq "${backup_successful_tar_rc}" ]
 	then
-		logHandler "Backup job was successful."
+		logHandler "Backup job was successful. (tar return value: '${rc}' == backup_successful_tar_rc: '${backup_successful_tar_rc}')"
 		backup_successful="1"
 	else
-		logHandler "Backup job was not successful."
+		logHandler "Backup job was not successful. (tar return value: '${rc}' != backup_successful_tar_rc: '${backup_successful_tar_rc}')"
 		script_exit_code="190"
 		exit
 	fi

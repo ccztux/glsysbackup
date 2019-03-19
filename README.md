@@ -426,7 +426,7 @@ post_backup_exit_when_unsuccessful="1"
 10. Execute the pre-backup-script, if it is defined and executeable
 11. Create file with installed packages
 12. Build excluding options from config array
-13. Build the backup optoins from config
+13. Build the backup options from config
 14. Make the tar backup
 15. Enrypt the backup with openssl if required
 16. Execute the post-backup-script, if it is defined and executeable
