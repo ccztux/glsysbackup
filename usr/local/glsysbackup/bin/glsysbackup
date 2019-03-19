@@ -76,7 +76,6 @@ script_exit_code="255"
 script_another_instance_is_running="0"
 script_bypass_exit_routines="0"
 script_shutdown_in_progress="0"
-script_override_lock="0"
 
 
 
@@ -783,7 +782,15 @@ setCommonVars()
 	fi
 }
 
-checkOpts()
+setRequiredBashOptions()
+{
+	if ! checkBashOption "nullglob"
+	then
+		setBashOption "nullglob"
+	fi
+}
+
+checkCliOptions()
 {
 	if [ -n "${script_config_file:-}" ]
 	then
@@ -1798,15 +1805,12 @@ executePostBackupScript()
 
 main()
 {
-	checkOpts
+	checkCliOptions
 	setDefaultConfig
 	setCommonVars
+	setRequiredBashOptions
 	includeConfig
 	checkConfig
-	if ! checkBashOption "extglob"
-	then
-		setBashOption "extglob"
-	fi
 	checkRootPrivileges
 	getUser
 	checkBashVersion
@@ -1831,17 +1835,17 @@ main()
 
 OPTERR="0"
 
-while getopts ":h.c:v" OPTION
+while getopts ":c:hv" OPTION
 do
 	case "${OPTION}" in
+		c)
+			script_config_file="${OPTARG}"
+			;;
 		h)
 			printUsage
 			script_bypass_exit_routines="1"
 			script_exit_code="230"
 			exit
-			;;
-		c)
-			script_config_file="${OPTARG}"
 			;;
 		v)
 			printScriptInfos
