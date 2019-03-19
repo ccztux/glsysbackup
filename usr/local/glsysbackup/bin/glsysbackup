@@ -11,7 +11,9 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-03-16
+#						2019-03-19
+#
+#  Version				2.0.0-beta3
 #
 #  Description:			Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -65,18 +67,18 @@ trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXI
 
 script_pid="${BASHPID}"
 script_name="${0##*/}"
-script_version="2.0.0-beta.1"
+script_version="2.0.0-beta3"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2019-03-16"
+script_last_modification_date="2019-03-19"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
 script_another_instance_is_running="0"
 script_bypass_exit_routines="0"
 script_shutdown_in_progress="0"
-script_override_lock="0"
+script_log_file_truncated="0"
 
 
 
@@ -94,9 +96,8 @@ printUsage()
 	printf "Version:\\t\\t%s\\n\\n" "${script_version}"
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "OPTIONS:\\n"
+	printf "   -c\\t\\tPath to config file. Example: '%s/etc/%s.conf'. (The file extension has to be: '.conf')\\n" "${script_base_path}" "${script_name}"
 	printf "   -h\\t\\tShows this help.\\n"
-	printf "   -c\\t\\tPath to config file. Example: '%s/etc/%s.conf'. (The file extension has to be: '.conf'.)\\n" "${script_base_path}" "${script_name}"
-	printf "   -o\\t\\tOverride lock in case %s was terminated abnormally.\\n" "${script_name}"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
 
@@ -111,7 +112,7 @@ printScriptInfos()
 	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
 }
 
-checkOption()
+checkBashOption()
 {
 	local option="${1}"
 
@@ -129,7 +130,7 @@ checkOption()
 	fi
 }
 
-setOption()
+setBashOption()
 {
 	local option="${1}"
 
@@ -296,12 +297,6 @@ includeConfig()
 	fi
 }
 
-checkConfig()
-{
-	# todo
-	return
-}
-
 logHandlerSetConfig()
 {
 	log_conf=
@@ -310,6 +305,7 @@ logHandlerSetConfig()
 	b_log_to_syslog="4"
 	b_date_bin_available="8"
 	b_logger_bin_available="16"
+	b_log_to_file_truncate="32"
 
 	if [ "${date_bin_printf:-}" -eq "1" ]
 	then
@@ -343,6 +339,11 @@ logHandlerSetConfig()
 	if [ -n "${logger_bin:-}" ]
 	then
 		log_conf="$((log_conf | b_logger_bin_available))"
+	fi
+
+	if [ "${log_to_file_truncate}" -eq "1" ]
+	then
+		log_conf="$((log_conf | b_log_to_file_truncate))"
 	fi
 }
 
@@ -385,6 +386,14 @@ logHandler()
 
 		if [ "$((log_conf & b_log_to_file))" -gt "0" ]
 		then
+			if [ "$((log_conf & b_log_to_file_truncate))" -gt "0" ] && [ "${script_log_file_truncated}" -ne "1" ]
+			then
+				if true >|"${script_log_file}"
+				then
+					script_log_file_truncated="1"
+				fi
+			fi
+
 			if [ "$((log_conf & b_date_bin_available))" -gt "0" ]
 			then
 				if [ -z "${log_timestamp}" ]
@@ -412,7 +421,7 @@ sigHandler()
 {
 	local signal="${1:-}"
 	local bash_source="${2:-}"
-	local bash_lineno="${3:-}"
+	local lineno="${3:-}"
 	local bash_command="${4:-}"
 
 	case "${signal}" in
@@ -464,7 +473,7 @@ sigHandler()
 		ERR)
 			if [ "${script_shutdown_in_progress}" -ne "1" ]
 			then
-				logHandler "Caught: '${signal}', in: '${bash_source}' at line number: '${bash_lineno}', command: '${bash_command}'."
+				logHandler "Caught: '${signal}', in: '${bash_source}' at line number: '${lineno}', command: '${bash_command}'."
 			fi
 
 			script_exit_code="1"
@@ -601,9 +610,9 @@ removeLock()
 	fi
 }
 
-overrideLock()
+removeLeftoverLock()
 {
-	logHandler "Overriding lock, because you want it..."
+	logHandler "Removing leftover lock..."
 
 	removeLock
 	setLock
@@ -613,41 +622,8 @@ cleanUp()
 {
 	logHandler "Now we are doing some cleanup jobs..."
 
-	removeUnencryptedBackupFile
 	removeInstalledPackagesFile
 	removeOldLeftoverLatestBackups
-}
-
-removeUnencryptedBackupFile()
-{
-	if [ "${backup_encryption_enabled:-}" -eq "1" ]
-	then
-		logHandler "Backup encryption is enabled, now we check if unencrypted backup file exists, if it is writeable and delete it..."
-		logHandler "Check if unencrypted backup file: '${backup_filename}' exists and if it is writeable..."
-
-		checkFileParameters "${backup_filename}"
-
-		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
-		then
-			logHandler "Unencrypted backup file exists and it is writeable."
-			logHandler "Deleting unencrypted backup file..."
-
-			# shellcheck disable=SC2154
-			if ${rm_bin} "${backup_filename}" 2>&1 | logHandler
-			then
-				logHandler "Deleting unencrypted backup file was successful."
-			else
-				logHandler "Deleting unencrypted backup file was not successful."
-				script_exit_code="40"
-			fi
-		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
-		then
-			logHandler "Unencrypted backup file doesnt exist, nothing to do."
-		else
-			logHandler "Unencrypted backup file is not writeable, we can not delete it."
-			script_exit_code="41"
-		fi
-	fi
 }
 
 removeInstalledPackagesFile()
@@ -678,6 +654,64 @@ removeInstalledPackagesFile()
 		else
 			logHandler "Installed packages file exists, but it is not writeable, we can not delete it."
 			script_exit_code="51"
+		fi
+	fi
+}
+
+removeOldLeftoverLatestBackups()
+{
+	logHandler "Checking for old, leftover backups in latest folder..."
+
+	if [ "${backup_encryption_enabled}" -eq "0" ]
+	then
+		logHandler "Backup encryption is not enabled, now we check if an lefover encrypted backup file exists, if it is writeable and delete it..."
+		logHandler "Check if encrypted backup file: '${backup_encryption_filename}' exists and if it is writeable..."
+
+		checkFileParameters "${backup_encryption_filename}"
+
+		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
+		then
+			logHandler "Old, leftover encrypted backup found in latest folder: '${backup_encryption_filename}' and we have write permission, so we delete it."
+
+			# shellcheck disable=SC2154
+			if ${rm_bin} "${backup_encryption_filename}" 2>&1 | logHandler
+			then
+				logHandler "Deleting file was successful."
+			else
+				logHandler "Deleting file was not successful."
+				script_exit_code="210"
+				exit
+			fi
+		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+		then
+			logHandler "No old, leftover encrypted backup found in latest folder."
+		else
+			logHandler "Old, leftover encrypted backup found in latest folder: '${backup_encryption_filename}', but we dont have write permissions, nothing to do."
+		fi
+	else
+		logHandler "Backup encryption is enabled, now we check if an lefover unencrypted backup file exists, if it is writeable and delete it..."
+		logHandler "Check if unencrypted backup file: '${backup_filename}' exists and if it is writeable..."
+
+		checkFileParameters "${backup_filename}"
+
+		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
+		then
+			logHandler "Old, leftover unencrypted backup found in latest folder: '${backup_filename}' and we have write permission, so we delete it."
+
+			# shellcheck disable=SC2154
+			if ${rm_bin} "${backup_filename}" 2>&1 | logHandler
+			then
+				logHandler "Deleting file was successful."
+			else
+				logHandler "Deleting file was not successful."
+				script_exit_code="211"
+				exit
+			fi
+		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+		then
+			logHandler "No old, leftover unencrypted backup found in latest folder."
+		else
+			logHandler "Old, leftover unencrypted backup found in latest folder: '${backup_filename}', but we dont have write permissions, nothing to do."
 		fi
 	fi
 }
@@ -731,6 +765,7 @@ setDefaultConfig()
 	log_to_stdout="1"
 	log_to_syslog="0"
 	log_timestamp_format="%Y-%m-%d %H:%M:%S"
+	log_to_file_truncate="0"
 	root_privileges_required="1"
 	re_nice_enabled="0"
 	re_nice_priority="19"
@@ -783,7 +818,15 @@ setCommonVars()
 	fi
 }
 
-checkOpts()
+setRequiredBashOptions()
+{
+	if ! checkBashOption "nullglob"
+	then
+		setBashOption "nullglob"
+	fi
+}
+
+checkCliOptions()
 {
 	if [ -n "${script_config_file:-}" ]
 	then
@@ -797,7 +840,7 @@ checkOpts()
 			exit
 		fi
 	else
-		printf "Mandatory argument: '-c' (Config file) not supplied, exiting.\\n\\n"
+		printf "Mandatory argument: '-c' (Config file) missing, exiting.\\n\\n"
 		printUsage
 
 		script_exit_code="61"
@@ -870,7 +913,6 @@ checkBashVersion()
 
 checkAlreadyRunningInstance()
 {
-	local rc=
 	local running_script_pids=
 
 	# shellcheck disable=SC2154
@@ -883,48 +925,33 @@ checkAlreadyRunningInstance()
 
 	logHandler "Check if another instance of: '${script_name}' is already running..."
 
-	checkLock
-	rc="${?}"
-
-	if [ "${rc}" -ne "0" ] && [ -z "${running_script_pids:-}" ]
+	if checkLock
 	then
-		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)."
-		setLock
-	elif [ "${rc}" -eq "0" ] && [ -z "${running_script_pids:-}" ]
-	then
-		logHandler "Another instance of: '${script_name}' seems to be running (Lockfile: '${script_lock_file}' exists and no processes are running). Maybe ${script_name} was terminated abnormally."
-
-		if [ "${script_override_lock}" -eq "1" ]
+		if [ -z "${running_script_pids:-}" ]
 		then
-			overrideLock
+			logHandler "Old, leftover lockfile: '${script_lock_file}', but no running processes detected. Maybe ${script_name} was terminated abnormally."
+			removeLeftoverLock
 		else
-			logHandler "HINT: You can override the old left over lock by calling ${script_name} with option '-o'."
+			running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
+
+			logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' and the following, running processes: '${running_script_pids}' detected)."
 
 			script_another_instance_is_running="1"
 			script_bypass_exit_routines="1"
 			script_exit_code="90"
 			exit
 		fi
-	elif [ "${rc}" -eq "0" ] && [ -n "${running_script_pids:-}" ]
-	then
-		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
+	else
+		if [ -z "${running_script_pids:-}" ]
+		then
+			logHandler "No other instance of: '${script_name}' is currently running (Neither lockfile: '${script_lock_file}' nor running processes detected)."
+			setLock
+		else
+			running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
 
-		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids}' are running)."
-
-		script_another_instance_is_running="1"
-		script_bypass_exit_routines="1"
-		script_exit_code="91"
-		exit
-	elif [ "${rc}" -ne "0" ] && [ -n "${running_script_pids:-}" ]
-	then
-		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
-
-		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids}' are running)."
-
-		script_another_instance_is_running="1"
-		script_bypass_exit_routines="1"
-		script_exit_code="92"
-		exit
+			logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist, but the following, running processes: '${running_script_pids}' detected)."
+			setLock
+		fi
 	fi
 }
 
@@ -1441,6 +1468,7 @@ rotateHandler()
 							fi
 						else
 							logHandler "Today is not the day, where we should rotate the ${rotation_type} backups (actual_weekday: '${actual_weekday}' != backup_rotation_weekly_weekday: '${backup_rotation_weekly_weekday}')."
+							continue
 						fi
 					fi
 					;;
@@ -1485,6 +1513,7 @@ rotateHandler()
 							fi
 						else
 							logHandler "Today is not the day, where we should rotate the ${rotation_type} backups (actual_day_of_month: '${actual_day_of_month}' != backup_rotation_monthly_day_of_month: '${backup_rotation_monthly_day_of_month}')."
+							continue
 						fi
 					fi
 					;;
@@ -1711,58 +1740,6 @@ encryptBackup()
 	fi
 }
 
-removeOldLeftoverLatestBackups()
-{
-	logHandler "Checking for old, leftover backups in latest folder..."
-
-	if [ "${backup_encryption_enabled}" -eq "1" ]
-	then
-		checkFileParameters "${backup_encryption_filename}"
-
-		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
-		then
-			logHandler "Old, leftover encrypted backup found in latest folder: '${backup_encryption_filename}' and we have write permission, so we delete it."
-
-			# shellcheck disable=SC2154
-			if ${rm_bin} "${backup_encryption_filename}" 2>&1 | logHandler
-			then
-				logHandler "Deleting file was successful."
-			else
-				logHandler "Deleting file was not successful."
-				script_exit_code="210"
-				exit
-			fi
-		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
-		then
-			logHandler "No old, leftover encrypted backup found in latest folder."
-		else
-			logHandler "Old, leftover encrypted backup found in latest folder: '${backup_encryption_filename}', but we dont have write permissions, nothing to do."
-		fi
-	else
-		checkFileParameters "${backup_filename}"
-
-		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
-		then
-			logHandler "Old, leftover unencrypted backup found in latest folder: '${backup_filename}' and we have write permission, so we delete it."
-
-			# shellcheck disable=SC2154
-			if ${rm_bin} "${backup_filename}" 2>&1 | logHandler
-			then
-				logHandler "Deleting file was successful."
-			else
-				logHandler "Deleting file was not successful."
-				script_exit_code="211"
-				exit
-			fi
-		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
-		then
-			logHandler "No old, leftover unencrypted backup found in latest folder."
-		else
-			logHandler "Old, leftover unencrypted backup found in latest folder: '${backup_filename}', but we dont have write permissions, nothing to do."
-		fi
-	fi
-}
-
 executePostBackupScript()
 {
 	local rc=
@@ -1813,15 +1790,11 @@ executePostBackupScript()
 
 main()
 {
-	checkOpts
+	checkCliOptions
 	setDefaultConfig
 	setCommonVars
+	setRequiredBashOptions
 	includeConfig
-	checkConfig
-	if ! checkOption "extglob"
-	then
-		setOption "extglob"
-	fi
 	checkRootPrivileges
 	getUser
 	checkBashVersion
@@ -1846,21 +1819,17 @@ main()
 
 OPTERR="0"
 
-# shellcheck disable=SC2213
-while getopts ":h.c:o.v." OPTION
+while getopts ":c:hv" OPTION
 do
 	case "${OPTION}" in
+		c)
+			script_config_file="${OPTARG}"
+			;;
 		h)
 			printUsage
 			script_bypass_exit_routines="1"
 			script_exit_code="230"
 			exit
-			;;
-		c)
-			script_config_file="${OPTARG}"
-			;;
-		o)
-			script_override_lock="1"
 			;;
 		v)
 			printScriptInfos

@@ -1,0 +1,9 @@
+/usr/local/glsysbackup/var/log/*.log
+{
+	weekly
+	rotate 6
+	missingok
+	notifempty
+	sharedscripts
+	compress
+}
