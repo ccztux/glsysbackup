@@ -76,6 +76,7 @@ script_exit_code="255"
 script_another_instance_is_running="0"
 script_bypass_exit_routines="0"
 script_shutdown_in_progress="0"
+script_log_file_truncated="0"
 
 
 
@@ -303,6 +304,7 @@ logHandlerSetConfig()
 	b_log_to_syslog="4"
 	b_date_bin_available="8"
 	b_logger_bin_available="16"
+	b_log_to_file_truncate="32"
 
 	if [ "${date_bin_printf:-}" -eq "1" ]
 	then
@@ -336,6 +338,11 @@ logHandlerSetConfig()
 	if [ -n "${logger_bin:-}" ]
 	then
 		log_conf="$((log_conf | b_logger_bin_available))"
+	fi
+
+	if [ "${log_to_file_truncate}" -eq "1" ]
+	then
+		log_conf="$((log_conf | b_log_to_file_truncate))"
 	fi
 }
 
@@ -378,6 +385,14 @@ logHandler()
 
 		if [ "$((log_conf & b_log_to_file))" -gt "0" ]
 		then
+			if [ "$((log_conf & b_log_to_file_truncate))" -gt "0" ] && [ "${script_log_file_truncated}" -ne "1" ]
+			then
+				if >|"${script_log_file}"
+				then
+					script_log_file_truncated="1"
+				fi
+			fi
+
 			if [ "$((log_conf & b_date_bin_available))" -gt "0" ]
 			then
 				if [ -z "${log_timestamp}" ]
@@ -405,7 +420,7 @@ sigHandler()
 {
 	local signal="${1:-}"
 	local bash_source="${2:-}"
-	local bash_lineno="${3:-}"
+	local lineno="${3:-}"
 	local bash_command="${4:-}"
 
 	case "${signal}" in
@@ -457,7 +472,7 @@ sigHandler()
 		ERR)
 			if [ "${script_shutdown_in_progress}" -ne "1" ]
 			then
-				logHandler "Caught: '${signal}', in: '${bash_source}' at line number: '${bash_lineno}', command: '${bash_command}'."
+				logHandler "Caught: '${signal}', in: '${bash_source}' at line number: '${lineno}', command: '${bash_command}'."
 			fi
 
 			script_exit_code="1"
@@ -749,6 +764,7 @@ setDefaultConfig()
 	log_to_stdout="1"
 	log_to_syslog="0"
 	log_timestamp_format="%Y-%m-%d %H:%M:%S"
+	log_to_file_truncate="1"
 	root_privileges_required="1"
 	re_nice_enabled="0"
 	re_nice_priority="19"
@@ -896,7 +912,6 @@ checkBashVersion()
 
 checkAlreadyRunningInstance()
 {
-	local rc=
 	local running_script_pids=
 
 	# shellcheck disable=SC2154
@@ -909,33 +924,33 @@ checkAlreadyRunningInstance()
 
 	logHandler "Check if another instance of: '${script_name}' is already running..."
 
-	checkLock
-	rc="${?}"
-
-	if [ "${rc}" -ne "0" ] && [ -z "${running_script_pids:-}" ]
+	if checkLock
 	then
-		logHandler "No other instance of: '${script_name}' is currently running (Neither lockfile: '${script_lock_file}' nor running processes detected)."
-		setLock
-	elif [ "${rc}" -eq "0" ] && [ -z "${running_script_pids:-}" ]
-	then
-		logHandler "Old, leftover lockfile: '${script_lock_file}', but no running processes detected. Maybe ${script_name} was terminated abnormally."
-		removeLeftoverLock
-	elif [ "${rc}" -eq "0" ] && [ -n "${running_script_pids:-}" ]
-	then
-		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
+		if [ -z "${running_script_pids:-}" ]
+		then
+			logHandler "Old, leftover lockfile: '${script_lock_file}', but no running processes detected. Maybe ${script_name} was terminated abnormally."
+			removeLeftoverLock
+		else
+			running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
 
-		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' and the following, running processes: '${running_script_pids}' detected)."
+			logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' and the following, running processes: '${running_script_pids}' detected)."
 
-		script_another_instance_is_running="1"
-		script_bypass_exit_routines="1"
-		script_exit_code="90"
-		exit
-	elif [ "${rc}" -ne "0" ] && [ -n "${running_script_pids:-}" ]
-	then
-		running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
+			script_another_instance_is_running="1"
+			script_bypass_exit_routines="1"
+			script_exit_code="90"
+			exit
+		fi
+	else
+		if [ -z "${running_script_pids:-}" ]
+		then
+			logHandler "No other instance of: '${script_name}' is currently running (Neither lockfile: '${script_lock_file}' nor running processes detected)."
+			setLock
+		else
+			running_script_pids="${running_script_pids:0:$((${#running_script_pids} - 2))}"
 
-		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist, but the following, running processes: '${running_script_pids}' detected)."
-		setLock
+			logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist, but the following, running processes: '${running_script_pids}' detected)."
+			setLock
+		fi
 	fi
 }
 
@@ -1452,6 +1467,7 @@ rotateHandler()
 							fi
 						else
 							logHandler "Today is not the day, where we should rotate the ${rotation_type} backups (actual_weekday: '${actual_weekday}' != backup_rotation_weekly_weekday: '${backup_rotation_weekly_weekday}')."
+							continue
 						fi
 					fi
 					;;
@@ -1496,6 +1512,7 @@ rotateHandler()
 							fi
 						else
 							logHandler "Today is not the day, where we should rotate the ${rotation_type} backups (actual_day_of_month: '${actual_day_of_month}' != backup_rotation_monthly_day_of_month: '${backup_rotation_monthly_day_of_month}')."
+							continue
 						fi
 					fi
 					;;
