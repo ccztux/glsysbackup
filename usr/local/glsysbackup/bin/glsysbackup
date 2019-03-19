@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-03-16
+#						2019-03-19
 #
 #  Description:			Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -69,7 +69,7 @@ script_version="2.0.0-beta.1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2019-03-16"
+script_last_modification_date="2019-03-19"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 script_exit_code="255"
@@ -606,41 +606,8 @@ cleanUp()
 {
 	logHandler "Now we are doing some cleanup jobs..."
 
-	removeUnencryptedBackupFile
 	removeInstalledPackagesFile
 	removeOldLeftoverLatestBackups
-}
-
-removeUnencryptedBackupFile()
-{
-	if [ "${backup_encryption_enabled:-}" -eq "1" ]
-	then
-		logHandler "Backup encryption is enabled, now we check if unencrypted backup file exists, if it is writeable and delete it..."
-		logHandler "Check if unencrypted backup file: '${backup_filename}' exists and if it is writeable..."
-
-		checkFileParameters "${backup_filename}"
-
-		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
-		then
-			logHandler "Unencrypted backup file exists and it is writeable."
-			logHandler "Deleting unencrypted backup file..."
-
-			# shellcheck disable=SC2154
-			if ${rm_bin} "${backup_filename}" 2>&1 | logHandler
-			then
-				logHandler "Deleting unencrypted backup file was successful."
-			else
-				logHandler "Deleting unencrypted backup file was not successful."
-				script_exit_code="40"
-			fi
-		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
-		then
-			logHandler "Unencrypted backup file doesnt exist, nothing to do."
-		else
-			logHandler "Unencrypted backup file is not writeable, we can not delete it."
-			script_exit_code="41"
-		fi
-	fi
 }
 
 removeInstalledPackagesFile()
@@ -671,6 +638,64 @@ removeInstalledPackagesFile()
 		else
 			logHandler "Installed packages file exists, but it is not writeable, we can not delete it."
 			script_exit_code="51"
+		fi
+	fi
+}
+
+removeOldLeftoverLatestBackups()
+{
+	logHandler "Checking for old, leftover backups in latest folder..."
+
+	if [ "${backup_encryption_enabled}" -eq "0" ]
+	then
+		logHandler "Backup encryption is not enabled, now we check if an lefover encrypted backup file exists, if it is writeable and delete it..."
+		logHandler "Check if encrypted backup file: '${backup_encryption_filename}' exists and if it is writeable..."
+
+		checkFileParameters "${backup_encryption_filename}"
+
+		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
+		then
+			logHandler "Old, leftover encrypted backup found in latest folder: '${backup_encryption_filename}' and we have write permission, so we delete it."
+
+			# shellcheck disable=SC2154
+			if ${rm_bin} "${backup_encryption_filename}" 2>&1 | logHandler
+			then
+				logHandler "Deleting file was successful."
+			else
+				logHandler "Deleting file was not successful."
+				script_exit_code="210"
+				exit
+			fi
+		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+		then
+			logHandler "No old, leftover encrypted backup found in latest folder."
+		else
+			logHandler "Old, leftover encrypted backup found in latest folder: '${backup_encryption_filename}', but we dont have write permissions, nothing to do."
+		fi
+	else
+		logHandler "Backup encryption is enabled, now we check if an lefover unencrypted backup file exists, if it is writeable and delete it..."
+		logHandler "Check if unencrypted backup file: '${backup_filename}' exists and if it is writeable..."
+
+		checkFileParameters "${backup_filename}"
+
+		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
+		then
+			logHandler "Old, leftover unencrypted backup found in latest folder: '${backup_filename}' and we have write permission, so we delete it."
+
+			# shellcheck disable=SC2154
+			if ${rm_bin} "${backup_filename}" 2>&1 | logHandler
+			then
+				logHandler "Deleting file was successful."
+			else
+				logHandler "Deleting file was not successful."
+				script_exit_code="211"
+				exit
+			fi
+		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+		then
+			logHandler "No old, leftover unencrypted backup found in latest folder."
+		else
+			logHandler "Old, leftover unencrypted backup found in latest folder: '${backup_filename}', but we dont have write permissions, nothing to do."
 		fi
 	fi
 }
@@ -1694,58 +1719,6 @@ encryptBackup()
 		fi
 	else
 		logHandler "Backup encryption is not enabled..."
-	fi
-}
-
-removeOldLeftoverLatestBackups()
-{
-	logHandler "Checking for old, leftover backups in latest folder..."
-
-	if [ "${backup_encryption_enabled}" -eq "1" ]
-	then
-		checkFileParameters "${backup_encryption_filename}"
-
-		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
-		then
-			logHandler "Old, leftover encrypted backup found in latest folder: '${backup_encryption_filename}' and we have write permission, so we delete it."
-
-			# shellcheck disable=SC2154
-			if ${rm_bin} "${backup_encryption_filename}" 2>&1 | logHandler
-			then
-				logHandler "Deleting file was successful."
-			else
-				logHandler "Deleting file was not successful."
-				script_exit_code="210"
-				exit
-			fi
-		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
-		then
-			logHandler "No old, leftover encrypted backup found in latest folder."
-		else
-			logHandler "Old, leftover encrypted backup found in latest folder: '${backup_encryption_filename}', but we dont have write permissions, nothing to do."
-		fi
-	else
-		checkFileParameters "${backup_filename}"
-
-		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
-		then
-			logHandler "Old, leftover unencrypted backup found in latest folder: '${backup_filename}' and we have write permission, so we delete it."
-
-			# shellcheck disable=SC2154
-			if ${rm_bin} "${backup_filename}" 2>&1 | logHandler
-			then
-				logHandler "Deleting file was successful."
-			else
-				logHandler "Deleting file was not successful."
-				script_exit_code="211"
-				exit
-			fi
-		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
-		then
-			logHandler "No old, leftover unencrypted backup found in latest folder."
-		else
-			logHandler "Old, leftover unencrypted backup found in latest folder: '${backup_filename}', but we dont have write permissions, nothing to do."
-		fi
 	fi
 }
 
