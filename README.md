@@ -27,7 +27,7 @@ Copy the files:
 
 ```bash
 cp -av ./usr/local/glsysbackup/ /usr/local/
-cp -av etc/logrotate.d/glsysbackup /etc/logrotate.d/
+cp -av ./etc/logrotate.d/glsysbackup /etc/logrotate.d/
 ```
 
 
