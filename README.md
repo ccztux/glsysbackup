@@ -239,7 +239,7 @@ backup_encryption_password="test1234"
 # enable pre backup script functionality (possible values: 1|0)
 pre_backup_script_enabled="0"
 
-# path to pre backup script 
+# path to pre backup script
 pre_backup_script="/home/pi/pre.sh"
 
 # exit glsysbackup in case execution of pre backup script was not successful
@@ -254,7 +254,7 @@ pre_backup_exit_when_unsuccessful="1"
 # enable post backup script functionality (possible values: 1|0)
 post_backup_script_enabled="0"
 
-# path to post backup script 
+# path to post backup script
 post_backup_script="/home/pi/post.sh"
 
 # exit glsysbackup in case execution of post backup script was not successful
@@ -265,7 +265,7 @@ post_backup_exit_when_unsuccessful="1"
 
 ## Example job output (initial run with default config):
 ```
-15:15:57 [pi@localhost]:~$ sudo ./glsysbackup 
+15:15:57 [pi@localhost]:~$ sudo ./glsysbackup
 [2018-01-06 15:15:57] glsysbackup: [10111] glsysbackup 2.0.0 starting... (PID=10111)
 [2018-01-06 15:15:57] glsysbackup: [10111] We are using config file: '/usr/local/glsysbackup/etc/glsysbackup.conf'.
 [2018-01-06 15:15:57] glsysbackup: [10111] Check if root priviliges are required...
@@ -456,7 +456,6 @@ post_backup_exit_when_unsuccessful="1"
 
 ## It requires the following binaries:
 - **bash** (Version 3 || 4)
-- **which** to get the full path to the required binaries through environment variable $PATH
 - **pgrep** to check if an instance of glsysbackup is already running
 - **whoami** to check the user who executes glsysbackup
 - **date** for logging purposes (Only required if bash version < 4.2. Else printf bash builtin will be used.)
