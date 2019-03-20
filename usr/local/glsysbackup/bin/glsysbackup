@@ -1705,7 +1705,7 @@ makeBackup()
 	${backup_cmd} 2>&1 | logHandler
 	rc="${?}"
 
-	if [ "${rc}" -eq "${backup_successful_tar_rc}" ]
+	if [ "${rc}" -le "${backup_successful_tar_rc}" ]
 	then
 		logHandler "Backup job was successful. (tar return value: '${rc}' == backup_successful_tar_rc: '${backup_successful_tar_rc}')"
 		backup_successful="1"
