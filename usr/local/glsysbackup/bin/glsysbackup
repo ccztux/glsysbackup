@@ -299,7 +299,7 @@ includeConfig()
 
 logHandlerSetConfig()
 {
-	log_conf=
+	log_conf="0"
 	b_log_to_file="1"
 	b_log_to_stdout="2"
 	b_log_to_syslog="4"
@@ -646,14 +646,14 @@ removeInstalledPackagesFile()
 				logHandler "Deleting installed packages file was successful."
 			else
 				logHandler "Deleting installed packages file was not successful."
-				script_exit_code="50"
+				script_exit_code="40"
 			fi
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
 		then
 			logHandler "Installed packages file doesnt exist, nothing to do."
 		else
 			logHandler "Installed packages file exists, but it is not writeable, we can not delete it."
-			script_exit_code="51"
+			script_exit_code="41"
 		fi
 	fi
 }
@@ -679,7 +679,7 @@ removeOldLeftoverLatestBackups()
 				logHandler "Deleting file was successful."
 			else
 				logHandler "Deleting file was not successful."
-				script_exit_code="210"
+				script_exit_code="50"
 				exit
 			fi
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
@@ -704,7 +704,7 @@ removeOldLeftoverLatestBackups()
 				logHandler "Deleting file was successful."
 			else
 				logHandler "Deleting file was not successful."
-				script_exit_code="211"
+				script_exit_code="51"
 				exit
 			fi
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
@@ -720,7 +720,7 @@ checkFileParameters()
 {
 	local file="${1:-}"
 
-	file_permission=
+	file_permission="0"
 	b_permission_execute="1"
 	b_permission_write="2"
 	b_permission_read="4"
@@ -784,6 +784,7 @@ setDefaultConfig()
 	installed_packages_enabled="1"
 	installed_packages_forced_manager=""
 	installed_packages_directory="/root"
+	backup_successful_tar_rc="1"
 	backup_compression_enabled="1"
 	backup_compression_type="gzip"
 	backup_verbose_mode_enabled="1"
@@ -806,6 +807,7 @@ setDefaultConfig()
 setCommonVars()
 {
 	script_base_path="/usr/local/${script_name}"
+	script_bin_directory="${script_base_path}/bin"
 	script_lock_directory="${script_base_path}/var/lock"
 	script_log_directory="${script_base_path}/var/log"
 
@@ -820,9 +822,17 @@ setCommonVars()
 
 setRequiredBashOptions()
 {
-	if ! checkBashOption "nullglob"
+	local bash_option_nullglob="nullglob"
+
+	if ! checkBashOption "${bash_option_nullglob}"
 	then
-		setBashOption "nullglob"
+		if ! setBashOption "${bash_option_nullglob}"
+		then
+			printf "Setting required bash option: '%s' was not successful.\\n" "${bash_option_nullglob}"
+			script_bypass_exit_routines="1"
+			script_exit_code="60"
+			exit
+		fi
 	fi
 }
 
@@ -836,14 +846,14 @@ checkCliOptions()
 			printUsage
 
 			script_config_file=
-			script_exit_code="60"
+			script_exit_code="70"
 			exit
 		fi
 	else
 		printf "Mandatory argument: '-c' (Config file) missing, exiting.\\n\\n"
 		printUsage
 
-		script_exit_code="61"
+		script_exit_code="71"
 		exit
 	fi
 }
@@ -861,7 +871,7 @@ checkRootPrivileges()
 			logHandler "HOORAY, we have root privileges. :)"
 		else
 			logHandler "You must run this script as root, terminating."
-			script_exit_code="70"
+			script_exit_code="80"
 			exit
 		fi
 	else
@@ -893,7 +903,7 @@ checkBashVersion()
 	if [ -z "${BASH_VERSINFO[0]}" ]
 	then
 		logHandler "Could not determine bash version, exiting."
-		script_exit_code="80"
+		script_exit_code="90"
 		exit
 	else
 		case "${BASH_VERSINFO[0]}" in
@@ -904,7 +914,7 @@ checkBashVersion()
 				logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
 
 				script_bypass_exit_routines="1"
-				script_exit_code="81"
+				script_exit_code="91"
 				exit
 				;;
 		esac
@@ -916,7 +926,7 @@ checkAlreadyRunningInstance()
 	local running_script_pids=
 
 	# shellcheck disable=SC2154
-	running_script_pids="$(${pgrep_bin} -d " " -f "^bash(.*)${script_base_path}/bin/${script_name}(.*)${script_config_file}(.*)$")"
+	running_script_pids="$(${pgrep_bin} -d " " -f "^bash(.*)${script_bin_directory}/${script_name}(.*)${script_config_file}(.*)$")"
 	running_script_pids="${running_script_pids//${script_pid}/}"
 	running_script_pids="${running_script_pids//\ /\,\ }"
 
@@ -935,7 +945,7 @@ checkAlreadyRunningInstance()
 
 			script_another_instance_is_running="1"
 			script_bypass_exit_routines="1"
-			script_exit_code="90"
+			script_exit_code="100"
 			exit
 		fi
 	else
@@ -966,7 +976,7 @@ reNice()
 			logHandler "Re-nice priority: '${re_nice_priority}' is out of range."
 			logHandler "HINT: Have a look at: 'man renice'."
 
-			script_exit_code="100"
+			script_exit_code="110"
 			exit
 		else
 			logHandler "Re-nice priority: '${re_nice_priority}' is in range."
@@ -978,7 +988,7 @@ reNice()
 				logHandler "Re-niceing was successful."
 			else
 				logHandler "Re-niceing was not successful."
-				script_exit_code="101"
+				script_exit_code="111"
 				exit
 			fi
 		fi
@@ -1004,7 +1014,7 @@ reIONice()
 			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is out of range."
 			logHandler "HINT: Have a look at: 'man ionice'."
 
-			script_exit_code="110"
+			script_exit_code="120"
 			exit
 		else
 			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is in range."
@@ -1022,7 +1032,7 @@ reIONice()
 				logHandler "Re-ioniceing priority: '${re_ionice_priority}' is out of range."
 				logHandler "HINT: Have a look at: 'man ionice'."
 
-				script_exit_code="111"
+				script_exit_code="121"
 				exit
 			else
 				logHandler "Re-ioniceing priority: '${re_ionice_scheduling_class}' is in range."
@@ -1047,7 +1057,7 @@ reIONice()
 			logHandler "Re-ioniceing was successful."
 		else
 			logHandler "Re-ioniceing was not successful."
-			script_exit_code="112"
+			script_exit_code="122"
 			exit
 		fi
 	else
@@ -1074,11 +1084,11 @@ executePreBackupScript()
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
 		then
 			logHandler "Pre backup script doesnt exist, nothing to do."
-			script_exit_code="120"
+			script_exit_code="130"
 			exit
 		else
 			logHandler "Pre backup script exists, but it is not executeable, nothing to do."
-			script_exit_code="121"
+			script_exit_code="131"
 			exit
 		fi
 
@@ -1094,7 +1104,7 @@ executePreBackupScript()
 			if [ "${pre_backup_exit_when_unsuccessful}" -eq "1" ]
 			then
 				logHandler "Breaking, because execution of pre backup script was unsuccessful und you want it."
-				script_exit_code="122"
+				script_exit_code="132"
 				exit
 			fi
 		fi
@@ -1129,12 +1139,12 @@ checkBackupDirStructure()
 			logHandler "Creating backup directory was successful."
 		else
 			logHandler "Creating backup directory was not successful."
-			script_exit_code="130"
+			script_exit_code="140"
 			exit
 		fi
 	else
 		logHandler "Backup directory exists but permissions are not ok, exiting."
-		script_exit_code="131"
+		script_exit_code="141"
 		exit
 	fi
 
@@ -1158,12 +1168,12 @@ checkBackupDirStructure()
 				logHandler "Creating directory: '${dir_helper}' was successful."
 			else
 				logHandler "Creating directory: '${dir_helper}' was not successful."
-				script_exit_code="132"
+				script_exit_code="142"
 				exit
 			fi
 		else
 			logHandler "Directory: '${dir_helper}' exists but permissions are not ok, exiting."
-			script_exit_code="133"
+			script_exit_code="143"
 			exit
 		fi
 	done
@@ -1263,7 +1273,7 @@ removeTodaysOldBackups()
 					logHandler "Deleting file was successful."
 				else
 					logHandler "Deleting file was not successful."
-					script_exit_code="140"
+					script_exit_code="150"
 					exit
 				fi
 			elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
@@ -1343,7 +1353,7 @@ removeOldBackups()
 						logHandler "Deleting file was successful."
 					else
 						logHandler "Deleting file was not successful."
-						script_exit_code="150"
+						script_exit_code="160"
 						exit
 					fi
 				elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
@@ -1428,7 +1438,7 @@ rotateHandler()
 							logHandler "Copy job was successful."
 						else
 							logHandler "Copy job was not successful."
-							script_exit_code="160"
+							script_exit_code="170"
 							exit
 						fi
 					fi
@@ -1460,7 +1470,7 @@ rotateHandler()
 								logHandler "Copy job was successful."
 							else
 								logHandler "Copy job was not successful."
-								script_exit_code="161"
+								script_exit_code="171"
 								exit
 							fi
 						else
@@ -1505,7 +1515,7 @@ rotateHandler()
 								logHandler "Copy job was successful."
 							else
 								logHandler "Copy job was not successful."
-								script_exit_code="162"
+								script_exit_code="172"
 								exit
 							fi
 						else
@@ -1548,7 +1558,7 @@ createInstalledPackagesFile()
 				logHandler "HINT: You can force to use one of the supported syspackage managers by setting configuration variable: 'installed_packages_forced_manager'."
 			fi
 
-			script_exit_code="170"
+			script_exit_code="180"
 			exit
 		elif [ "${#available_syspackage_managers[@]}" -eq "1" ]
 		then
@@ -1557,7 +1567,7 @@ createInstalledPackagesFile()
 		elif [ "${#available_syspackage_managers[@]}" -eq "0" ]
 		then
 			logHandler "No supported system package manager found, exiting."
-			script_exit_code="171"
+			script_exit_code="181"
 			exit
 		fi
 
@@ -1581,7 +1591,7 @@ createInstalledPackagesFile()
 				;;
 			*)
 				logHandler "Unsupported syspackage manager used in function: '${FUNCNAME[0]}'. :( Exiting."
-				script_exit_code="172"
+				script_exit_code="182"
 				exit
 				;;
 		esac
@@ -1594,7 +1604,7 @@ createInstalledPackagesFile()
 			backup_items+=("${installed_packages_filename}")
 		else
 			logHandler "Creating installed packages file was not successful."
-			script_exit_code="173"
+			script_exit_code="183"
 			exit
 		fi
 	else
@@ -1660,7 +1670,7 @@ buildBackupCmd()
 				;;
 			*)
 				logHandler "Unsupported compression type configured, exiting."
-				script_exit_code="180"
+				script_exit_code="190"
 				exit
 				;;
 		esac
@@ -1711,7 +1721,7 @@ makeBackup()
 		backup_successful="1"
 	else
 		logHandler "Backup job was not successful. (tar return value: '${rc}' > backup_successful_tar_rc: '${backup_successful_tar_rc}')"
-		script_exit_code="190"
+		script_exit_code="200"
 		exit
 	fi
 }
@@ -1734,7 +1744,7 @@ encryptBackup()
 			encryption_successful="1"
 		else
 			logHandler "Encrypting job was not successful."
-			script_exit_code="200"
+			script_exit_code="210"
 			exit
 		fi
 	else
@@ -1761,11 +1771,11 @@ executePostBackupScript()
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
 		then
 			logHandler "Post backup script doesnt exist, nothing to do."
-			script_exit_code="220"
+			script_exit_code="230"
 			exit
 		else
 			logHandler "Post backup script exists, but it is not executeable, nothing to do."
-			script_exit_code="221"
+			script_exit_code="231"
 			exit
 		fi
 
@@ -1781,7 +1791,7 @@ executePostBackupScript()
 			if [ "${post_backup_exit_when_unsuccessful}" -eq "1" ]
 			then
 				logHandler "Breaking, because execution of post backup script was unsuccessful und you want it."
-				script_exit_code="222"
+				script_exit_code="232"
 				exit
 			fi
 		fi
@@ -1830,27 +1840,27 @@ do
 		h)
 			printUsage
 			script_bypass_exit_routines="1"
-			script_exit_code="230"
+			script_exit_code="240"
 			exit
 			;;
 		v)
 			printScriptInfos
 			script_bypass_exit_routines="1"
-			script_exit_code="231"
+			script_exit_code="241"
 			exit
 			;;
 		\?)
 			printf "Invalid option: -%s\\n\\n" "${OPTARG}"
 			printUsage
 			script_bypass_exit_routines="1"
-			script_exit_code="232"
+			script_exit_code="242"
 			exit
 			;;
 		:)
 			printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
 			printUsage
 			script_bypass_exit_routines="1"
-			script_exit_code="233"
+			script_exit_code="243"
 			exit
 			;;
 	esac
