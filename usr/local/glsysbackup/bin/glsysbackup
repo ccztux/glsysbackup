@@ -1707,10 +1707,10 @@ makeBackup()
 
 	if [ "${rc}" -le "${backup_successful_tar_rc}" ]
 	then
-		logHandler "Backup job was successful. (tar return value: '${rc}' == backup_successful_tar_rc: '${backup_successful_tar_rc}')"
+		logHandler "Backup job was successful. (tar return value: '${rc}' <= backup_successful_tar_rc: '${backup_successful_tar_rc}')"
 		backup_successful="1"
 	else
-		logHandler "Backup job was not successful. (tar return value: '${rc}' != backup_successful_tar_rc: '${backup_successful_tar_rc}')"
+		logHandler "Backup job was not successful. (tar return value: '${rc}' > backup_successful_tar_rc: '${backup_successful_tar_rc}')"
 		script_exit_code="190"
 		exit
 	fi
