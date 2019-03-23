@@ -167,14 +167,128 @@ setRequiredBashOptions()
 	fi
 }
 
-setRequiredShellOptions
-setRequiredBashOptions
 
 
+#---------------------------
+# Traps and signal handling:
+#---------------------------
 
-#-------
-# Traps:
-#-------
+signalHandler()
+{
+	local signal="${1:-}"
+	local bash_source="${2:-}"
+	local lineno="${3:-}"
+	local bash_command="${4:-}"
+
+	case "${signal}" in
+		SIGTERM)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="143"
+			exit
+			;;
+		SIGINT)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="130"
+			exit
+			;;
+		SIGHUP)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="129"
+			exit
+			;;
+		SIGABRT)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="134"
+			exit
+			;;
+		SIGQUIT)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="129"
+			exit
+			;;
+		ERR)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', in: '${bash_source}' at line number: '${lineno}', command: '${bash_command}'."
+			fi
+
+			script_exit_code="1"
+			exit
+			;;
+		EXIT)
+			if [ -n "${script_config_file:-}" ]
+			then
+				logHandler "Caught: '${signal}', exiting script..."
+
+				if [ "${script_bypass_exit_routines}" -ne "1" ]
+				then
+					cleanUp
+
+					if [ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ] || [ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ]
+					then
+						script_exit_code="0"
+						rotateHandler
+					else
+						logHandler "The backup job was not successful, so we dont rotate backup files."
+					fi
+
+					if [ "${script_another_instance_is_running}" -ne "1" ]
+					then
+						if checkLock
+						then
+							removeLock
+						fi
+					fi
+				fi
+
+				if [ "${script_exit_code}" -eq "0" ]
+				then
+					logHandler "We did a great job. :)"
+				else
+					logHandler "Ooops!!! Something went wrong. :("
+					logHandler "Read the log or output to determine what exactly went wrong."
+				fi
+
+				logHandler "Script was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
+				logHandler "Bye, bye..."
+			fi
+
+			if [ "${signal}" != "EXIT" ]
+			then
+				${kill_bin:=kill} -s "${signal}" -- -"${script_pid}" 2>/dev/null
+			else
+				script_shutdown_in_progress="1"
+				${kill_bin:=kill} -s SIGTERM -- -"${script_pid}" 2>/dev/null
+			fi
+
+			exit ${script_exit_code}
+			;;
+		*)
+			logHandler "Caught: '${signal}' in function: '${FUNCNAME[0]}', but dont know what to do with it..."
+			return 1
+			;;
+	esac
+}
 
 setTraps()
 {
@@ -199,29 +313,6 @@ setTraps()
 		fi
 	done
 }
-
-setTraps
-
-
-
-#-----------------------
-# Script info variables:
-#-----------------------
-
-script_pid="${BASHPID}"
-script_name="${0##*/}"
-script_version="2.0.0-beta3"
-script_author="Christian Zettel (ccztux)"
-script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
-script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2019-03-19"
-script_license="GNU GPLv3"
-script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
-script_exit_code="255"
-script_another_instance_is_running="0"
-script_bypass_exit_routines="0"
-script_shutdown_in_progress="0"
-script_log_file_truncated="0"
 
 
 
@@ -522,123 +613,6 @@ logHandler()
 			fi
 		fi
 	fi
-}
-
-signalHandler()
-{
-	local signal="${1:-}"
-	local bash_source="${2:-}"
-	local lineno="${3:-}"
-	local bash_command="${4:-}"
-
-	case "${signal}" in
-		SIGTERM)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="143"
-			exit
-			;;
-		SIGINT)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="130"
-			exit
-			;;
-		SIGHUP)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="129"
-			exit
-			;;
-		SIGABRT)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="134"
-			exit
-			;;
-		SIGQUIT)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="129"
-			exit
-			;;
-		ERR)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', in: '${bash_source}' at line number: '${lineno}', command: '${bash_command}'."
-			fi
-
-			script_exit_code="1"
-			exit
-			;;
-		EXIT)
-			if [ -n "${script_config_file:-}" ]
-			then
-				logHandler "Caught: '${signal}', exiting script..."
-
-				if [ "${script_bypass_exit_routines}" -ne "1" ]
-				then
-					cleanUp
-
-					if [ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ] || [ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ]
-					then
-						script_exit_code="0"
-						rotateHandler
-					else
-						logHandler "The backup job was not successful, so we dont rotate backup files."
-					fi
-
-					if [ "${script_another_instance_is_running}" -ne "1" ]
-					then
-						if checkLock
-						then
-							removeLock
-						fi
-					fi
-				fi
-
-				if [ "${script_exit_code}" -eq "0" ]
-				then
-					logHandler "We did a great job. :)"
-				else
-					logHandler "Ooops!!! Something went wrong. :("
-					logHandler "Read the log or output to determine what exactly went wrong."
-				fi
-
-				logHandler "Script was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
-				logHandler "Bye, bye..."
-			fi
-
-			if [ "${signal}" != "EXIT" ]
-			then
-				${kill_bin:=kill} -s "${signal}" -- -"${script_pid}" 2>/dev/null
-			else
-				script_shutdown_in_progress="1"
-				${kill_bin:=kill} -s SIGTERM -- -"${script_pid}" 2>/dev/null
-			fi
-
-			exit ${script_exit_code}
-			;;
-		*)
-			logHandler "Caught: '${signal}' in function: '${FUNCNAME[0]}', but dont know what to do with it..."
-			return 1
-			;;
-	esac
 }
 
 checkLock()
@@ -1917,9 +1891,40 @@ main()
 
 
 
-#-------------
-# Get options:
-#-------------
+#-------
+# Start:
+#-------
+
+setRequiredShellOptions
+setRequiredBashOptions
+setTraps
+
+
+
+#-----------------------
+# Script info variables:
+#-----------------------
+
+script_pid="${BASHPID}"
+script_name="${0##*/}"
+script_version="2.0.0-beta3"
+script_author="Christian Zettel (ccztux)"
+script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
+script_project_website="https://github.com/ccztux/glsysbackup"
+script_last_modification_date="2019-03-19"
+script_license="GNU GPLv3"
+script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
+script_exit_code="255"
+script_another_instance_is_running="0"
+script_bypass_exit_routines="0"
+script_shutdown_in_progress="0"
+script_log_file_truncated="0"
+
+
+
+#-----------------
+# Get CLI options:
+#-----------------
 
 OPTERR="0"
 
@@ -1960,9 +1965,9 @@ done
 
 
 
-#------
-# Main:
-#------
+#-------------------------
+# Jump into main function:
+#-------------------------
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
