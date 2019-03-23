@@ -119,7 +119,7 @@ setBashOption()
 
 setRequiredShellOptions()
 {
-	local shell_option
+	local shell_option=
 	local required_shell_options_nok=()
 	local required_shell_options=("noclobber" "nounset" "pipefail")
 
@@ -144,7 +144,7 @@ setRequiredShellOptions()
 
 setRequiredBashOptions()
 {
-	local bash_option
+	local bash_option=
 	local required_bash_options_nok=()
 	local required_bash_options=("nullglob")
 
@@ -292,8 +292,8 @@ signalHandler()
 
 setTraps()
 {
-	local signal
-	local signal_handler_arguments
+	local signal=
+	local signal_handler_arguments=
 	local signals=("SIGTERM" "SIGINT" "SIGHUP" "SIGABRT" "SIGQUIT" "ERR" "EXIT")
 
 	for signal in "${signals[@]}"
@@ -1600,9 +1600,9 @@ rotateHandler()
 
 createInstalledPackagesFile()
 {
-	local create_installed_packages_cmd=
 	local syspackage_manager=
 	local available_syspackage_managers_helper=
+	local create_installed_packages_cmd=
 	installed_packages_filename="${installed_packages_directory}/${script_name}.${script_config_name}.installed_packges.txt"
 
 	logHandler "Check if installed packages are enabled..."
@@ -1895,82 +1895,82 @@ main()
 # Start:
 #-------
 
-setRequiredShellOptions
-setRequiredBashOptions
-setTraps
-
-
-
-#-----------------------
-# Script info variables:
-#-----------------------
-
-script_pid="${BASHPID}"
-script_name="${0##*/}"
-script_version="2.0.0-beta3"
-script_author="Christian Zettel (ccztux)"
-script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
-script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2019-03-19"
-script_license="GNU GPLv3"
-script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
-script_exit_code="255"
-script_another_instance_is_running="0"
-script_bypass_exit_routines="0"
-script_shutdown_in_progress="0"
-script_log_file_truncated="0"
-
-
-
-#-----------------
-# Get CLI options:
-#-----------------
-
-OPTERR="0"
-
-while getopts ":c:hv" OPTION
-do
-	case "${OPTION}" in
-		c)
-			script_config_file="${OPTARG}"
-			;;
-		h)
-			printUsage
-			script_bypass_exit_routines="1"
-			script_exit_code="240"
-			exit
-			;;
-		v)
-			printScriptInfos
-			script_bypass_exit_routines="1"
-			script_exit_code="241"
-			exit
-			;;
-		\?)
-			printf "Invalid option: -%s\\n\\n" "${OPTARG}"
-			printUsage
-			script_bypass_exit_routines="1"
-			script_exit_code="242"
-			exit
-			;;
-		:)
-			printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
-			printUsage
-			script_bypass_exit_routines="1"
-			script_exit_code="243"
-			exit
-			;;
-	esac
-done
-
-
-
-#-------------------------
-# Jump into main function:
-#-------------------------
-
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
+	setRequiredShellOptions
+	setRequiredBashOptions
+	setTraps
+
+
+
+	#-----------------------
+	# Script info variables:
+	#-----------------------
+
+	script_pid="${BASHPID}"
+	script_name="${0##*/}"
+	script_version="2.0.0-beta3"
+	script_author="Christian Zettel (ccztux)"
+	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
+	script_project_website="https://github.com/ccztux/glsysbackup"
+	script_last_modification_date="2019-03-19"
+	script_license="GNU GPLv3"
+	script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
+	script_exit_code="255"
+	script_another_instance_is_running="0"
+	script_bypass_exit_routines="0"
+	script_shutdown_in_progress="0"
+	script_log_file_truncated="0"
+
+
+
+	#-----------------
+	# Get CLI options:
+	#-----------------
+
+	OPTERR="0"
+
+	while getopts ":c:hv" OPTION
+	do
+		case "${OPTION}" in
+			c)
+				script_config_file="${OPTARG}"
+				;;
+			h)
+				printUsage
+				script_bypass_exit_routines="1"
+				script_exit_code="240"
+				exit
+				;;
+			v)
+				printScriptInfos
+				script_bypass_exit_routines="1"
+				script_exit_code="241"
+				exit
+				;;
+			\?)
+				printf "Invalid option: -%s\\n\\n" "${OPTARG}"
+				printUsage
+				script_bypass_exit_routines="1"
+				script_exit_code="242"
+				exit
+				;;
+			:)
+				printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
+				printUsage
+				script_bypass_exit_routines="1"
+				script_exit_code="243"
+				exit
+				;;
+		esac
+	done
+
+
+
+	#-------------------------
+	# Jump into main function:
+	#-------------------------
+
 	main "${@}"
 	exit
 else
