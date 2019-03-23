@@ -211,6 +211,8 @@ signalHandler()
 	esac
 }
 
+
+
 #------------------------
 # Bash and shell options:
 #------------------------
@@ -446,6 +448,8 @@ checkRequiredBinaries()
 	done
 
 	logHandlerSetConfig
+	calculateFunctionNameLength
+
 	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
 	logHandler "We are using config file: '${script_config_file}'."
 
@@ -524,6 +528,22 @@ includeConfig()
 	fi
 }
 
+calculateFunctionNameLength()
+{
+	local function=
+	local function_names=()
+	function_names_max_length="0"
+	IFS=$'\n' read -d "" -ra function_names < <(declare -F)
+
+	for function in "${function_names[@]//declare -f /}"
+	do
+		if [ "${#function}" -gt "${function_names_max_length}" ]
+		then
+			function_names_max_length="${#function}"
+		fi
+	done
+}
+
 logHandlerSetConfig()
 {
 	log_conf="0"
@@ -586,6 +606,7 @@ logHandler()
 {
 	local log_message="${1:-}"
 	local log_timestamp=
+	local calling_function=
 
 	if [ -z "${log_message:-}" ]
 	then
@@ -596,6 +617,13 @@ logHandler()
 	else
 		log_message="${log_message//\`/}"
 
+		if [ "${FUNCNAME[${#FUNCNAME[@]} - 3]}" != "${FUNCNAME[0]}" ]
+		then
+			calling_function="${FUNCNAME[${#FUNCNAME[@]} - 3]}"
+		else
+			calling_function="${FUNCNAME[${#FUNCNAME[@]} - 2]}"
+		fi
+
 		if [ "$((log_conf & b_log_to_stdout))" -gt "0" ]
 		then
 			if [ "$((log_conf & b_date_bin_available))" -gt "0" ]
@@ -605,9 +633,9 @@ logHandler()
 					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
 				fi
 
-				printf "[%s] %s: [%d] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
+				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${script_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}"
 			else
-				printf "[Date bin not found] %s: [%d] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${script_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}"
 			fi
 		fi
 
@@ -628,9 +656,9 @@ logHandler()
 					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
 				fi
 
-				printf "[%s] %s: [%d] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >>"${script_log_file}"
+				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${script_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}" >>"${script_log_file}"
 			else
-				printf "[Date bin not found] %s: [%d] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >>"${script_log_file}"
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${script_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}" >>"${script_log_file}"
 			fi
 		fi
 
@@ -638,7 +666,7 @@ logHandler()
 		then
 			if [ "$((log_conf & b_logger_bin_available))" -gt "0" ]
 			then
-				${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
+				${logger_bin} -t "${script_name}[${script_pid}]" "(${FUNCNAME[${#FUNCNAME[@]} - 3]}) ${log_message}"
 			fi
 		fi
 	fi
