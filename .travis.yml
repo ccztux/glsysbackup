@@ -1,12 +1,12 @@
 language: bash
 
 script:
-  - bash -c 'shellcheck --version'
-  - bash -c 'shellcheck --color=always --external-sources /scripts/usr/local/glsysbackup/bin/glsysbackup'
-  - bash -c 'shellcheck --color=always /scripts/usr/local/glsysbackup/etc/glsysbackup.conf'
+	- bash -c 'shellcheck --version'
+	- bash -c 'shellcheck --color=always --external-sources /usr/local/glsysbackup/bin/glsysbackup'
+	- bash -c 'shellcheck --color=always /usr/local/glsysbackup/etc/glsysbackup.conf'
 
 matrix:
-  fast_finish: true
+	fast_finish: true
 
 notifications:
-  email: false
+	email: false
