@@ -35,15 +35,140 @@
 #===================================================================================================
 
 
-#--------------
-# Bash options:
-#--------------
+#------------------------
+# Bash and shell options:
+#------------------------
 
-# if we want to enable errtrace option the code has to be reworked partially
-#set -o errtrace || { printf "Setting essential bash option: 'errtrace' was not successful, terminating...\\n" ; exit 244 ; }
-set -o noclobber || { printf "Setting essential bash option: 'noclobber' was not successful, terminating...\\n" ; exit 245 ; }
-set -o nounset || { printf "Setting essential bash option: 'nounset' was not successful, terminating...\\n" ; exit 246 ; }
-set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not successful, terminating...\\n" ; exit 247 ; }
+checkShellOption()
+{
+	local shell_option="${1}"
+
+	if [ -n "${shell_option}" ]
+	then
+		if [[ "${-}" =~ ^(.*)${shell_option}(.*)$ ]] || [[ "${SHELLOPTS}" =~ ^(.*)${shell_option}(.*)$ ]]
+		then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 2
+	fi
+}
+
+setShellOption()
+{
+	local shell_option="${1}"
+
+	if [ -n "${shell_option}" ]
+	then
+		if [[ "${shell_option}" =~ ^([A-Z]|[a-z])$ ]]
+		then
+			if set -"${shell_option}" 2>/dev/null
+			then
+				return 0
+			else
+				return 1
+			fi
+		else
+			if set -o "${shell_option}" 2>/dev/null
+			then
+				return 0
+			else
+				return 1
+			fi
+		fi
+	else
+		return 2
+	fi
+}
+
+checkBashOption()
+{
+	local bash_option="${1}"
+
+	if [ -n "${bash_option}" ]
+	then
+		if shopt -q "${bash_option}" 2>/dev/null
+		then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 2
+	fi
+}
+
+setBashOption()
+{
+	local bash_option="${1}"
+
+	if [ -n "${bash_option}" ]
+	then
+		if shopt -s "${bash_option}" 2>/dev/null
+		then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 2
+	fi
+}
+
+setRequiredShellOptions()
+{
+	local shell_option
+	local required_shell_options_nok=()
+	local required_shell_options=("noclobber" "nounset" "pipefail")
+
+	for shell_option in "${required_shell_options[@]}"
+	do
+		if ! checkShellOption "${shell_option}"
+		then
+			if ! setShellOption "${shell_option}"
+			then
+				required_shell_options_nok+=("${shell_option}")
+			fi
+		fi
+	done
+
+	if [ "${#required_shell_options_nok[@]}" -ge "1" ]
+	then
+		printf "Setting required shell option: '%s' was not successful.\\n" "${required_shell_options_nok[@]}"
+		printf "Terminating...\\n"
+		exit 245
+	fi
+}
+
+setRequiredBashOptions()
+{
+	local bash_option
+	local required_bash_options_nok=()
+	local required_bash_options=("nullglob")
+
+	for bash_option in "${required_bash_options[@]}"
+	do
+		if ! checkBashOption "${bash_option}"
+		then
+			if ! setBashOption "${bash_option}"
+			then
+				required_bash_options_nok+=("${bash_option}")
+			fi
+		fi
+	done
+
+	if [ "${#required_bash_options_nok[@]}" -ge "1" ]
+	then
+		printf "Setting required bash option: '%s' was not successful.\\n" "${required_bash_options_nok[@]}"
+		printf "Terminating...\\n"
+		exit 246
+	fi
+}
+
+setRequiredShellOptions
+setRequiredBashOptions
 
 
 
@@ -51,13 +176,31 @@ set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not s
 # Traps:
 #-------
 
-trap 'sigHandler SIGTERM' SIGTERM || { printf "Setting essential trap for signal: 'SIGTERM' was not successful, terminating...\\n" ; exit 248 ; }
-trap 'sigHandler SIGINT' SIGINT || { printf "Setting essential trap for signal: 'SIGINT' was not successful, terminating...\\n" ; exit 249 ; }
-trap 'sigHandler SIGHUP' SIGHUP || { printf "Setting essential trap for signal: 'SIGHUP' was not successful, terminating...\\n" ; exit 250 ; }
-trap 'sigHandler SIGABRT' SIGABRT || { printf "Setting essential trap for signal: 'SIGABRT' was not successful, terminating...\\n" ; exit 251 ; }
-trap 'sigHandler SIGQUIT' SIGQUIT || { printf "Setting essential trap for signal: 'SIGQUIT' was not successful, terminating...\\n" ; exit 252 ; }
-trap 'sigHandler ERR "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR || { printf "Setting essential trap for signal: 'ERR' was not successful, terminating...\\n" ; exit 253 ; }
-trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXIT' was not successful, terminating...\\n" ; exit 254 ; }
+setTraps()
+{
+	local signal
+	local signal_handler_arguments
+	local signals=("SIGTERM" "SIGINT" "SIGHUP" "SIGABRT" "SIGQUIT" "ERR" "EXIT")
+
+	for signal in "${signals[@]}"
+	do
+		if [ "${signal}" != "ERR" ]
+		then
+			signal_handler_arguments="${signal}"
+		else
+			signal_handler_arguments="${signal} \"${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}\" \"${LINENO}\" \"${BASH_COMMAND}\""
+		fi
+
+		if ! trap "signalHandler ${signal_handler_arguments}" "${signal}"
+		then
+			printf "Setting trap for signal: '%s' was not successful.\\n" "${signal}"
+			printf "Terminating...\\n"
+			exit 247
+		fi
+	done
+}
+
+setTraps
 
 
 
@@ -82,9 +225,9 @@ script_log_file_truncated="0"
 
 
 
-#-----------
-# Functions:
-#-----------
+#-------------------
+# Various Functions:
+#-------------------
 
 printUsage()
 {
@@ -110,42 +253,6 @@ printScriptInfos()
 	printf "Version:\\t\\t%s\\n\\n" "${script_version}"
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
-}
-
-checkBashOption()
-{
-	local option="${1}"
-
-	if [ -n "${option}" ]
-	then
-		if shopt -q "${option}"
-		then
-			return 0
-		else
-			return 1
-		fi
-	else
-		logHandler "Missing argument: 'option' in function: ${FUNCNAME[0]}"
-		return 2
-	fi
-}
-
-setBashOption()
-{
-	local option="${1}"
-
-	if [ -n "${option}" ]
-	then
-		if shopt -s "${option}"
-		then
-			return 0
-		else
-			return 1
-		fi
-	else
-		logHandler "Missing argument: 'option' in function: ${FUNCNAME[0]}"
-		return 2
-	fi
 }
 
 checkBin()
@@ -417,7 +524,7 @@ logHandler()
 	fi
 }
 
-sigHandler()
+signalHandler()
 {
 	local signal="${1:-}"
 	local bash_source="${2:-}"
@@ -817,22 +924,6 @@ setCommonVars()
 		script_config_name="${script_config_name//.conf/}"
 		script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
 		script_log_file="${script_log_directory}/${script_name}.${script_config_name}.log"
-	fi
-}
-
-setRequiredBashOptions()
-{
-	local bash_option_nullglob="nullglob"
-
-	if ! checkBashOption "${bash_option_nullglob}"
-	then
-		if ! setBashOption "${bash_option_nullglob}"
-		then
-			printf "Setting required bash option: '%s' was not successful.\\n" "${bash_option_nullglob}"
-			script_bypass_exit_routines="1"
-			script_exit_code="60"
-			exit
-		fi
 	fi
 }
 
@@ -1535,7 +1626,7 @@ rotateHandler()
 
 createInstalledPackagesFile()
 {
-	local rc=
+	local create_installed_packages_cmd=
 	local syspackage_manager=
 	local available_syspackage_managers_helper=
 	installed_packages_filename="${installed_packages_directory}/${script_name}.${script_config_name}.installed_packges.txt"
@@ -1575,19 +1666,19 @@ createInstalledPackagesFile()
 
 		case "${syspackage_manager}" in
 			rpm)
-				${syspackage_manager} -qa >"${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} -qa >${installed_packages_filename}"
 				;;
 			dpkg)
-				${syspackage_manager} --get-selections >"${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} --get-selections >${installed_packages_filename}"
 				;;
 			pacman)
-				${syspackage_manager} -Qqe >"${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} -Qqe >${installed_packages_filename}"
 				;;
 			equery)
-				${syspackage_manager} list "*" >"${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} list \"*\" >${installed_packages_filename}"
 				;;
 			pkgutil)
-				${syspackage_manager} --pkgs >"${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} --pkgs >${installed_packages_filename}"
 				;;
 			*)
 				logHandler "Unsupported syspackage manager used in function: '${FUNCNAME[0]}'. :( Exiting."
@@ -1596,9 +1687,7 @@ createInstalledPackagesFile()
 				;;
 		esac
 
-		rc="${?}"
-
-		if [ "${rc}" -eq "0" ]
+		if eval "${create_installed_packages_cmd}" 2>&1 >/dev/null | logHandler
 		then
 			logHandler "Creating installed packages file was successful, adding file to backup_items config array."
 			backup_items+=("${installed_packages_filename}")
@@ -1614,7 +1703,6 @@ createInstalledPackagesFile()
 
 buildExcludeOpts()
 {
-	local rc=
 	local item=
 
 	logHandler "Check if we need to build excluding options..."
@@ -1712,17 +1800,22 @@ makeBackup()
 
 	logHandler "Starting backup job..."
 
-	${backup_cmd} 2>&1 | logHandler
-	rc="${?}"
-
-	if [ "${rc}" -le "${backup_successful_tar_rc}" ]
+	if ${backup_cmd} 2>&1 | logHandler
 	then
-		logHandler "Backup job was successful. (tar return value: '${rc}' <= backup_successful_tar_rc: '${backup_successful_tar_rc}')"
+		logHandler "Backup job was successful. (tar return value: '0' <= backup_successful_tar_rc: '${backup_successful_tar_rc}')"
 		backup_successful="1"
 	else
-		logHandler "Backup job was not successful. (tar return value: '${rc}' > backup_successful_tar_rc: '${backup_successful_tar_rc}')"
-		script_exit_code="200"
-		exit
+		rc="${?}"
+
+		if [ "${rc}" -le "${backup_successful_tar_rc}" ]
+		then
+			logHandler "Backup job was successful. (tar return value: '${rc}' <= backup_successful_tar_rc: '${backup_successful_tar_rc}')"
+			backup_successful="1"
+		else
+			logHandler "Backup job was not successful. (tar return value: '${rc}' > backup_successful_tar_rc: '${backup_successful_tar_rc}')"
+			script_exit_code="200"
+			exit
+		fi
 	fi
 }
 
@@ -1805,7 +1898,6 @@ main()
 	checkCliOptions
 	setDefaultConfig
 	setCommonVars
-	setRequiredBashOptions
 	includeConfig
 	checkRootPrivileges
 	getUser
