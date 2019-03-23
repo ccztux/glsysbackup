@@ -898,6 +898,49 @@ setCommonVars()
 		script_config_name="${script_config_name//.conf/}"
 		script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
 		script_log_file="${script_log_directory}/${script_name}.${script_config_name}.log"
+
+		installed_packages_filename="${installed_packages_directory}/${script_name}.${script_config_name}.installed_packges.txt"
+
+		if [ "${backup_compression_enabled}" -eq "1" ]
+		then
+			case "${backup_compression_type}" in
+				gzip)
+					backup_file_extension="tar.gz"
+					;;
+				bzip2)
+					backup_file_extension="tar.bz"
+					;;
+				xz)
+					backup_file_extension="tar.xz"
+					;;
+				lzip)
+					backup_file_extension="tar.lz"
+					;;
+				lzma)
+					backup_file_extension="tar.lzma"
+					;;
+				lzop)
+					backup_file_extension="tar.lzop"
+					;;
+				*)
+					;;
+			esac
+		fi
+
+		backup_base_directory="${backup_destination_path}/${HOSTNAME}/${script_config_name}"
+		backup_filename="${backup_base_directory}/latest/${backup_base_filename}.${backup_file_extension}"
+		backup_encryption_file_extension="aes.${backup_file_extension}"
+		backup_encryption_filename="${backup_filename//${backup_file_extension}/${backup_encryption_file_extension}}"
+
+		rotation_type=
+		rotation_timestamp_base_format="%Y-%m-%d"
+
+		if [ "${backup_encryption_enabled}" -eq "1" ]
+		then
+			file_extension="${backup_encryption_file_extension}"
+		else
+			file_extension="${backup_file_extension}"
+		fi
 	fi
 
 	encryption_successful="0"
@@ -1186,7 +1229,6 @@ checkBackupDirStructure()
 	local dir=
 	local dir_helper=
 	local backup_dirs=("daily" "weekly" "monthly" "latest")
-	backup_base_directory="${backup_destination_path}/${HOSTNAME}/${script_config_name}"
 
 	logHandler "Check backup dir structure..."
 	logHandler "Check if backup directory: '${backup_destination_path}' exists and permissions to move files are ok..."
@@ -1311,8 +1353,7 @@ getDaysOfMonth()
 removeTodaysOldBackups()
 {
 	local file=
-	local todays_timestamp=
-	todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
+	local todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
 	local backup_files_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_base_filename}_${todays_timestamp}*.${file_extension}"
 	# shellcheck disable=SC2206
 	local backup_files=(${backup_files_base_name})
@@ -1440,7 +1481,6 @@ removeOldBackups()
 rotateHandler()
 {
 	local file=
-	file_extension=
 	local file_new=
 	local actual_weekday=
 	local actual_weekday_format="%u"
@@ -1453,8 +1493,6 @@ rotateHandler()
 	local last_day_of_month=
 	local rotation_timestamp=
 	local rotation_types=("daily" "weekly" "monthly")
-	rotation_type=
-	rotation_timestamp_base_format="%Y-%m-%d"
 	local rotation_daily_timestamp_format="${rotation_timestamp_base_format}_%Hh%Mm_%A"
 	local rotation_weekly_timestamp_format="${rotation_timestamp_base_format}_%Hh%Mm_%W"
 	local rotation_monthly_timestamp_format="${rotation_timestamp_base_format}_%Hh%Mm_%B"
@@ -1476,12 +1514,9 @@ rotateHandler()
 		if [ "${backup_encryption_enabled}" -eq "1" ]
 		then
 			file="${backup_encryption_filename}"
-			file_extension="${backup_encryption_file_extension}"
 		else
 			file="${backup_filename}"
-			file_extension="${backup_file_extension}"
 		fi
-
 
 		for rotation_type in "${rotation_types[@]}"
 		do
@@ -1606,7 +1641,6 @@ createInstalledPackagesFile()
 	local syspackage_manager=
 	local available_syspackage_managers_helper=
 	local create_installed_packages_cmd=
-	installed_packages_filename="${installed_packages_directory}/${script_name}.${script_config_name}.installed_packges.txt"
 
 	logHandler "Check if installed packages are enabled..."
 
@@ -1711,27 +1745,21 @@ buildBackupCmd()
 		case "${backup_compression_type}" in
 			gzip)
 				backup_options+=("--gzip")
-				backup_file_extension="tar.gz"
 				;;
 			bzip2)
 				backup_options+=("--bzip2")
-				backup_file_extension="tar.bz"
 				;;
 			xz)
 				backup_options+=("--xz")
-				backup_file_extension="tar.xz"
 				;;
 			lzip)
 				backup_options+=("--lzip")
-				backup_file_extension="tar.lz"
 				;;
 			lzma)
 				backup_options+=("--lzma")
-				backup_file_extension="tar.lzma"
 				;;
 			lzop)
 				backup_options+=("--lzop")
-				backup_file_extension="tar.lzop"
 				;;
 			*)
 				logHandler "Unsupported compression type configured, exiting."
@@ -1741,7 +1769,6 @@ buildBackupCmd()
 		esac
 	fi
 
-	backup_filename="${backup_base_directory}/latest/${backup_base_filename}.${backup_file_extension}"
 	backup_options+=("--file=${backup_filename}")
 
 	if [ "${backup_verbose_mode_enabled}" -eq "1" ]
@@ -1798,9 +1825,6 @@ makeBackup()
 
 encryptBackup()
 {
-	backup_encryption_file_extension="aes.${backup_file_extension}"
-	backup_encryption_filename="${backup_filename//${backup_file_extension}/${backup_encryption_file_extension}}"
-
 	if [ "${backup_encryption_enabled}" -eq "1" ]
 	then
 		logHandler "Backup encryption is enabled..."
