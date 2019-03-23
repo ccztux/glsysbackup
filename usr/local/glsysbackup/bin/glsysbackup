@@ -1123,7 +1123,7 @@ reNice()
 			logHandler "Re-niceing..."
 
 			# shellcheck disable=SC2154
-			if ${renice_bin} -n ${re_nice_priority} -p ${script_pid} 2>&1 | logHandler
+			if ${renice_bin} -n ${re_nice_priority} -p "${script_pid}" 2>&1 | logHandler
 			then
 				logHandler "Re-niceing was successful."
 			else
