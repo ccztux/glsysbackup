@@ -1353,6 +1353,7 @@ getDaysOfMonth()
 removeTodaysOldBackups()
 {
 	local file=
+	local todays_timestamp=
 	local todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
 	local backup_files_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_base_filename}_${todays_timestamp}*.${file_extension}"
 	# shellcheck disable=SC2206
