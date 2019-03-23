@@ -35,6 +35,182 @@
 #===================================================================================================
 
 
+#-------
+# Traps:
+#-------
+
+if ! trap 'signalHandler SIGTERM' SIGTERM
+then
+	printf "Setting trap for signal: 'SIGTERM' was not successful.\\n"
+	printf "Terminating...\\n"
+	exit 247
+fi
+
+if ! trap 'signalHandler SIGINT' SIGINT
+then
+	printf "Setting trap for signal: 'SIGINT' was not successful.\\n"
+	printf "Terminating...\\n"
+	exit 247
+fi
+
+if ! trap 'signalHandler SIGHUP' SIGHUP
+then
+	printf "Setting trap for signal: 'SIGHUP' was not successful.\\n"
+	printf "Terminating...\\n"
+	exit 247
+fi
+
+if ! trap 'signalHandler SIGABRT' SIGABRT
+then
+	printf "Setting trap for signal: 'SIGABRT' was not successful.\\n"
+	printf "Terminating...\\n"
+	exit 247
+fi
+
+if ! trap 'signalHandler SIGQUIT' SIGQUIT
+then
+	printf "Setting trap for signal: 'SIGQUIT' was not successful.\\n"
+	printf "Terminating...\\n"
+	exit 247
+fi
+
+if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
+then
+	printf "Setting trap for signal: 'ERR' was not successful.\\n"
+	printf "Terminating...\\n"
+	exit 247
+fi
+
+if ! trap 'signalHandler "EXIT"' EXIT
+then
+	printf "Setting trap for signal: 'EXIT' was not successful.\\n"
+	printf "Terminating...\\n"
+	exit 247
+fi
+
+
+
+#---------------
+# signalHandler:
+#---------------
+
+signalHandler()
+{
+	local signal="${1:-}"
+	local bash_source="${2:-}"
+	local lineno="${3:-}"
+	local bash_command="${4:-}"
+
+	case "${signal}" in
+		SIGTERM)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="143"
+			exit
+			;;
+		SIGINT)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="130"
+			exit
+			;;
+		SIGHUP)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="129"
+			exit
+			;;
+		SIGABRT)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="134"
+			exit
+			;;
+		SIGQUIT)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="129"
+			exit
+			;;
+		ERR)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', in: '${bash_source}' at line number: '${lineno}', command: '${bash_command}'."
+			fi
+
+			script_exit_code="1"
+			exit
+			;;
+		EXIT)
+			if [ -n "${script_config_file:-}" ]
+			then
+				logHandler "Caught: '${signal}', exiting script..."
+
+				if [ "${script_bypass_exit_routines}" -ne "1" ]
+				then
+					cleanUp
+
+					if [ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ] || [ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ]
+					then
+						script_exit_code="0"
+						rotateHandler
+					else
+						logHandler "The backup job was not successful, so we dont rotate backup files."
+					fi
+
+					if [ "${script_another_instance_is_running}" -ne "1" ]
+					then
+						if checkLock
+						then
+							removeLock
+						fi
+					fi
+				fi
+
+				if [ "${script_exit_code}" -eq "0" ]
+				then
+					logHandler "We did a great job. :)"
+				else
+					logHandler "Ooops!!! Something went wrong. :("
+					logHandler "Read the log or output to determine what exactly went wrong."
+				fi
+
+				logHandler "Script was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
+				logHandler "Bye, bye..."
+			fi
+
+			if [ "${signal}" != "EXIT" ]
+			then
+				${kill_bin:=kill} -s "${signal}" -- -"${script_pid}" 2>/dev/null
+			else
+				script_shutdown_in_progress="1"
+				${kill_bin:=kill} -s SIGTERM -- -"${script_pid}" 2>/dev/null
+			fi
+
+			exit ${script_exit_code}
+			;;
+		*)
+			logHandler "Caught: '${signal}' in function: '${FUNCNAME[0]}', but dont know what to do with it..."
+			return 1
+			;;
+	esac
+}
+
 #------------------------
 # Bash and shell options:
 #------------------------
@@ -165,153 +341,6 @@ setRequiredBashOptions()
 		printf "Terminating...\\n"
 		exit 246
 	fi
-}
-
-
-
-#---------------------------
-# Traps and signal handling:
-#---------------------------
-
-signalHandler()
-{
-	local signal="${1:-}"
-	local bash_source="${2:-}"
-	local lineno="${3:-}"
-	local bash_command="${4:-}"
-
-	case "${signal}" in
-		SIGTERM)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="143"
-			exit
-			;;
-		SIGINT)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="130"
-			exit
-			;;
-		SIGHUP)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="129"
-			exit
-			;;
-		SIGABRT)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="134"
-			exit
-			;;
-		SIGQUIT)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="129"
-			exit
-			;;
-		ERR)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', in: '${bash_source}' at line number: '${lineno}', command: '${bash_command}'."
-			fi
-
-			script_exit_code="1"
-			exit
-			;;
-		EXIT)
-			if [ -n "${script_config_file:-}" ]
-			then
-				logHandler "Caught: '${signal}', exiting script..."
-
-				if [ "${script_bypass_exit_routines}" -ne "1" ]
-				then
-					cleanUp
-
-					if [ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ] || [ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ]
-					then
-						script_exit_code="0"
-						rotateHandler
-					else
-						logHandler "The backup job was not successful, so we dont rotate backup files."
-					fi
-
-					if [ "${script_another_instance_is_running}" -ne "1" ]
-					then
-						if checkLock
-						then
-							removeLock
-						fi
-					fi
-				fi
-
-				if [ "${script_exit_code}" -eq "0" ]
-				then
-					logHandler "We did a great job. :)"
-				else
-					logHandler "Ooops!!! Something went wrong. :("
-					logHandler "Read the log or output to determine what exactly went wrong."
-				fi
-
-				logHandler "Script was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
-				logHandler "Bye, bye..."
-			fi
-
-			if [ "${signal}" != "EXIT" ]
-			then
-				${kill_bin:=kill} -s "${signal}" -- -"${script_pid}" 2>/dev/null
-			else
-				script_shutdown_in_progress="1"
-				${kill_bin:=kill} -s SIGTERM -- -"${script_pid}" 2>/dev/null
-			fi
-
-			exit ${script_exit_code}
-			;;
-		*)
-			logHandler "Caught: '${signal}' in function: '${FUNCNAME[0]}', but dont know what to do with it..."
-			return 1
-			;;
-	esac
-}
-
-setTraps()
-{
-	local signal=
-	local signal_handler_arguments=
-	local signals=("SIGTERM" "SIGINT" "SIGHUP" "SIGABRT" "SIGQUIT" "ERR" "EXIT")
-
-	for signal in "${signals[@]}"
-	do
-		if [ "${signal}" != "ERR" ]
-		then
-			signal_handler_arguments="${signal}"
-		else
-			signal_handler_arguments="${signal} \"${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}\" \"${LINENO}\" \"${BASH_COMMAND}\""
-		fi
-
-		if ! trap "signalHandler ${signal_handler_arguments}" "${signal}"
-		then
-			printf "Setting trap for signal: '%s' was not successful.\\n" "${signal}"
-			printf "Terminating...\\n"
-			exit 247
-		fi
-	done
 }
 
 
@@ -1354,7 +1383,7 @@ removeTodaysOldBackups()
 {
 	local file=
 	local todays_timestamp=
-	local todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
+	todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
 	local backup_files_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_base_filename}_${todays_timestamp}*.${file_extension}"
 	# shellcheck disable=SC2206
 	local backup_files=(${backup_files_base_name})
@@ -1927,7 +1956,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
 	setRequiredShellOptions
 	setRequiredBashOptions
-	setTraps
 
 
 
