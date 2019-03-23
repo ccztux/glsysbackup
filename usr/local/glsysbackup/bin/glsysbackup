@@ -899,6 +899,9 @@ setCommonVars()
 		script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
 		script_log_file="${script_log_directory}/${script_name}.${script_config_name}.log"
 	fi
+
+	encryption_successful="0"
+	backup_successful="0"
 }
 
 checkCliOptions()
@@ -931,7 +934,7 @@ checkRootPrivileges()
 	then
 		logHandler "Root privileges are required, checking privileges..."
 
-		if [ "$UID" -eq "0" ]
+		if [ "${UID}" -eq "0" ]
 		then
 			logHandler "HOORAY, we have root privileges. :)"
 		else
@@ -952,7 +955,7 @@ getUser()
 
 	if [ -n "${SUDO_USER:-}" ]
 	then
-		script_exec_user="$SUDO_USER"
+		script_exec_user="${SUDO_USER}"
 	else
 		# shellcheck disable=SC2154
 		script_exec_user="$(${whoami_bin})"
