@@ -1,9 +1,17 @@
+sudo: required
+
 language: bash
 
+services:
+	- docker
+
+before_install:
+	- docker pull koalaman/shellcheck
+
 script:
-	- bash -c 'shellcheck --version'
-	- bash -c 'shellcheck --color=always --external-sources /usr/local/glsysbackup/bin/glsysbackup'
-	- bash -c 'shellcheck --color=always /usr/local/glsysbackup/etc/glsysbackup.conf'
+	- docker run koalaman/shellcheck --version
+	- docker run -v $(pwd):/scripts koalaman/shellcheck --color=always --external-sources /scripts/usr/local/glsysbackup/bin/glsysbackup
+	- docker run -v $(pwd):/scripts koalaman/shellcheck --color=always /scripts/usr/local/glsysbackup/etc/glsysbackup.conf
 
 matrix:
 	fast_finish: true
