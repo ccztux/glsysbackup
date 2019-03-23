@@ -9,9 +9,9 @@ before_install:
   - docker pull koalaman/shellcheck
 
 script:
-  - docker run koalaman/shellcheck -color=always --version
-  - docker run -v $(pwd):/scripts koalaman/shellcheck --color=always --external-sources /scripts/usr/local/glsysbackup/bin/glsysbackup
-  - docker run -v $(pwd):/scripts koalaman/shellcheck --color=always /scripts/usr/local/glsysbackup/etc/glsysbackup.conf
+  - docker run koalaman/shellcheck --color=always --version
+  - docker run -v $(pwd):/scripts koalaman/shellcheck --color=always --external-sources --check-sourced /scripts/usr/local/glsysbackup/bin/glsysbackup
+  #- docker run -v $(pwd):/scripts koalaman/shellcheck --color=always /scripts/usr/local/glsysbackup/etc/glsysbackup.conf
 
 matrix:
   fast_finish: true
