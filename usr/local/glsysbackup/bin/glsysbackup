@@ -35,56 +35,290 @@
 #===================================================================================================
 
 
-#--------------
-# Bash options:
-#--------------
+#------------------------
+# Bash and shell options:
+#------------------------
 
-# if we want to enable errtrace option the code has to be reworked partially
-#set -o errtrace || { printf "Setting essential bash option: 'errtrace' was not successful, terminating...\\n" ; exit 244 ; }
-set -o noclobber || { printf "Setting essential bash option: 'noclobber' was not successful, terminating...\\n" ; exit 245 ; }
-set -o nounset || { printf "Setting essential bash option: 'nounset' was not successful, terminating...\\n" ; exit 246 ; }
-set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not successful, terminating...\\n" ; exit 247 ; }
+checkShellOption()
+{
+	local shell_option="${1}"
+
+	if [ -n "${shell_option}" ]
+	then
+		if [[ "${-}" =~ ^(.*)${shell_option}(.*)$ ]] || [[ "${SHELLOPTS}" =~ ^(.*)${shell_option}(.*)$ ]]
+		then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 2
+	fi
+}
+
+setShellOption()
+{
+	local shell_option="${1}"
+
+	if [ -n "${shell_option}" ]
+	then
+		if [[ "${shell_option}" =~ ^([A-Z]|[a-z])$ ]]
+		then
+			if set -"${shell_option}" 2>/dev/null
+			then
+				return 0
+			else
+				return 1
+			fi
+		else
+			if set -o "${shell_option}" 2>/dev/null
+			then
+				return 0
+			else
+				return 1
+			fi
+		fi
+	else
+		return 2
+	fi
+}
+
+checkBashOption()
+{
+	local bash_option="${1}"
+
+	if [ -n "${bash_option}" ]
+	then
+		if shopt -q "${bash_option}" 2>/dev/null
+		then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 2
+	fi
+}
+
+setBashOption()
+{
+	local bash_option="${1}"
+
+	if [ -n "${bash_option}" ]
+	then
+		if shopt -s "${bash_option}" 2>/dev/null
+		then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 2
+	fi
+}
+
+setRequiredShellOptions()
+{
+	local shell_option=
+	local required_shell_options_nok=()
+	local required_shell_options=("noclobber" "nounset" "pipefail")
+
+	for shell_option in "${required_shell_options[@]}"
+	do
+		if ! checkShellOption "${shell_option}"
+		then
+			if ! setShellOption "${shell_option}"
+			then
+				required_shell_options_nok+=("${shell_option}")
+			fi
+		fi
+	done
+
+	if [ "${#required_shell_options_nok[@]}" -ge "1" ]
+	then
+		printf "Setting required shell option: '%s' was not successful.\\n" "${required_shell_options_nok[@]}"
+		printf "Terminating...\\n"
+		exit 245
+	fi
+}
+
+setRequiredBashOptions()
+{
+	local bash_option=
+	local required_bash_options_nok=()
+	local required_bash_options=("nullglob")
+
+	for bash_option in "${required_bash_options[@]}"
+	do
+		if ! checkBashOption "${bash_option}"
+		then
+			if ! setBashOption "${bash_option}"
+			then
+				required_bash_options_nok+=("${bash_option}")
+			fi
+		fi
+	done
+
+	if [ "${#required_bash_options_nok[@]}" -ge "1" ]
+	then
+		printf "Setting required bash option: '%s' was not successful.\\n" "${required_bash_options_nok[@]}"
+		printf "Terminating...\\n"
+		exit 246
+	fi
+}
 
 
 
-#-------
-# Traps:
-#-------
+#---------------------------
+# Traps and signal handling:
+#---------------------------
 
-trap 'sigHandler SIGTERM' SIGTERM || { printf "Setting essential trap for signal: 'SIGTERM' was not successful, terminating...\\n" ; exit 248 ; }
-trap 'sigHandler SIGINT' SIGINT || { printf "Setting essential trap for signal: 'SIGINT' was not successful, terminating...\\n" ; exit 249 ; }
-trap 'sigHandler SIGHUP' SIGHUP || { printf "Setting essential trap for signal: 'SIGHUP' was not successful, terminating...\\n" ; exit 250 ; }
-trap 'sigHandler SIGABRT' SIGABRT || { printf "Setting essential trap for signal: 'SIGABRT' was not successful, terminating...\\n" ; exit 251 ; }
-trap 'sigHandler SIGQUIT' SIGQUIT || { printf "Setting essential trap for signal: 'SIGQUIT' was not successful, terminating...\\n" ; exit 252 ; }
-trap 'sigHandler ERR "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR || { printf "Setting essential trap for signal: 'ERR' was not successful, terminating...\\n" ; exit 253 ; }
-trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXIT' was not successful, terminating...\\n" ; exit 254 ; }
+signalHandler()
+{
+	local signal="${1:-}"
+	local bash_source="${2:-}"
+	local lineno="${3:-}"
+	local bash_command="${4:-}"
+
+	case "${signal}" in
+		SIGTERM)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="143"
+			exit
+			;;
+		SIGINT)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="130"
+			exit
+			;;
+		SIGHUP)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="129"
+			exit
+			;;
+		SIGABRT)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="134"
+			exit
+			;;
+		SIGQUIT)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', preparing for exiting..."
+			fi
+
+			script_exit_code="129"
+			exit
+			;;
+		ERR)
+			if [ "${script_shutdown_in_progress}" -ne "1" ]
+			then
+				logHandler "Caught: '${signal}', in: '${bash_source}' at line number: '${lineno}', command: '${bash_command}'."
+			fi
+
+			script_exit_code="1"
+			exit
+			;;
+		EXIT)
+			if [ -n "${script_config_file:-}" ]
+			then
+				logHandler "Caught: '${signal}', exiting script..."
+
+				if [ "${script_bypass_exit_routines}" -ne "1" ]
+				then
+					cleanUp
+
+					if [ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ] || [ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ]
+					then
+						script_exit_code="0"
+						rotateHandler
+					else
+						logHandler "The backup job was not successful, so we dont rotate backup files."
+					fi
+
+					if [ "${script_another_instance_is_running}" -ne "1" ]
+					then
+						if checkLock
+						then
+							removeLock
+						fi
+					fi
+				fi
+
+				if [ "${script_exit_code}" -eq "0" ]
+				then
+					logHandler "We did a great job. :)"
+				else
+					logHandler "Ooops!!! Something went wrong. :("
+					logHandler "Read the log or output to determine what exactly went wrong."
+				fi
+
+				logHandler "Script was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
+				logHandler "Bye, bye..."
+			fi
+
+			if [ "${signal}" != "EXIT" ]
+			then
+				${kill_bin:=kill} -s "${signal}" -- -"${script_pid}" 2>/dev/null
+			else
+				script_shutdown_in_progress="1"
+				${kill_bin:=kill} -s SIGTERM -- -"${script_pid}" 2>/dev/null
+			fi
+
+			exit ${script_exit_code}
+			;;
+		*)
+			logHandler "Caught: '${signal}' in function: '${FUNCNAME[0]}', but dont know what to do with it..."
+			return 1
+			;;
+	esac
+}
+
+setTraps()
+{
+	local signal=
+	local signal_handler_arguments=
+	local signals=("SIGTERM" "SIGINT" "SIGHUP" "SIGABRT" "SIGQUIT" "ERR" "EXIT")
+
+	for signal in "${signals[@]}"
+	do
+		if [ "${signal}" != "ERR" ]
+		then
+			signal_handler_arguments="${signal}"
+		else
+			signal_handler_arguments="${signal} \"${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}\" \"${LINENO}\" \"${BASH_COMMAND}\""
+		fi
+
+		if ! trap "signalHandler ${signal_handler_arguments}" "${signal}"
+		then
+			printf "Setting trap for signal: '%s' was not successful.\\n" "${signal}"
+			printf "Terminating...\\n"
+			exit 247
+		fi
+	done
+}
 
 
 
-#-----------------------
-# Script info variables:
-#-----------------------
-
-script_pid="${BASHPID}"
-script_name="${0##*/}"
-script_version="2.0.0-beta3"
-script_author="Christian Zettel (ccztux)"
-script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
-script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2019-03-19"
-script_license="GNU GPLv3"
-script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
-script_exit_code="255"
-script_another_instance_is_running="0"
-script_bypass_exit_routines="0"
-script_shutdown_in_progress="0"
-script_log_file_truncated="0"
-
-
-
-#-----------
-# Functions:
-#-----------
+#-------------------
+# Various Functions:
+#-------------------
 
 printUsage()
 {
@@ -110,42 +344,6 @@ printScriptInfos()
 	printf "Version:\\t\\t%s\\n\\n" "${script_version}"
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
-}
-
-checkBashOption()
-{
-	local option="${1}"
-
-	if [ -n "${option}" ]
-	then
-		if shopt -q "${option}"
-		then
-			return 0
-		else
-			return 1
-		fi
-	else
-		logHandler "Missing argument: 'option' in function: ${FUNCNAME[0]}"
-		return 2
-	fi
-}
-
-setBashOption()
-{
-	local option="${1}"
-
-	if [ -n "${option}" ]
-	then
-		if shopt -s "${option}"
-		then
-			return 0
-		else
-			return 1
-		fi
-	else
-		logHandler "Missing argument: 'option' in function: ${FUNCNAME[0]}"
-		return 2
-	fi
 }
 
 checkBin()
@@ -299,7 +497,7 @@ includeConfig()
 
 logHandlerSetConfig()
 {
-	log_conf=
+	log_conf="0"
 	b_log_to_file="1"
 	b_log_to_stdout="2"
 	b_log_to_syslog="4"
@@ -417,123 +615,6 @@ logHandler()
 	fi
 }
 
-sigHandler()
-{
-	local signal="${1:-}"
-	local bash_source="${2:-}"
-	local lineno="${3:-}"
-	local bash_command="${4:-}"
-
-	case "${signal}" in
-		SIGTERM)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="143"
-			exit
-			;;
-		SIGINT)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="130"
-			exit
-			;;
-		SIGHUP)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="129"
-			exit
-			;;
-		SIGABRT)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="134"
-			exit
-			;;
-		SIGQUIT)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-			script_exit_code="129"
-			exit
-			;;
-		ERR)
-			if [ "${script_shutdown_in_progress}" -ne "1" ]
-			then
-				logHandler "Caught: '${signal}', in: '${bash_source}' at line number: '${lineno}', command: '${bash_command}'."
-			fi
-
-			script_exit_code="1"
-			exit
-			;;
-		EXIT)
-			if [ -n "${script_config_file:-}" ]
-			then
-				logHandler "Caught: '${signal}', exiting script..."
-
-				if [ "${script_bypass_exit_routines}" -ne "1" ]
-				then
-					cleanUp
-
-					if [ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ] || [ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ]
-					then
-						script_exit_code="0"
-						rotateHandler
-					else
-						logHandler "The backup job was not successful, so we dont rotate backup files."
-					fi
-
-					if [ "${script_another_instance_is_running}" -ne "1" ]
-					then
-						if checkLock
-						then
-							removeLock
-						fi
-					fi
-				fi
-
-				if [ "${script_exit_code}" -eq "0" ]
-				then
-					logHandler "We did a great job. :)"
-				else
-					logHandler "Ooops!!! Something went wrong. :("
-					logHandler "Read the log or output to determine what exactly went wrong."
-				fi
-
-				logHandler "Script was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
-				logHandler "Bye, bye..."
-			fi
-
-			if [ "${signal}" != "EXIT" ]
-			then
-				${kill_bin:=kill} -s "${signal}" -- -"${script_pid}" 2>/dev/null
-			else
-				script_shutdown_in_progress="1"
-				${kill_bin:=kill} -s SIGTERM -- -"${script_pid}" 2>/dev/null
-			fi
-
-			exit ${script_exit_code}
-			;;
-		*)
-			logHandler "Caught: '${signal}' in function: '${FUNCNAME[0]}', but dont know what to do with it..."
-			return 1
-			;;
-	esac
-}
-
 checkLock()
 {
 	logHandler "Check if lock file: '${script_lock_file}' exists and if it is read and writeable..."
@@ -646,14 +727,14 @@ removeInstalledPackagesFile()
 				logHandler "Deleting installed packages file was successful."
 			else
 				logHandler "Deleting installed packages file was not successful."
-				script_exit_code="50"
+				script_exit_code="40"
 			fi
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
 		then
 			logHandler "Installed packages file doesnt exist, nothing to do."
 		else
 			logHandler "Installed packages file exists, but it is not writeable, we can not delete it."
-			script_exit_code="51"
+			script_exit_code="41"
 		fi
 	fi
 }
@@ -679,7 +760,7 @@ removeOldLeftoverLatestBackups()
 				logHandler "Deleting file was successful."
 			else
 				logHandler "Deleting file was not successful."
-				script_exit_code="210"
+				script_exit_code="50"
 				exit
 			fi
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
@@ -704,7 +785,7 @@ removeOldLeftoverLatestBackups()
 				logHandler "Deleting file was successful."
 			else
 				logHandler "Deleting file was not successful."
-				script_exit_code="211"
+				script_exit_code="51"
 				exit
 			fi
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
@@ -720,7 +801,7 @@ checkFileParameters()
 {
 	local file="${1:-}"
 
-	file_permission=
+	file_permission="0"
 	b_permission_execute="1"
 	b_permission_write="2"
 	b_permission_read="4"
@@ -784,6 +865,7 @@ setDefaultConfig()
 	installed_packages_enabled="1"
 	installed_packages_forced_manager=""
 	installed_packages_directory="/root"
+	backup_successful_tar_rc="1"
 	backup_compression_enabled="1"
 	backup_compression_type="gzip"
 	backup_verbose_mode_enabled="1"
@@ -806,6 +888,7 @@ setDefaultConfig()
 setCommonVars()
 {
 	script_base_path="/usr/local/${script_name}"
+	script_bin_directory="${script_base_path}/bin"
 	script_lock_directory="${script_base_path}/var/lock"
 	script_log_directory="${script_base_path}/var/log"
 
@@ -815,15 +898,53 @@ setCommonVars()
 		script_config_name="${script_config_name//.conf/}"
 		script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
 		script_log_file="${script_log_directory}/${script_name}.${script_config_name}.log"
-	fi
-}
 
-setRequiredBashOptions()
-{
-	if ! checkBashOption "nullglob"
-	then
-		setBashOption "nullglob"
+		installed_packages_filename="${installed_packages_directory}/${script_name}.${script_config_name}.installed_packges.txt"
+
+		if [ "${backup_compression_enabled}" -eq "1" ]
+		then
+			case "${backup_compression_type}" in
+				gzip)
+					backup_file_extension="tar.gz"
+					;;
+				bzip2)
+					backup_file_extension="tar.bz"
+					;;
+				xz)
+					backup_file_extension="tar.xz"
+					;;
+				lzip)
+					backup_file_extension="tar.lz"
+					;;
+				lzma)
+					backup_file_extension="tar.lzma"
+					;;
+				lzop)
+					backup_file_extension="tar.lzop"
+					;;
+				*)
+					;;
+			esac
+		fi
+
+		backup_base_directory="${backup_destination_path}/${HOSTNAME}/${script_config_name}"
+		backup_filename="${backup_base_directory}/latest/${backup_base_filename}.${backup_file_extension}"
+		backup_encryption_file_extension="aes.${backup_file_extension}"
+		backup_encryption_filename="${backup_filename//${backup_file_extension}/${backup_encryption_file_extension}}"
+
+		rotation_type=
+		rotation_timestamp_base_format="%Y-%m-%d"
+
+		if [ "${backup_encryption_enabled}" -eq "1" ]
+		then
+			file_extension="${backup_encryption_file_extension}"
+		else
+			file_extension="${backup_file_extension}"
+		fi
 	fi
+
+	encryption_successful="0"
+	backup_successful="0"
 }
 
 checkCliOptions()
@@ -836,14 +957,14 @@ checkCliOptions()
 			printUsage
 
 			script_config_file=
-			script_exit_code="60"
+			script_exit_code="70"
 			exit
 		fi
 	else
 		printf "Mandatory argument: '-c' (Config file) missing, exiting.\\n\\n"
 		printUsage
 
-		script_exit_code="61"
+		script_exit_code="71"
 		exit
 	fi
 }
@@ -856,12 +977,12 @@ checkRootPrivileges()
 	then
 		logHandler "Root privileges are required, checking privileges..."
 
-		if [ "$UID" -eq "0" ]
+		if [ "${UID}" -eq "0" ]
 		then
 			logHandler "HOORAY, we have root privileges. :)"
 		else
 			logHandler "You must run this script as root, terminating."
-			script_exit_code="70"
+			script_exit_code="80"
 			exit
 		fi
 	else
@@ -877,7 +998,7 @@ getUser()
 
 	if [ -n "${SUDO_USER:-}" ]
 	then
-		script_exec_user="$SUDO_USER"
+		script_exec_user="${SUDO_USER}"
 	else
 		# shellcheck disable=SC2154
 		script_exec_user="$(${whoami_bin})"
@@ -893,7 +1014,7 @@ checkBashVersion()
 	if [ -z "${BASH_VERSINFO[0]}" ]
 	then
 		logHandler "Could not determine bash version, exiting."
-		script_exit_code="80"
+		script_exit_code="90"
 		exit
 	else
 		case "${BASH_VERSINFO[0]}" in
@@ -904,7 +1025,7 @@ checkBashVersion()
 				logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
 
 				script_bypass_exit_routines="1"
-				script_exit_code="81"
+				script_exit_code="91"
 				exit
 				;;
 		esac
@@ -916,7 +1037,7 @@ checkAlreadyRunningInstance()
 	local running_script_pids=
 
 	# shellcheck disable=SC2154
-	running_script_pids="$(${pgrep_bin} -d " " -f "^bash(.*)${script_base_path}/bin/${script_name}(.*)${script_config_file}(.*)$")"
+	running_script_pids="$(${pgrep_bin} -d " " -f "^bash(.*)${script_bin_directory}/${script_name}(.*)${script_config_file}(.*)$")"
 	running_script_pids="${running_script_pids//${script_pid}/}"
 	running_script_pids="${running_script_pids//\ /\,\ }"
 
@@ -935,7 +1056,7 @@ checkAlreadyRunningInstance()
 
 			script_another_instance_is_running="1"
 			script_bypass_exit_routines="1"
-			script_exit_code="90"
+			script_exit_code="100"
 			exit
 		fi
 	else
@@ -966,7 +1087,7 @@ reNice()
 			logHandler "Re-nice priority: '${re_nice_priority}' is out of range."
 			logHandler "HINT: Have a look at: 'man renice'."
 
-			script_exit_code="100"
+			script_exit_code="110"
 			exit
 		else
 			logHandler "Re-nice priority: '${re_nice_priority}' is in range."
@@ -978,7 +1099,7 @@ reNice()
 				logHandler "Re-niceing was successful."
 			else
 				logHandler "Re-niceing was not successful."
-				script_exit_code="101"
+				script_exit_code="111"
 				exit
 			fi
 		fi
@@ -1004,7 +1125,7 @@ reIONice()
 			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is out of range."
 			logHandler "HINT: Have a look at: 'man ionice'."
 
-			script_exit_code="110"
+			script_exit_code="120"
 			exit
 		else
 			logHandler "Re-ioniceing scheduling class: '${re_ionice_scheduling_class}' is in range."
@@ -1022,7 +1143,7 @@ reIONice()
 				logHandler "Re-ioniceing priority: '${re_ionice_priority}' is out of range."
 				logHandler "HINT: Have a look at: 'man ionice'."
 
-				script_exit_code="111"
+				script_exit_code="121"
 				exit
 			else
 				logHandler "Re-ioniceing priority: '${re_ionice_scheduling_class}' is in range."
@@ -1047,7 +1168,7 @@ reIONice()
 			logHandler "Re-ioniceing was successful."
 		else
 			logHandler "Re-ioniceing was not successful."
-			script_exit_code="112"
+			script_exit_code="122"
 			exit
 		fi
 	else
@@ -1074,11 +1195,11 @@ executePreBackupScript()
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
 		then
 			logHandler "Pre backup script doesnt exist, nothing to do."
-			script_exit_code="120"
+			script_exit_code="130"
 			exit
 		else
 			logHandler "Pre backup script exists, but it is not executeable, nothing to do."
-			script_exit_code="121"
+			script_exit_code="131"
 			exit
 		fi
 
@@ -1094,7 +1215,7 @@ executePreBackupScript()
 			if [ "${pre_backup_exit_when_unsuccessful}" -eq "1" ]
 			then
 				logHandler "Breaking, because execution of pre backup script was unsuccessful und you want it."
-				script_exit_code="122"
+				script_exit_code="132"
 				exit
 			fi
 		fi
@@ -1108,7 +1229,6 @@ checkBackupDirStructure()
 	local dir=
 	local dir_helper=
 	local backup_dirs=("daily" "weekly" "monthly" "latest")
-	backup_base_directory="${backup_destination_path}/${HOSTNAME}/${script_config_name}"
 
 	logHandler "Check backup dir structure..."
 	logHandler "Check if backup directory: '${backup_destination_path}' exists and permissions to move files are ok..."
@@ -1129,12 +1249,12 @@ checkBackupDirStructure()
 			logHandler "Creating backup directory was successful."
 		else
 			logHandler "Creating backup directory was not successful."
-			script_exit_code="130"
+			script_exit_code="140"
 			exit
 		fi
 	else
 		logHandler "Backup directory exists but permissions are not ok, exiting."
-		script_exit_code="131"
+		script_exit_code="141"
 		exit
 	fi
 
@@ -1158,12 +1278,12 @@ checkBackupDirStructure()
 				logHandler "Creating directory: '${dir_helper}' was successful."
 			else
 				logHandler "Creating directory: '${dir_helper}' was not successful."
-				script_exit_code="132"
+				script_exit_code="142"
 				exit
 			fi
 		else
 			logHandler "Directory: '${dir_helper}' exists but permissions are not ok, exiting."
-			script_exit_code="133"
+			script_exit_code="143"
 			exit
 		fi
 	done
@@ -1233,8 +1353,7 @@ getDaysOfMonth()
 removeTodaysOldBackups()
 {
 	local file=
-	local todays_timestamp=
-	todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
+	local todays_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${rotation_timestamp_base_format}${date_cmd_format_suffix}")"
 	local backup_files_base_name="${backup_base_directory}/${rotation_type}/${rotation_type}_${backup_base_filename}_${todays_timestamp}*.${file_extension}"
 	# shellcheck disable=SC2206
 	local backup_files=(${backup_files_base_name})
@@ -1263,7 +1382,7 @@ removeTodaysOldBackups()
 					logHandler "Deleting file was successful."
 				else
 					logHandler "Deleting file was not successful."
-					script_exit_code="140"
+					script_exit_code="150"
 					exit
 				fi
 			elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
@@ -1343,7 +1462,7 @@ removeOldBackups()
 						logHandler "Deleting file was successful."
 					else
 						logHandler "Deleting file was not successful."
-						script_exit_code="150"
+						script_exit_code="160"
 						exit
 					fi
 				elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
@@ -1362,7 +1481,6 @@ removeOldBackups()
 rotateHandler()
 {
 	local file=
-	file_extension=
 	local file_new=
 	local actual_weekday=
 	local actual_weekday_format="%u"
@@ -1375,8 +1493,6 @@ rotateHandler()
 	local last_day_of_month=
 	local rotation_timestamp=
 	local rotation_types=("daily" "weekly" "monthly")
-	rotation_type=
-	rotation_timestamp_base_format="%Y-%m-%d"
 	local rotation_daily_timestamp_format="${rotation_timestamp_base_format}_%Hh%Mm_%A"
 	local rotation_weekly_timestamp_format="${rotation_timestamp_base_format}_%Hh%Mm_%W"
 	local rotation_monthly_timestamp_format="${rotation_timestamp_base_format}_%Hh%Mm_%B"
@@ -1398,12 +1514,9 @@ rotateHandler()
 		if [ "${backup_encryption_enabled}" -eq "1" ]
 		then
 			file="${backup_encryption_filename}"
-			file_extension="${backup_encryption_file_extension}"
 		else
 			file="${backup_filename}"
-			file_extension="${backup_file_extension}"
 		fi
-
 
 		for rotation_type in "${rotation_types[@]}"
 		do
@@ -1428,7 +1541,7 @@ rotateHandler()
 							logHandler "Copy job was successful."
 						else
 							logHandler "Copy job was not successful."
-							script_exit_code="160"
+							script_exit_code="170"
 							exit
 						fi
 					fi
@@ -1460,7 +1573,7 @@ rotateHandler()
 								logHandler "Copy job was successful."
 							else
 								logHandler "Copy job was not successful."
-								script_exit_code="161"
+								script_exit_code="171"
 								exit
 							fi
 						else
@@ -1505,7 +1618,7 @@ rotateHandler()
 								logHandler "Copy job was successful."
 							else
 								logHandler "Copy job was not successful."
-								script_exit_code="162"
+								script_exit_code="172"
 								exit
 							fi
 						else
@@ -1525,10 +1638,9 @@ rotateHandler()
 
 createInstalledPackagesFile()
 {
-	local rc=
 	local syspackage_manager=
 	local available_syspackage_managers_helper=
-	installed_packages_filename="${installed_packages_directory}/${script_name}.${script_config_name}.installed_packges.txt"
+	local create_installed_packages_cmd=
 
 	logHandler "Check if installed packages are enabled..."
 
@@ -1548,7 +1660,7 @@ createInstalledPackagesFile()
 				logHandler "HINT: You can force to use one of the supported syspackage managers by setting configuration variable: 'installed_packages_forced_manager'."
 			fi
 
-			script_exit_code="170"
+			script_exit_code="180"
 			exit
 		elif [ "${#available_syspackage_managers[@]}" -eq "1" ]
 		then
@@ -1557,7 +1669,7 @@ createInstalledPackagesFile()
 		elif [ "${#available_syspackage_managers[@]}" -eq "0" ]
 		then
 			logHandler "No supported system package manager found, exiting."
-			script_exit_code="171"
+			script_exit_code="181"
 			exit
 		fi
 
@@ -1565,36 +1677,34 @@ createInstalledPackagesFile()
 
 		case "${syspackage_manager}" in
 			rpm)
-				${syspackage_manager} -qa >"${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} -qa >${installed_packages_filename}"
 				;;
 			dpkg)
-				${syspackage_manager} --get-selections >"${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} --get-selections >${installed_packages_filename}"
 				;;
 			pacman)
-				${syspackage_manager} -Qqe >"${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} -Qqe >${installed_packages_filename}"
 				;;
 			equery)
-				${syspackage_manager} list "*" >"${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} list \"*\" >${installed_packages_filename}"
 				;;
 			pkgutil)
-				${syspackage_manager} --pkgs >"${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} --pkgs >${installed_packages_filename}"
 				;;
 			*)
 				logHandler "Unsupported syspackage manager used in function: '${FUNCNAME[0]}'. :( Exiting."
-				script_exit_code="172"
+				script_exit_code="182"
 				exit
 				;;
 		esac
 
-		rc="${?}"
-
-		if [ "${rc}" -eq "0" ]
+		if eval "${create_installed_packages_cmd}" 2>&1 >/dev/null | logHandler
 		then
 			logHandler "Creating installed packages file was successful, adding file to backup_items config array."
 			backup_items+=("${installed_packages_filename}")
 		else
 			logHandler "Creating installed packages file was not successful."
-			script_exit_code="173"
+			script_exit_code="183"
 			exit
 		fi
 	else
@@ -1604,7 +1714,6 @@ createInstalledPackagesFile()
 
 buildExcludeOpts()
 {
-	local rc=
 	local item=
 
 	logHandler "Check if we need to build excluding options..."
@@ -1636,37 +1745,30 @@ buildBackupCmd()
 		case "${backup_compression_type}" in
 			gzip)
 				backup_options+=("--gzip")
-				backup_file_extension="tar.gz"
 				;;
 			bzip2)
 				backup_options+=("--bzip2")
-				backup_file_extension="tar.bz"
 				;;
 			xz)
 				backup_options+=("--xz")
-				backup_file_extension="tar.xz"
 				;;
 			lzip)
 				backup_options+=("--lzip")
-				backup_file_extension="tar.lz"
 				;;
 			lzma)
 				backup_options+=("--lzma")
-				backup_file_extension="tar.lzma"
 				;;
 			lzop)
 				backup_options+=("--lzop")
-				backup_file_extension="tar.lzop"
 				;;
 			*)
 				logHandler "Unsupported compression type configured, exiting."
-				script_exit_code="180"
+				script_exit_code="190"
 				exit
 				;;
 		esac
 	fi
 
-	backup_filename="${backup_base_directory}/latest/${backup_base_filename}.${backup_file_extension}"
 	backup_options+=("--file=${backup_filename}")
 
 	if [ "${backup_verbose_mode_enabled}" -eq "1" ]
@@ -1702,25 +1804,27 @@ makeBackup()
 
 	logHandler "Starting backup job..."
 
-	${backup_cmd} 2>&1 | logHandler
-	rc="${?}"
-
-	if [ "${rc}" -le "${backup_successful_tar_rc}" ]
+	if ${backup_cmd} 2>&1 | logHandler
 	then
-		logHandler "Backup job was successful. (tar return value: '${rc}' <= backup_successful_tar_rc: '${backup_successful_tar_rc}')"
+		logHandler "Backup job was successful. (tar return value: '0' <= backup_successful_tar_rc: '${backup_successful_tar_rc}')"
 		backup_successful="1"
 	else
-		logHandler "Backup job was not successful. (tar return value: '${rc}' > backup_successful_tar_rc: '${backup_successful_tar_rc}')"
-		script_exit_code="190"
-		exit
+		rc="${?}"
+
+		if [ "${rc}" -le "${backup_successful_tar_rc}" ]
+		then
+			logHandler "Backup job was successful. (tar return value: '${rc}' <= backup_successful_tar_rc: '${backup_successful_tar_rc}')"
+			backup_successful="1"
+		else
+			logHandler "Backup job was not successful. (tar return value: '${rc}' > backup_successful_tar_rc: '${backup_successful_tar_rc}')"
+			script_exit_code="200"
+			exit
+		fi
 	fi
 }
 
 encryptBackup()
 {
-	backup_encryption_file_extension="aes.${backup_file_extension}"
-	backup_encryption_filename="${backup_filename//${backup_file_extension}/${backup_encryption_file_extension}}"
-
 	if [ "${backup_encryption_enabled}" -eq "1" ]
 	then
 		logHandler "Backup encryption is enabled..."
@@ -1734,7 +1838,7 @@ encryptBackup()
 			encryption_successful="1"
 		else
 			logHandler "Encrypting job was not successful."
-			script_exit_code="200"
+			script_exit_code="210"
 			exit
 		fi
 	else
@@ -1761,11 +1865,11 @@ executePostBackupScript()
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
 		then
 			logHandler "Post backup script doesnt exist, nothing to do."
-			script_exit_code="220"
+			script_exit_code="230"
 			exit
 		else
 			logHandler "Post backup script exists, but it is not executeable, nothing to do."
-			script_exit_code="221"
+			script_exit_code="231"
 			exit
 		fi
 
@@ -1781,7 +1885,7 @@ executePostBackupScript()
 			if [ "${post_backup_exit_when_unsuccessful}" -eq "1" ]
 			then
 				logHandler "Breaking, because execution of post backup script was unsuccessful und you want it."
-				script_exit_code="222"
+				script_exit_code="232"
 				exit
 			fi
 		fi
@@ -1795,7 +1899,6 @@ main()
 	checkCliOptions
 	setDefaultConfig
 	setCommonVars
-	setRequiredBashOptions
 	includeConfig
 	checkRootPrivileges
 	getUser
@@ -1815,55 +1918,86 @@ main()
 
 
 
-#-------------
-# Get options:
-#-------------
-
-OPTERR="0"
-
-while getopts ":c:hv" OPTION
-do
-	case "${OPTION}" in
-		c)
-			script_config_file="${OPTARG}"
-			;;
-		h)
-			printUsage
-			script_bypass_exit_routines="1"
-			script_exit_code="230"
-			exit
-			;;
-		v)
-			printScriptInfos
-			script_bypass_exit_routines="1"
-			script_exit_code="231"
-			exit
-			;;
-		\?)
-			printf "Invalid option: -%s\\n\\n" "${OPTARG}"
-			printUsage
-			script_bypass_exit_routines="1"
-			script_exit_code="232"
-			exit
-			;;
-		:)
-			printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
-			printUsage
-			script_bypass_exit_routines="1"
-			script_exit_code="233"
-			exit
-			;;
-	esac
-done
-
-
-
-#------
-# Main:
-#------
+#-------
+# Start:
+#-------
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
+	setRequiredShellOptions
+	setRequiredBashOptions
+	setTraps
+
+
+
+	#-----------------------
+	# Script info variables:
+	#-----------------------
+
+	script_pid="${BASHPID}"
+	script_name="${0##*/}"
+	script_version="2.0.0-beta3"
+	script_author="Christian Zettel (ccztux)"
+	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
+	script_project_website="https://github.com/ccztux/glsysbackup"
+	script_last_modification_date="2019-03-19"
+	script_license="GNU GPLv3"
+	script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
+	script_exit_code="255"
+	script_another_instance_is_running="0"
+	script_bypass_exit_routines="0"
+	script_shutdown_in_progress="0"
+	script_log_file_truncated="0"
+
+
+
+	#-----------------
+	# Get CLI options:
+	#-----------------
+
+	OPTERR="0"
+
+	while getopts ":c:hv" OPTION
+	do
+		case "${OPTION}" in
+			c)
+				script_config_file="${OPTARG}"
+				;;
+			h)
+				printUsage
+				script_bypass_exit_routines="1"
+				script_exit_code="240"
+				exit
+				;;
+			v)
+				printScriptInfos
+				script_bypass_exit_routines="1"
+				script_exit_code="241"
+				exit
+				;;
+			\?)
+				printf "Invalid option: -%s\\n\\n" "${OPTARG}"
+				printUsage
+				script_bypass_exit_routines="1"
+				script_exit_code="242"
+				exit
+				;;
+			:)
+				printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
+				printUsage
+				script_bypass_exit_routines="1"
+				script_exit_code="243"
+				exit
+				;;
+		esac
+	done
+
+
+
+	#-------------------------
+	# Jump into main function:
+	#-------------------------
+
 	main "${@}"
 	exit
 else
