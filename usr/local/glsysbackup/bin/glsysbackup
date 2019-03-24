@@ -448,7 +448,11 @@ checkRequiredBinaries()
 	done
 
 	logHandlerSetConfig
-	calculateFunctionNameLength
+
+	if [ "$((log_conf & b_log_to_stdout))" -gt "0" ] || [ "$((log_conf & b_log_to_file))" -gt "0" ]
+	then
+		calculateFunctionNameLength
+	fi
 
 	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
 	logHandler "We are using config file: '${script_config_file}'."
