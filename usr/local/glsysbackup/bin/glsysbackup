@@ -168,7 +168,7 @@ signalHandler()
 			exit
 			;;
 		EXIT)
-			if [ "${script_config_file_is_valid}" -eq "1" ]
+			if [ "${script_config_file_included}" -eq "1" ]
 			then
 				logHandler "Caught: '${signal}', exiting script..."
 
@@ -364,6 +364,8 @@ setRequiredBashOptions()
 
 printUsage()
 {
+	script_print_usage="1"
+
 	setCommonVars
 
 	printf "Usage: %s OPTIONS\\n\\n" "${script_name}"
@@ -468,6 +470,28 @@ checkRequiredBinaries()
 	if [ "$((log_conf & b_log_to_file))" -gt "0" ]
 	then
 		checkFileParameters "${script_log_directory}"
+
+		if [ "$((file_permission & b_is_directory))" -eq "0" ]
+		then
+			eprintf "Log directory doesnt exist."
+			eprintf "Creating log directory..."
+
+			# shellcheck disable=SC2154
+			if ${mkdir_bin} -p "${script_log_directory}" 2>&1 | logHandler
+			then
+				eprintf "Creating log directory was successful."
+			else
+				eprintf "Creating log directory was not successful."
+				script_bypass_exit_routines="1"
+				script_exit_code="10"
+				exit
+			fi
+		else
+			eprintf "Log directory exists but permissions are not ok, exiting."
+			script_bypass_exit_routines="1"
+			script_exit_code="11"
+			exit
+		fi
 	fi
 
 	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
@@ -520,14 +544,14 @@ includeConfig()
 		# shellcheck source=/scripts/usr/local/glsysbackup/etc/glsysbackup.conf
 		if source "${script_config_file}"
 		then
-			script_config_file_is_valid="1"
+			script_config_file_included="1"
 			checkRequiredBinaries
 		else
 			logHandler "Including config file: '${script_config_file}' was not successful."
 			logHandler "Terminating..."
 
 			script_bypass_exit_routines="1"
-			script_exit_code="10"
+			script_exit_code="20"
 			exit
 		fi
 	elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
@@ -536,7 +560,7 @@ includeConfig()
 		logHandler "Terminating..."
 
 		script_bypass_exit_routines="1"
-		script_exit_code="11"
+		script_exit_code="21"
 		exit
 	elif [ "$((file_permission & b_regular_file_is_not_empty))" -eq "0" ]
 	then
@@ -544,7 +568,7 @@ includeConfig()
 		logHandler "Terminating..."
 
 		script_bypass_exit_routines="1"
-		script_exit_code="12"
+		script_exit_code="22"
 		exit
 	elif [ "$((file_permission & b_permission_read))" -eq "0" ]
 	then
@@ -552,7 +576,7 @@ includeConfig()
 		logHandler "Terminating..."
 
 		script_bypass_exit_routines="1"
-		script_exit_code="13"
+		script_exit_code="23"
 		exit
 	fi
 }
@@ -747,12 +771,12 @@ setLock()
 			logHandler "Creating script lock directory was successful."
 		else
 			logHandler "Creating script lock directory was not successful."
-			script_exit_code="20"
+			script_exit_code="30"
 			exit
 		fi
 	else
 		logHandler "Script lock directory exists but permissions are not ok, exiting."
-		script_exit_code="21"
+		script_exit_code="31"
 		exit
 	fi
 
@@ -763,7 +787,7 @@ setLock()
 		logHandler "Setting lock was successful."
 	else
 		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock."
-		script_exit_code="22"
+		script_exit_code="32"
 		exit
 	fi
 }
@@ -778,7 +802,7 @@ removeLock()
 		logHandler "Removing lock was successful."
 	else
 		logHandler "Removing lock was not successful."
-		script_exit_code="30"
+		script_exit_code="40"
 		exit
 	fi
 }
@@ -819,14 +843,14 @@ removeInstalledPackagesFile()
 				logHandler "Deleting installed packages file was successful."
 			else
 				logHandler "Deleting installed packages file was not successful."
-				script_exit_code="40"
+				script_exit_code="50"
 			fi
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
 		then
 			logHandler "Installed packages file doesnt exist, nothing to do."
 		else
 			logHandler "Installed packages file exists, but it is not writeable, we can not delete it."
-			script_exit_code="41"
+			script_exit_code="51"
 		fi
 	fi
 }
@@ -852,7 +876,7 @@ removeOldLeftoverLatestBackups()
 				logHandler "Deleting file was successful."
 			else
 				logHandler "Deleting file was not successful."
-				script_exit_code="50"
+				script_exit_code="60"
 				exit
 			fi
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
@@ -877,7 +901,7 @@ removeOldLeftoverLatestBackups()
 				logHandler "Deleting file was successful."
 			else
 				logHandler "Deleting file was not successful."
-				script_exit_code="51"
+				script_exit_code="61"
 				exit
 			fi
 		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
@@ -984,7 +1008,12 @@ setCommonVars()
 	script_lock_directory="${script_base_path}/var/lock"
 	script_log_directory="${script_base_path}/var/log"
 
-	if [ "${script_config_file_is_valid}" -eq "1" ]
+	if [ "${script_print_usage}" -eq "1" ]
+	then
+		return
+	fi
+
+	if [ -n "${script_config_file}" ]
 	then
 		script_config_name="${script_config_file##*/}"
 		script_config_name="${script_config_name//.conf/}"
@@ -2041,7 +2070,8 @@ then
 	script_bypass_exit_routines="0"
 	script_shutdown_in_progress="0"
 	script_log_file_truncated="0"
-	script_config_file_is_valid="0"
+	script_config_file_included="0"
+	script_print_usage="0"
 
 
 
