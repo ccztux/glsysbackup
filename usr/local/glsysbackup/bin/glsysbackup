@@ -318,6 +318,7 @@ setRequiredShellOptions()
 		then
 			if ! setShellOption "${shell_option}"
 			then
+				eprintf "Setting required shell option: '${shell_option}' was not successful."
 				required_shell_options_nok+=("${shell_option}")
 			fi
 		fi
@@ -325,7 +326,6 @@ setRequiredShellOptions()
 
 	if [ "${#required_shell_options_nok[@]}" -ge "1" ]
 	then
-		eprintf "Setting required shell option: '${required_shell_options_nok[@]}' was not successful."
 		eprintf "Terminating..."
 		exit 245
 	fi
@@ -343,6 +343,7 @@ setRequiredBashOptions()
 		then
 			if ! setBashOption "${bash_option}"
 			then
+				eprintf "Setting required bash option: '${bash_option}' was not successful."
 				required_bash_options_nok+=("${bash_option}")
 			fi
 		fi
@@ -350,7 +351,6 @@ setRequiredBashOptions()
 
 	if [ "${#required_bash_options_nok[@]}" -ge "1" ]
 	then
-		eprintf "Setting required bash option: '${required_bash_options_nok[@]}' was not successful."
 		eprintf "Terminating..."
 		exit 246
 	fi
