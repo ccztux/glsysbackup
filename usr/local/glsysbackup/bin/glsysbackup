@@ -35,56 +35,67 @@
 #===================================================================================================
 
 
+#--------------------------------
+# Print error messages to stderr:
+#--------------------------------
+
+eprintf()
+{
+	printf "%b\\n" "${1}" >&2
+}
+
+
+
 #-------
 # Traps:
 #-------
 
 if ! trap 'signalHandler SIGTERM' SIGTERM
 then
-	printf "Setting trap for signal: 'SIGTERM' was not successful.\\n"
-	printf "Terminating...\\n"
+	eprintf "Setting trap for signal: 'SIGTERM' was not successful."
+	eprintf "Terminating..."
 	exit 247
 fi
 
 if ! trap 'signalHandler SIGINT' SIGINT
 then
-	printf "Setting trap for signal: 'SIGINT' was not successful.\\n"
-	printf "Terminating...\\n"
+	eprintf "Setting trap for signal: 'SIGINT' was not successful."
+	eprintf "Terminating..."
 	exit 247
 fi
 
 if ! trap 'signalHandler SIGHUP' SIGHUP
 then
-	printf "Setting trap for signal: 'SIGHUP' was not successful.\\n"
-	printf "Terminating...\\n"
+	eprintf "Setting trap for signal: 'SIGHUP' was not successful."
+	eprintf "Terminating..."
 	exit 247
 fi
 
 if ! trap 'signalHandler SIGABRT' SIGABRT
 then
-	printf "Setting trap for signal: 'SIGABRT' was not successful.\\n"
-	printf "Terminating...\\n"
+	eprintf "Setting trap for signal: 'SIGABRT' was not successful."
+	eprintf "Terminating..."
 	exit 247
 fi
 
 if ! trap 'signalHandler SIGQUIT' SIGQUIT
 then
-	printf "Setting trap for signal: 'SIGQUIT' was not successful.\\n"
-	printf "Terminating...\\n"
+	eprintf "Setting trap for signal: 'SIGQUIT' was not successful."
+	eprintf "Terminating..."
 	exit 247
 fi
 
 if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
 then
-	printf "Setting trap for signal: 'ERR' was not successful.\\n"
-	printf "Terminating...\\n"
+	eprintf "Setting trap for signal: 'ERR' was not successful."
+	eprintf "Terminating..."
 	exit 247
 fi
 
 if ! trap 'signalHandler "EXIT"' EXIT
 then
-	printf "Setting trap for signal: 'EXIT' was not successful.\\n"
-	printf "Terminating...\\n"
+	eprintf "Setting trap for signal: 'EXIT' was not successful."
+	eprintf "Terminating..."
 	exit 247
 fi
 
@@ -157,7 +168,7 @@ signalHandler()
 			exit
 			;;
 		EXIT)
-			if [ -n "${script_config_file:-}" ]
+			if [ "${script_config_file_is_valid}" -eq "1" ]
 			then
 				logHandler "Caught: '${signal}', exiting script..."
 
@@ -314,8 +325,8 @@ setRequiredShellOptions()
 
 	if [ "${#required_shell_options_nok[@]}" -ge "1" ]
 	then
-		printf "Setting required shell option: '%s' was not successful.\\n" "${required_shell_options_nok[@]}"
-		printf "Terminating...\\n"
+		eprintf "Setting required shell option: '${required_shell_options_nok[@]}' was not successful."
+		eprintf "Terminating..."
 		exit 245
 	fi
 }
@@ -339,8 +350,8 @@ setRequiredBashOptions()
 
 	if [ "${#required_bash_options_nok[@]}" -ge "1" ]
 	then
-		printf "Setting required bash option: '%s' was not successful.\\n" "${required_bash_options_nok[@]}"
-		printf "Terminating...\\n"
+		eprintf "Setting required bash option: '${required_bash_options_nok[@]}' was not successful."
+		eprintf "Terminating..."
 		exit 246
 	fi
 }
@@ -454,6 +465,11 @@ checkRequiredBinaries()
 		calculateFunctionNameLength
 	fi
 
+	if [ "$((log_conf & b_log_to_file))" -gt "0" ]
+	then
+		checkFileParameters "${script_log_directory}"
+	fi
+
 	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
 	logHandler "We are using config file: '${script_config_file}'."
 
@@ -504,28 +520,37 @@ includeConfig()
 		# shellcheck source=/scripts/usr/local/glsysbackup/etc/glsysbackup.conf
 		if source "${script_config_file}"
 		then
+			script_config_file_is_valid="1"
 			checkRequiredBinaries
 		else
-			printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
+			logHandler "Including config file: '${script_config_file}' was not successful."
+			logHandler "Terminating..."
+
 			script_bypass_exit_routines="1"
 			script_exit_code="10"
 			exit
 		fi
 	elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
 	then
-		printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
+		logHandler "Config file: '${script_config_file}' does not exist."
+		logHandler "Terminating..."
+
 		script_bypass_exit_routines="1"
 		script_exit_code="11"
 		exit
 	elif [ "$((file_permission & b_regular_file_is_not_empty))" -eq "0" ]
 	then
-		printf "Config file: '%s' exists, but is empty, exiting.\\n" "${script_config_file}"
+		logHandler "Config file: '${script_config_file}' exists, but is empty."
+		logHandler "Terminating..."
+
 		script_bypass_exit_routines="1"
 		script_exit_code="12"
 		exit
 	elif [ "$((file_permission & b_permission_read))" -eq "0" ]
 	then
-		printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
+		logHandler "Config file: '${script_config_file}' exists, but it is not readable."
+		logHandler "Terminating..."
+
 		script_bypass_exit_routines="1"
 		script_exit_code="13"
 		exit
@@ -620,6 +645,12 @@ logHandler()
 		fi
 	else
 		log_message="${log_message//\`/}"
+
+		if [ -z "${log_conf:-}" ]
+		then
+			eprintf "${log_message}"
+			return
+		fi
 
 		if [ "${FUNCNAME[-3]}" != "${FUNCNAME[0]}" ]
 		then
@@ -953,7 +984,7 @@ setCommonVars()
 	script_lock_directory="${script_base_path}/var/lock"
 	script_log_directory="${script_base_path}/var/log"
 
-	if [ -n "${script_config_file:-}" ]
+	if [ "${script_config_file_is_valid}" -eq "1" ]
 	then
 		script_config_name="${script_config_file##*/}"
 		script_config_name="${script_config_name//.conf/}"
@@ -1014,17 +1045,18 @@ checkCliOptions()
 	then
 		if [[ ! "${script_config_file}" =~ ^(.*).conf$ ]]
 		then
-			printf "Unsupported file extension of config file: '%s', exiting.\\n\\n" "${script_config_file}"
+			logHandler "Unsupported file extension of config file: '${script_config_file}', exiting.\\n"
 			printUsage
 
-			script_config_file=
+			script_bypass_exit_routines="1"
 			script_exit_code="70"
 			exit
 		fi
 	else
-		printf "Mandatory argument: '-c' (Config file) missing, exiting.\\n\\n"
+		logHandler "Mandatory argument: '-c' (Config file) missing, exiting.\\n"
 		printUsage
 
+		script_bypass_exit_routines="1"
 		script_exit_code="71"
 		exit
 	fi
@@ -2009,6 +2041,7 @@ then
 	script_bypass_exit_routines="0"
 	script_shutdown_in_progress="0"
 	script_log_file_truncated="0"
+	script_config_file_is_valid="0"
 
 
 
@@ -2037,14 +2070,14 @@ then
 				exit
 				;;
 			\?)
-				printf "Invalid option: -%s\\n\\n" "${OPTARG}"
+				logHandler "Invalid option: -${OPTARG}\\n"
 				printUsage
 				script_bypass_exit_routines="1"
 				script_exit_code="242"
 				exit
 				;;
 			:)
-				printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
+				logHandler "Option: -${OPTARG} requires an argument.\\n"
 				printUsage
 				script_bypass_exit_routines="1"
 				script_exit_code="243"
@@ -2062,6 +2095,6 @@ then
 	main "${@}"
 	exit
 else
-	printf "\\nThis is NOT a bash library. Execute it directly!\\n\\n"
+	logHandler "\\nThis is NOT a bash library. Execute it directly!\\n\\n"
 	exit 1
 fi
