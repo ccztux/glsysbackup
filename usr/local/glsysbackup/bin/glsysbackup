@@ -309,7 +309,6 @@ setBashOption()
 setRequiredShellOptions()
 {
 	local shell_option=
-	local required_shell_options_nok=()
 	local required_shell_options=("noclobber" "nounset" "pipefail")
 
 	for shell_option in "${required_shell_options[@]}"
@@ -319,22 +318,16 @@ setRequiredShellOptions()
 			if ! setShellOption "${shell_option}"
 			then
 				eprintf "Setting required shell option: '${shell_option}' was not successful."
-				required_shell_options_nok+=("${shell_option}")
+				eprintf "Terminating..."
+				exit 245
 			fi
 		fi
 	done
-
-	if [ "${#required_shell_options_nok[@]}" -ge "1" ]
-	then
-		eprintf "Terminating..."
-		exit 245
-	fi
 }
 
 setRequiredBashOptions()
 {
 	local bash_option=
-	local required_bash_options_nok=()
 	local required_bash_options=("nullglob")
 
 	for bash_option in "${required_bash_options[@]}"
@@ -344,16 +337,11 @@ setRequiredBashOptions()
 			if ! setBashOption "${bash_option}"
 			then
 				eprintf "Setting required bash option: '${bash_option}' was not successful."
-				required_bash_options_nok+=("${bash_option}")
+				eprintf "Terminating..."
+				exit 246
 			fi
 		fi
 	done
-
-	if [ "${#required_bash_options_nok[@]}" -ge "1" ]
-	then
-		eprintf "Terminating..."
-		exit 246
-	fi
 }
 
 
