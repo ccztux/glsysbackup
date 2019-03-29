@@ -664,11 +664,11 @@ logHandler()
 			return
 		fi
 
-		if [ "${FUNCNAME[-3]}" != "${FUNCNAME[0]}" ]
+		if [ "${FUNCNAME[0 + 1]}" != "logHandlerStdinHelper" ]
 		then
-			calling_function="${FUNCNAME[-3]}"
+			calling_function="${FUNCNAME[0 + 1]}"
 		else
-			calling_function="${FUNCNAME[-2]}"
+			calling_function="${FUNCNAME[0 + 3]}"
 		fi
 
 		if [ "$((log_conf & b_log_to_stdout))" -gt "0" ]
