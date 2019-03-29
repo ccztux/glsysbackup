@@ -1800,13 +1800,13 @@ createInstalledPackagesFile()
 
 		case "${syspackage_manager}" in
 			rpm)
-				create_installed_packages_cmd="${syspackage_manager} -qa >${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} --query --all >${installed_packages_filename}"
 				;;
 			dpkg)
-				create_installed_packages_cmd="${syspackage_manager} --get-selections >${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} --list >${installed_packages_filename}"
 				;;
 			pacman)
-				create_installed_packages_cmd="${syspackage_manager} -Qqe >${installed_packages_filename}"
+				create_installed_packages_cmd="${syspackage_manager} --query --explicit >${installed_packages_filename}"
 				;;
 			equery)
 				create_installed_packages_cmd="${syspackage_manager} list \"*\" >${installed_packages_filename}"
