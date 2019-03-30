@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-03-19
+#						2019-03-30
 #
-#  Version				2.0.0-beta3
+#  Version				2.0.0-beta4
 #
 #  Description:			Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -201,7 +201,7 @@ signalHandler()
 					logHandler "Read the log or output to determine what exactly went wrong."
 				fi
 
-				logHandler "Script was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
+				logHandler "${script_name} (${script_version}) was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
 				logHandler "Bye, bye..."
 			fi
 
@@ -448,43 +448,6 @@ checkRequiredBinaries()
 		fi
 	done
 
-	logHandlerSetConfig
-
-	if [ "$((log_conf & b_log_to_stdout))" -gt "0" ] || [ "$((log_conf & b_log_to_file))" -gt "0" ]
-	then
-		calculateFunctionNameLength
-	fi
-
-	if [ "$((log_conf & b_log_to_file))" -gt "0" ]
-	then
-		checkFileParameters "${script_log_directory}"
-
-		if [ "$((file_permission & b_is_directory))" -eq "0" ]
-		then
-			eprintf "Log directory doesnt exist."
-			eprintf "Creating log directory..."
-
-			# shellcheck disable=SC2154
-			if ${mkdir_bin} -p "${script_log_directory}" 2>&1 | logHandler
-			then
-				eprintf "Creating log directory was successful."
-			else
-				eprintf "Creating log directory was not successful."
-				script_bypass_exit_routines="1"
-				script_exit_code="10"
-				exit
-			fi
-		else
-			eprintf "Log directory exists but permissions are not ok, exiting."
-			script_bypass_exit_routines="1"
-			script_exit_code="11"
-			exit
-		fi
-	fi
-
-	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
-	logHandler "We are using config file: '${script_config_file}'."
-
 	if [ "${#binaries_not_found[@]}" -gt "1" ]
 	then
 		binaries_not_found_helper="${binaries_not_found[*]}"
@@ -519,7 +482,6 @@ checkRequiredBinaries()
 				available_syspackage_managers+=("${installed_packages_forced_manager}")
 			fi
 		fi
-
 	fi
 }
 
@@ -533,7 +495,6 @@ includeConfig()
 		if source "${script_config_file}"
 		then
 			script_config_file_included="1"
-			checkRequiredBinaries
 		else
 			logHandler "Including config file: '${script_config_file}' was not successful."
 			logHandler "Terminating..."
@@ -635,12 +596,28 @@ logHandlerSetConfig()
 	fi
 }
 
+checkLogHandlerRequirements()
+{
+	if [ "$((log_conf & b_log_to_stdout))" -gt "0" ] || [ "$((log_conf & b_log_to_file))" -gt "0" ]
+	then
+		calculateFunctionNameLength
+	fi
+
+	if [ "$((log_conf & b_log_to_file))" -gt "0" ]
+	then
+		checkLogDir
+	fi
+
+	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
+	logHandler "We are using config file: '${script_config_file}'."
+}
+
 logHandlerStdinHelper()
 {
 	while read -r
 	do
 		logHandler "${REPLY}"
-	done < "/dev/stdin"
+	done
 }
 
 logHandler()
@@ -658,7 +635,7 @@ logHandler()
 	else
 		log_message="${log_message//\`/}"
 
-		if [ -z "${log_conf:-}" ]
+		if [ "${script_log_requirements_ok}" -ne "1" ]
 		then
 			eprintf "${log_message}"
 			return
@@ -1331,6 +1308,49 @@ executePreBackupScript()
 		fi
 	else
 		logHandler "Pre backup script functionality is not enabled."
+	fi
+}
+
+checkLogDir()
+{
+	checkFileParameters "${script_log_directory}"
+
+	if [ "$((file_permission & b_is_directory))" -gt "0" ] && [ "$((file_permission & b_permission_read))" -gt "0" ] && [ "$((file_permission & b_permission_execute))" -gt "0" ]
+	then
+		checkFileParameters "${script_log_file}"
+
+		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
+		then
+			script_log_requirements_ok="1"
+			return 0
+		elif [ "$((file_permission & b_permission_write))" -eq "0" ]
+		then
+			logHandler "Log file exists but permissions are not ok, exiting."
+			script_bypass_exit_routines="1"
+			script_exit_code="10"
+			exit
+		fi
+	elif [ "$((file_permission & b_is_directory))" -eq "0" ]
+	then
+		logHandler "Log directory doesnt exist."
+		logHandler "Creating log directory..."
+
+		# shellcheck disable=SC2154
+		if ${mkdir_bin} -p "${script_log_directory}" 2>&1 | logHandler
+		then
+			logHandler "Creating log directory was successful."
+			script_log_requirements_ok="1"
+		else
+			logHandler "Creating log directory was not successful."
+			script_bypass_exit_routines="1"
+			script_exit_code="11"
+			exit
+		fi
+	else
+		logHandler "Log directory exists but permissions are not ok, exiting."
+		script_bypass_exit_routines="1"
+		script_exit_code="12"
+		exit
 	fi
 }
 
@@ -2011,6 +2031,9 @@ main()
 	setDefaultConfig
 	setCommonVars
 	includeConfig
+	checkRequiredBinaries
+	logHandlerSetConfig
+	checkLogHandlerRequirements
 	checkRootPrivileges
 	getUser
 	checkBashVersion
@@ -2046,11 +2069,11 @@ then
 
 	script_pid="${BASHPID}"
 	script_name="${0##*/}"
-	script_version="2.0.0-beta3"
+	script_version="2.0.0-beta4"
 	script_author="Christian Zettel (ccztux)"
 	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 	script_project_website="https://github.com/ccztux/glsysbackup"
-	script_last_modification_date="2019-03-19"
+	script_last_modification_date="2019-03-30"
 	script_license="GNU GPLv3"
 	script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 	script_exit_code="255"
@@ -2060,6 +2083,7 @@ then
 	script_log_file_truncated="0"
 	script_config_file_included="0"
 	script_print_usage="0"
+	script_log_requirements_ok="0"
 
 
 
