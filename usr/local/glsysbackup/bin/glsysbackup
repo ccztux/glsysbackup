@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-03-19
+#						2019-03-30
 #
-#  Version				2.0.0-beta3
+#  Version				2.0.0-beta4
 #
 #  Description:			Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -2069,11 +2069,11 @@ then
 
 	script_pid="${BASHPID}"
 	script_name="${0##*/}"
-	script_version="2.0.0-beta3"
+	script_version="2.0.0-beta4"
 	script_author="Christian Zettel (ccztux)"
 	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 	script_project_website="https://github.com/ccztux/glsysbackup"
-	script_last_modification_date="2019-03-19"
+	script_last_modification_date="2019-03-30"
 	script_license="GNU GPLv3"
 	script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 	script_exit_code="255"
