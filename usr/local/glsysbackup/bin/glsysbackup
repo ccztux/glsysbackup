@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-03-30
+#						2019-03-31
 #
 #  Version				2.0.0-beta4
 #
@@ -385,7 +385,7 @@ checkBin()
 
 	if _bin="$(command -v "${binary}" 2>/dev/null)"
 	then
-		export "${binary}"_bin="${_bin}"
+		export "${binary//-/_}"_bin="${_bin}"
 		return 0
 	else
 		return 1
@@ -404,6 +404,11 @@ checkRequiredBinaries()
 	if [ "${log_to_syslog}" -eq "1" ]
 	then
 		required_binaries+=("logger")
+	fi
+
+	if [ "${log_to_journal}" -eq "1" ]
+	then
+		required_binaries+=("systemd-cat")
 	fi
 
 	if [ "${log_to_file}" -eq "1" ] || [ "${log_to_stdout}" -eq "1" ]
@@ -552,9 +557,11 @@ logHandlerSetConfig()
 	b_log_to_file="1"
 	b_log_to_stdout="2"
 	b_log_to_syslog="4"
-	b_date_bin_available="8"
-	b_logger_bin_available="16"
-	b_log_to_file_truncate="32"
+	b_log_to_journal="8"
+	b_date_bin_available="16"
+	b_logger_bin_available="32"
+	b_systemd_cat_bin_available="64"
+	b_log_to_file_truncate="128"
 
 	if [ "${date_bin_printf:-}" -eq "1" ]
 	then
@@ -580,6 +587,11 @@ logHandlerSetConfig()
 		log_conf="$((log_conf | b_log_to_syslog))"
 	fi
 
+	if [ "${log_to_journal}" -eq "1" ]
+	then
+		log_conf="$((log_conf | b_log_to_journal))"
+	fi
+
 	if [ -n "${date_bin:-}" ]
 	then
 		log_conf="$((log_conf | b_date_bin_available))"
@@ -588,6 +600,11 @@ logHandlerSetConfig()
 	if [ -n "${logger_bin:-}" ]
 	then
 		log_conf="$((log_conf | b_logger_bin_available))"
+	fi
+
+	if [ -n "${systemd_cat_bin:-}" ]
+	then
+		log_conf="$((log_conf | b_systemd_cat_bin_available))"
 	fi
 
 	if [ "${log_to_file_truncate}" -eq "1" ]
@@ -641,11 +658,11 @@ logHandler()
 			return
 		fi
 
-		if [ "${FUNCNAME[0 + 1]}" != "logHandlerStdinHelper" ]
+		if [ "${FUNCNAME[1]}" != "logHandlerStdinHelper" ]
 		then
-			calling_function="${FUNCNAME[0 + 1]}"
+			calling_function="${FUNCNAME[1]}"
 		else
-			calling_function="${FUNCNAME[0 + 3]}"
+			calling_function="${FUNCNAME[3]}"
 		fi
 
 		if [ "$((log_conf & b_log_to_stdout))" -gt "0" ]
@@ -691,6 +708,14 @@ logHandler()
 			if [ "$((log_conf & b_logger_bin_available))" -gt "0" ]
 			then
 				${logger_bin} -t "${script_name}[${script_pid}]" "(${calling_function}) ${log_message}"
+			fi
+		fi
+
+		if [ "$((log_conf & b_log_to_journal))" -gt "0" ]
+		then
+			if [ "$((log_conf & b_systemd_cat_bin_available))" -gt "0" ]
+			then
+				printf "(%s) %s\\n" "${calling_function}" "${log_message}" | ${systemd_cat_bin} --identifier="${script_name}"
 			fi
 		fi
 	fi
@@ -2073,7 +2098,7 @@ then
 	script_author="Christian Zettel (ccztux)"
 	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 	script_project_website="https://github.com/ccztux/glsysbackup"
-	script_last_modification_date="2019-03-30"
+	script_last_modification_date="2019-03-31"
 	script_license="GNU GPLv3"
 	script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 	script_exit_code="255"
