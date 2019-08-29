@@ -1946,7 +1946,7 @@ buildBackupCmd()
 		backup_cmd="${tar_bin} ${backup_options[*]} ${backup_items[*]}"
 	else
 		# shellcheck disable=SC2154
-		backup_cmd="${tar_bin} ${backup_options[*]} ${exclude_string[*]} ${backup_items[*]}"
+		backup_cmd="${tar_bin} ${exclude_string[*]} ${backup_options[*]} ${backup_items[*]}"
 	fi
 
 	logHandler "We build the following backup command: '${backup_cmd}'."
