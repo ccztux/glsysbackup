@@ -1745,7 +1745,7 @@ rotateHandler()
 						actual_year="$(eval "${date_bin} ${date_cmd_format_prefix}${actual_year_format}${date_cmd_format_suffix}")"
 						last_day_of_month="$(getDaysOfMonth "${actual_year}" "${actual_month}")"
 
-						if [ "${actual_day_of_month}" -eq "${backup_rotation_monthly_day_of_month}" ] || [ "${backup_rotation_monthly_day_of_month}" -ge "28" ] && [ "${actual_day_of_month}" -eq "${last_day_of_month}" ]
+						if [ "${actual_day_of_month}" -eq "${backup_rotation_monthly_day_of_month}" ] || { [ "${backup_rotation_monthly_day_of_month}" -ge "28" ] && [ "${actual_day_of_month}" -eq "${last_day_of_month}" ]; }
 						then
 							if [ "${actual_day_of_month}" -eq "${backup_rotation_monthly_day_of_month}" ]
 							then
