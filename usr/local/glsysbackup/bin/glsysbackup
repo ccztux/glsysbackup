@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-03-31
+#						2019-08-29
 #
 #  Version				2.0.0-beta4
 #
@@ -1129,18 +1129,16 @@ checkBashVersion()
 		script_exit_code="90"
 		exit
 	else
-		case "${BASH_VERSINFO[0]}" in
-			3|4)
-				logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
-				;;
-			*)
-				logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
+		if [ "${BASH_VERSINFO[0]}" -lt "${script_minimal_required_bash_version}" ]
+		then
+			logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
 
-				script_bypass_exit_routines="1"
-				script_exit_code="91"
-				exit
-				;;
-		esac
+			script_bypass_exit_routines="1"
+			script_exit_code="91"
+			exit
+		else
+			logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
+		fi
 	fi
 }
 
@@ -2098,7 +2096,8 @@ then
 	script_author="Christian Zettel (ccztux)"
 	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 	script_project_website="https://github.com/ccztux/glsysbackup"
-	script_last_modification_date="2019-03-31"
+	script_last_modification_date="2019-08-29"
+	script_minimal_required_bash_version="3"
 	script_license="GNU GPLv3"
 	script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
 	script_exit_code="255"
