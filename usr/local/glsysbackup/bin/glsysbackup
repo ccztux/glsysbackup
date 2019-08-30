@@ -494,7 +494,7 @@ includeConfig()
 {
 	checkFileParameters "${script_config_file}"
 
-	if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_regular_file_is_not_empty))" -gt "0" ] && [ "$((file_permission & b_permission_read))" -gt "0" ]
+	if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_regular_file_is_not_empty ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ]
 	then
 		# shellcheck source=/scripts/usr/local/glsysbackup/etc/glsysbackup.conf
 		if source "${script_config_file}"
@@ -508,7 +508,7 @@ includeConfig()
 			script_exit_code="20"
 			exit
 		fi
-	elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+	elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
 	then
 		logHandler "Config file: '${script_config_file}' does not exist."
 		logHandler "Terminating..."
@@ -516,7 +516,7 @@ includeConfig()
 		script_bypass_exit_routines="1"
 		script_exit_code="21"
 		exit
-	elif [ "$((file_permission & b_regular_file_is_not_empty))" -eq "0" ]
+	elif [ "$(( file_permission & b_regular_file_is_not_empty ))" -eq "0" ]
 	then
 		logHandler "Config file: '${script_config_file}' exists, but is empty."
 		logHandler "Terminating..."
@@ -524,7 +524,7 @@ includeConfig()
 		script_bypass_exit_routines="1"
 		script_exit_code="22"
 		exit
-	elif [ "$((file_permission & b_permission_read))" -eq "0" ]
+	elif [ "$(( file_permission & b_permission_read ))" -eq "0" ]
 	then
 		logHandler "Config file: '${script_config_file}' exists, but it is not readable."
 		logHandler "Terminating..."
@@ -574,53 +574,53 @@ logHandlerSetConfig()
 
 	if [ "${log_to_file}" -eq "1" ]
 	then
-		log_conf="$((log_conf | b_log_to_file))"
+		log_conf="$(( log_conf | b_log_to_file ))"
 	fi
 
 	if [ "${log_to_stdout}" -eq "1" ]
 	then
-		log_conf="$((log_conf | b_log_to_stdout))"
+		log_conf="$(( log_conf | b_log_to_stdout ))"
 	fi
 
 	if [ "${log_to_syslog}" -eq "1" ]
 	then
-		log_conf="$((log_conf | b_log_to_syslog))"
+		log_conf="$(( log_conf | b_log_to_syslog ))"
 	fi
 
 	if [ "${log_to_journal}" -eq "1" ]
 	then
-		log_conf="$((log_conf | b_log_to_journal))"
+		log_conf="$(( log_conf | b_log_to_journal ))"
 	fi
 
 	if [ -n "${date_bin:-}" ]
 	then
-		log_conf="$((log_conf | b_date_bin_available))"
+		log_conf="$(( log_conf | b_date_bin_available ))"
 	fi
 
 	if [ -n "${logger_bin:-}" ]
 	then
-		log_conf="$((log_conf | b_logger_bin_available))"
+		log_conf="$(( log_conf | b_logger_bin_available ))"
 	fi
 
 	if [ -n "${systemd_cat_bin:-}" ]
 	then
-		log_conf="$((log_conf | b_systemd_cat_bin_available))"
+		log_conf="$(( log_conf | b_systemd_cat_bin_available ))"
 	fi
 
 	if [ "${log_to_file_truncate}" -eq "1" ]
 	then
-		log_conf="$((log_conf | b_log_to_file_truncate))"
+		log_conf="$(( log_conf | b_log_to_file_truncate ))"
 	fi
 }
 
 checkLogHandlerRequirements()
 {
-	if [ "$((log_conf & b_log_to_stdout))" -gt "0" ] || [ "$((log_conf & b_log_to_file))" -gt "0" ]
+	if [ "$(( log_conf & b_log_to_stdout ))" -gt "0" ] || [ "$(( log_conf & b_log_to_file ))" -gt "0" ]
 	then
 		calculateFunctionNameLength
 	fi
 
-	if [ "$((log_conf & b_log_to_file))" -gt "0" ]
+	if [ "$(( log_conf & b_log_to_file ))" -gt "0" ]
 	then
 		checkLogDir
 	fi
@@ -665,9 +665,9 @@ logHandler()
 			calling_function="${FUNCNAME[3]}"
 		fi
 
-		if [ "$((log_conf & b_log_to_stdout))" -gt "0" ]
+		if [ "$(( log_conf & b_log_to_stdout ))" -gt "0" ]
 		then
-			if [ "$((log_conf & b_date_bin_available))" -gt "0" ]
+			if [ "$(( log_conf & b_date_bin_available ))" -gt "0" ]
 			then
 				if [ -z "${log_timestamp}" ]
 				then
@@ -680,9 +680,9 @@ logHandler()
 			fi
 		fi
 
-		if [ "$((log_conf & b_log_to_file))" -gt "0" ]
+		if [ "$(( log_conf & b_log_to_file ))" -gt "0" ]
 		then
-			if [ "$((log_conf & b_log_to_file_truncate))" -gt "0" ] && [ "${script_log_file_truncated}" -ne "1" ]
+			if [ "$(( log_conf & b_log_to_file_truncate ))" -gt "0" ] && [ "${script_log_file_truncated}" -ne "1" ]
 			then
 				if true >|"${script_log_file}"
 				then
@@ -690,7 +690,7 @@ logHandler()
 				fi
 			fi
 
-			if [ "$((log_conf & b_date_bin_available))" -gt "0" ]
+			if [ "$(( log_conf & b_date_bin_available ))" -gt "0" ]
 			then
 				if [ -z "${log_timestamp}" ]
 				then
@@ -703,17 +703,17 @@ logHandler()
 			fi
 		fi
 
-		if [ "$((log_conf & b_log_to_syslog))" -gt "0" ]
+		if [ "$(( log_conf & b_log_to_syslog ))" -gt "0" ]
 		then
-			if [ "$((log_conf & b_logger_bin_available))" -gt "0" ]
+			if [ "$(( log_conf & b_logger_bin_available ))" -gt "0" ]
 			then
 				${logger_bin} -t "${script_name}[${script_pid}]" "(${calling_function}) ${log_message}"
 			fi
 		fi
 
-		if [ "$((log_conf & b_log_to_journal))" -gt "0" ]
+		if [ "$(( log_conf & b_log_to_journal ))" -gt "0" ]
 		then
-			if [ "$((log_conf & b_systemd_cat_bin_available))" -gt "0" ]
+			if [ "$(( log_conf & b_systemd_cat_bin_available ))" -gt "0" ]
 			then
 				printf "(%s) %s\\n" "${calling_function}" "${log_message}" | ${systemd_cat_bin} --identifier="${script_name}"
 			fi
@@ -727,11 +727,11 @@ checkLock()
 
 	checkFileParameters "${script_lock_file}"
 
-	if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_read))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
+	if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
 	then
 		logHandler "Lock file exists and it is read/writeable."
 		return 0
-	elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+	elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
 	then
 		logHandler "Lock file doesnt exist."
 		return 1
@@ -747,10 +747,10 @@ setLock()
 
 	checkFileParameters "${script_lock_directory}"
 
-	if [ "$((file_permission & b_is_directory))" -gt "0" ] && [ "$((file_permission & b_permission_read))" -gt "0" ] && [ "$((file_permission & b_permission_execute))" -gt "0" ]
+	if [ "$(( file_permission & b_is_directory ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
 	then
 		logHandler "Script lock directory exists and permissions are ok."
-	elif [ "$((file_permission & b_is_directory))" -eq "0" ]
+	elif [ "$(( file_permission & b_is_directory ))" -eq "0" ]
 	then
 		logHandler "Script lock directory doesnt exist."
 		logHandler "Creating script lock directory..."
@@ -822,7 +822,7 @@ removeInstalledPackagesFile()
 
 		checkFileParameters "${installed_packages_filename}"
 
-		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
+		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
 		then
 			logHandler "Installed packages file exists and is writeable."
 			logHandler "Deleting installed packages file..."
@@ -835,7 +835,7 @@ removeInstalledPackagesFile()
 				logHandler "Deleting installed packages file was not successful."
 				script_exit_code="50"
 			fi
-		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+		elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
 		then
 			logHandler "Installed packages file doesnt exist, nothing to do."
 		else
@@ -856,7 +856,7 @@ removeOldLeftoverLatestBackups()
 
 		checkFileParameters "${backup_encryption_filename}"
 
-		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
+		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
 		then
 			logHandler "Old, leftover encrypted backup found in latest folder: '${backup_encryption_filename}' and we have write permission, so we delete it."
 
@@ -869,7 +869,7 @@ removeOldLeftoverLatestBackups()
 				script_exit_code="60"
 				exit
 			fi
-		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+		elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
 		then
 			logHandler "No old, leftover encrypted backup found in latest folder."
 		else
@@ -881,7 +881,7 @@ removeOldLeftoverLatestBackups()
 
 		checkFileParameters "${backup_filename}"
 
-		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
+		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
 		then
 			logHandler "Old, leftover unencrypted backup found in latest folder: '${backup_filename}' and we have write permission, so we delete it."
 
@@ -894,7 +894,7 @@ removeOldLeftoverLatestBackups()
 				script_exit_code="61"
 				exit
 			fi
-		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+		elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
 		then
 			logHandler "No old, leftover unencrypted backup found in latest folder."
 		else
@@ -917,31 +917,31 @@ checkFileParameters()
 
 	if [ -x "${file}" ]
 	then
-		file_permission="$((file_permission | b_permission_execute))"
+		file_permission="$(( file_permission | b_permission_execute ))"
 	fi
 
 	if [ -w "${file}" ]
 	then
-		file_permission="$((file_permission | b_permission_write))"
+		file_permission="$(( file_permission | b_permission_write ))"
 	fi
 
 	if [ -r "${file}" ]
 	then
-		file_permission="$((file_permission | b_permission_read))"
+		file_permission="$(( file_permission | b_permission_read ))"
 	fi
 
 	if [ -f "${file}" ]
 	then
-		file_permission="$((file_permission | b_regular_file_exists))"
+		file_permission="$(( file_permission | b_regular_file_exists ))"
 
 		if [ -s "${file}" ]
 		then
-			file_permission="$((file_permission | b_regular_file_is_not_empty))"
+			file_permission="$(( file_permission | b_regular_file_is_not_empty ))"
 		fi
 	else
 		if [ -d "${file}" ]
 		then
-			file_permission="$((file_permission | b_is_directory))"
+			file_permission="$(( file_permission | b_is_directory ))"
 		fi
 	fi
 }
@@ -1299,10 +1299,10 @@ executePreBackupScript()
 
 		checkFileParameters "${pre_backup_script}"
 
-		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_execute))" -gt "0" ]
+		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
 		then
 			logHandler "Pre backup script exists and it is executeable, so we execute it..."
-		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+		elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
 		then
 			logHandler "Pre backup script doesnt exist, nothing to do."
 			script_exit_code="130"
@@ -1338,22 +1338,22 @@ checkLogDir()
 {
 	checkFileParameters "${script_log_directory}"
 
-	if [ "$((file_permission & b_is_directory))" -gt "0" ] && [ "$((file_permission & b_permission_read))" -gt "0" ] && [ "$((file_permission & b_permission_execute))" -gt "0" ]
+	if [ "$(( file_permission & b_is_directory ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
 	then
 		checkFileParameters "${script_log_file}"
 
-		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
+		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
 		then
 			script_log_requirements_ok="1"
 			return 0
-		elif [ "$((file_permission & b_permission_write))" -eq "0" ]
+		elif [ "$(( file_permission & b_permission_write ))" -eq "0" ]
 		then
 			logHandler "Log file exists but permissions are not ok, exiting."
 			script_bypass_exit_routines="1"
 			script_exit_code="10"
 			exit
 		fi
-	elif [ "$((file_permission & b_is_directory))" -eq "0" ]
+	elif [ "$(( file_permission & b_is_directory ))" -eq "0" ]
 	then
 		logHandler "Log directory doesnt exist."
 		logHandler "Creating log directory..."
@@ -1388,10 +1388,10 @@ checkBackupDirStructure()
 
 	checkFileParameters "${backup_destination_path}"
 
-	if [ "$((file_permission & b_is_directory))" -gt "0" ] && [ "$((file_permission & b_permission_read))" -gt "0" ] && [ "$((file_permission & b_permission_execute))" -gt "0" ]
+	if [ "$(( file_permission & b_is_directory ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
 	then
 		logHandler "Backup directory exists and permissions are ok."
-	elif [ "$((file_permission & b_is_directory))" -eq "0" ]
+	elif [ "$(( file_permission & b_is_directory ))" -eq "0" ]
 	then
 		logHandler "Backup directory doesnt exist."
 		logHandler "Creating backup directory..."
@@ -1417,10 +1417,10 @@ checkBackupDirStructure()
 
 		checkFileParameters "${dir_helper}"
 
-		if [ "$((file_permission & b_is_directory))" -gt "0" ] && [ "$((file_permission & b_permission_read))" -gt "0" ] && [ "$((file_permission & b_permission_execute))" -gt "0" ]
+		if [ "$(( file_permission & b_is_directory ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
 		then
 			logHandler "Directory: '${dir_helper}' exist, nothing to do."
-		elif [ "$((file_permission & b_is_directory))" -eq "0" ]
+		elif [ "$(( file_permission & b_is_directory ))" -eq "0" ]
 		then
 			logHandler "Directory: '${dir_helper}' doesnt exist."
 			logHandler "Creating directory..."
@@ -1458,7 +1458,7 @@ bubbleSort()
 {
 	local array=("${@}")
 	local elements="${#array[@]}"
-	local i="$((elements - 1))"
+	local i="$(( elements - 1 ))"
 	local j=
 	local temp_value=
 
@@ -1468,17 +1468,17 @@ bubbleSort()
 
 		while [ "${j}" -lt "${i}" ]
 		do
-			if [[ "${array[${j}]}" > "${array[$((j + 1))]}" ]]
+			if [[ "${array[${j}]}" > "${array[$(( j + 1 ))]}" ]]
 			then
 				temp_value="${array[${j}]}"
-				array[${j}]="${array[$((j + 1))]}"
-				array[$((j + 1))]="${temp_value}"
+				array[${j}]="${array[$(( j + 1 ))]}"
+				array[$(( j + 1 ))]="${temp_value}"
 			fi
 
-			j="$((j + 1))"
+			j="$(( j + 1 ))"
 		done
 
-		i="$((i - 1))"
+		i="$(( i - 1 ))"
 	done
 
 	printf "%s\\n" "${array[@]}"
@@ -1488,15 +1488,15 @@ getDaysOfMonth()
 {
 	local year="${1}"
 	local month="${2##*0}"
-	local days_of_month="$(( 30 + (month + month / 8) % 2))"
+	local days_of_month="$(( 30 + ( month + month / 8 ) % 2 ))"
 
 	if [ "${month}" -eq "2" ]
 	then
-		days_of_month="$((days_of_month - 2))"
+		days_of_month="$(( days_of_month - 2 ))"
 
-		if [ "$((year % 4))" -eq "0" ] && [ "$((year % 100))" -ne "0" ] || [ "$((year % 400))" -eq "0" ]
+		if [ "$(( year % 4 ))" -eq "0" ] && [ "$(( year % 100 ))" -ne "0" ] || [ "$(( year % 400 ))" -eq "0" ]
 		then
-			days_of_month="$((days_of_month + 1))"
+			days_of_month="$(( days_of_month + 1 ))"
 		fi
 	fi
 
@@ -1526,7 +1526,7 @@ removeTodaysOldBackups()
 
 			checkFileParameters "${file}"
 
-			if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
+			if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
 			then
 				logHandler "We have write permissions, so we can delete it."
 
@@ -1539,7 +1539,7 @@ removeTodaysOldBackups()
 					script_exit_code="150"
 					exit
 				fi
-			elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+			elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
 			then
 				logHandler "File doenst exist, nothing to do."
 			else
@@ -1566,7 +1566,7 @@ removeOldBackups()
 		daily)
 			if [ "${backup_files_count}" -gt "${backup_rotation_daily_max_backups}" ]
 			then
-				backups_to_delete_counter="$((backup_files_count - backup_rotation_daily_max_backups))"
+				backups_to_delete_counter="$(( backup_files_count - backup_rotation_daily_max_backups ))"
 				logHandler "Rotation of ${rotation_type} backups is necessary (backup_files_count: '${backup_files_count}' > backup_rotation_daily_max_backups: '${backup_rotation_daily_max_backups}')."
 			else
 				logHandler "Rotation of ${rotation_type} backups is not necessary (backup_files_count: '${backup_files_count}' <= backup_rotation_daily_max_backups: '${backup_rotation_daily_max_backups}')."
@@ -1576,7 +1576,7 @@ removeOldBackups()
 		weekly)
 			if [ "${backup_files_count}" -gt "${backup_rotation_weekly_max_backups}" ]
 			then
-				backups_to_delete_counter="$((backup_files_count - backup_rotation_weekly_max_backups))"
+				backups_to_delete_counter="$(( backup_files_count - backup_rotation_weekly_max_backups ))"
 				logHandler "Rotation of ${rotation_type} backups is necessary (backup_files_count: '${backup_files_count}' > backup_rotation_weekly_max_backups: '${backup_rotation_weekly_max_backups}')."
 			else
 				logHandler "Rotation of ${rotation_type} backups is not necessary (backup_files_count: '${backup_files_count}' <= backup_rotation_weekly_max_backups: '${backup_rotation_weekly_max_backups}')."
@@ -1586,7 +1586,7 @@ removeOldBackups()
 		monthly)
 			if [ "${backup_files_count}" -gt "${backup_rotation_monthly_max_backups}" ]
 			then
-				backups_to_delete_counter="$((backup_files_count - backup_rotation_monthly_max_backups))"
+				backups_to_delete_counter="$(( backup_files_count - backup_rotation_monthly_max_backups ))"
 				logHandler "Rotation of ${rotation_type} backups is necessary (backup_files_count: '${backup_files_count}' > backup_rotation_monthly_max_backups: '${backup_rotation_monthly_max_backups}')."
 			else
 				logHandler "Rotation of ${rotation_type} backups is not necessary (backup_files_count: '${backup_files_count}' <= backup_rotation_monthly_max_backups: '${backup_rotation_monthly_max_backups}')."
@@ -1606,7 +1606,7 @@ removeOldBackups()
 
 				checkFileParameters "${file}"
 
-				if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_write))" -gt "0" ]
+				if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
 				then
 					logHandler "We have write permissions, so we can delete it."
 
@@ -1619,14 +1619,14 @@ removeOldBackups()
 						script_exit_code="160"
 						exit
 					fi
-				elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+				elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
 				then
 					logHandler "File doenst exist, nothing to do."
 				else
 					logHandler "We dont have write permissions, nothing to do."
 				fi
 
-				backups_to_delete_counter="$((backups_to_delete_counter - 1))"
+				backups_to_delete_counter="$(( backups_to_delete_counter - 1 ))"
 			fi
 		done
 	fi
@@ -2013,10 +2013,10 @@ executePostBackupScript()
 
 		checkFileParameters "${post_backup_script}"
 
-		if [ "$((file_permission & b_regular_file_exists))" -gt "0" ] && [ "$((file_permission & b_permission_execute))" -gt "0" ]
+		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
 		then
 			logHandler "Post backup script exists and it is executeable, so we execute it..."
-		elif [ "$((file_permission & b_regular_file_exists))" -eq "0" ]
+		elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
 		then
 			logHandler "Post backup script doesnt exist, nothing to do."
 			script_exit_code="230"
@@ -2079,7 +2079,7 @@ main()
 # Start:
 #-------
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
+if [ "${BASH_SOURCE[0]}" == "${0}" ]
 then
 	setRequiredShellOptions
 	setRequiredBashOptions
