@@ -1652,7 +1652,7 @@ rotateHandler()
 	local actual_weekday=
 	local actual_weekday_format="%u"
 	local actual_day_of_month=
-	local actual_day_of_month_format="%d"
+	local actual_day_of_month_format="%-d"
 	local actual_month=
 	local actual_month_format="%m"
 	local actual_year=
