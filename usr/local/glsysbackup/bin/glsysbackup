@@ -176,7 +176,7 @@ signalHandler()
 				then
 					cleanUp
 
-					if [ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ] || [ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ]
+					if { [ "${backup_encryption_enabled:-}" -eq "1" ] && [ "${encryption_successful:-}" -eq "1" ]; } || { [ "${backup_encryption_enabled:-}" -eq "0" ] && [ "${backup_successful:-}" -eq "1" ]; }
 					then
 						script_exit_code="0"
 						rotateHandler
@@ -1484,6 +1484,19 @@ bubbleSort()
 	printf "%s\\n" "${array[@]}"
 }
 
+isLeapYear()
+{
+	local year="${1}"
+	local month="${2}"
+
+	if { [ "$(( year % 4 ))" -eq "0" ] && [ "$(( year % 100 ))" -ne "0" ]; } || [ "$(( year % 400))" -eq "0" ]
+	then
+		return 0
+	else
+		return 1
+	fi
+}
+
 getDaysOfMonth()
 {
 	local year="${1}"
@@ -1494,7 +1507,7 @@ getDaysOfMonth()
 	then
 		days_of_month="$(( days_of_month - 2 ))"
 
-		if [ "$(( year % 4 ))" -eq "0" ] && [ "$(( year % 100 ))" -ne "0" ] || [ "$(( year % 400 ))" -eq "0" ]
+		if isLeapYear "${year}" "${month}"
 		then
 			days_of_month="$(( days_of_month + 1 ))"
 		fi
