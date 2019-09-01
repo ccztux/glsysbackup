@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-08-29
+#						2019-09-01
 #
 #  Version				2.0.0-beta4
 #
@@ -1342,16 +1342,15 @@ checkLogDir()
 	then
 		checkFileParameters "${script_log_file}"
 
-		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
+		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -eq "0" ]
 		then
-			script_log_requirements_ok="1"
-			return 0
-		elif [ "$(( file_permission & b_permission_write ))" -eq "0" ]
-		then
-			logHandler "Log file exists but permissions are not ok, exiting."
+			logHandler "Log file exists but we dont have write permissions, exiting."
 			script_bypass_exit_routines="1"
 			script_exit_code="10"
 			exit
+		else
+			script_log_requirements_ok="1"
+			return 0
 		fi
 	elif [ "$(( file_permission & b_is_directory ))" -eq "0" ]
 	then
