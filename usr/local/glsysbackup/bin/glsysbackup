@@ -205,13 +205,7 @@ signalHandler()
 				logHandler "Bye, bye..."
 			fi
 
-			if [ "${signal}" != "EXIT" ]
-			then
-				${kill_bin:=kill} -s "${signal}" -- -"${script_pid}" 2>/dev/null
-			else
-				script_shutdown_in_progress="1"
-				${kill_bin:=kill} -s SIGTERM -- -"${script_pid}" 2>/dev/null
-			fi
+			${kill_bin:=kill} -s "${signal}" -- -"${script_pid}" 2>/dev/null
 
 			exit ${script_exit_code}
 			;;
