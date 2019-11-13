@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-09-01
+#						2019-11-13
 #
 #  Version				2.0.0-beta4
 #
@@ -348,7 +348,7 @@ printUsage()
 {
 	script_print_usage="1"
 
-	setCommonVars
+	buildScriptPaths
 
 	printf "Usage: %s OPTIONS\\n\\n" "${script_name}"
 	printf "Author:\\t\\t\\t%s\\n" "${script_author}"
@@ -985,67 +985,62 @@ setDefaultConfig()
 	post_backup_exit_when_unsuccessful="1"
 }
 
-setCommonVars()
+buildScriptPaths()
 {
 	script_base_path="/usr/local/${script_name}"
 	script_bin_directory="${script_base_path}/bin"
 	script_lock_directory="${script_base_path}/var/lock"
 	script_log_directory="${script_base_path}/var/log"
+}
 
-	if [ "${script_print_usage}" -eq "1" ]
+setCommonVars()
+{
+	script_config_name="${script_config_file##*/}"
+	script_config_name="${script_config_name//.conf/}"
+	script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
+	script_log_file="${script_log_directory}/${script_name}.${script_config_name}.log"
+
+	installed_packages_filename="${installed_packages_directory}/${script_name}.${script_config_name}.installed_packges.txt"
+
+	if [ "${backup_compression_enabled}" -eq "1" ]
 	then
-		return
+		case "${backup_compression_type}" in
+			gzip)
+				backup_file_extension="tar.gz"
+				;;
+			bzip2)
+				backup_file_extension="tar.bz"
+				;;
+			xz)
+				backup_file_extension="tar.xz"
+				;;
+			lzip)
+				backup_file_extension="tar.lz"
+				;;
+			lzma)
+				backup_file_extension="tar.lzma"
+				;;
+			lzop)
+				backup_file_extension="tar.lzop"
+				;;
+			*)
+				;;
+		esac
 	fi
 
-	if [ -n "${script_config_file}" ]
+	backup_base_directory="${backup_destination_path}/${HOSTNAME}/${script_config_name}"
+	backup_filename="${backup_base_directory}/latest/${backup_base_filename}.${backup_file_extension}"
+	backup_encryption_file_extension="aes.${backup_file_extension}"
+	backup_encryption_filename="${backup_filename//${backup_file_extension}/${backup_encryption_file_extension}}"
+
+	rotation_type=
+	rotation_timestamp_base_format="%Y-%m-%d"
+
+	if [ "${backup_encryption_enabled}" -eq "1" ]
 	then
-		script_config_name="${script_config_file##*/}"
-		script_config_name="${script_config_name//.conf/}"
-		script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
-		script_log_file="${script_log_directory}/${script_name}.${script_config_name}.log"
-
-		installed_packages_filename="${installed_packages_directory}/${script_name}.${script_config_name}.installed_packges.txt"
-
-		if [ "${backup_compression_enabled}" -eq "1" ]
-		then
-			case "${backup_compression_type}" in
-				gzip)
-					backup_file_extension="tar.gz"
-					;;
-				bzip2)
-					backup_file_extension="tar.bz"
-					;;
-				xz)
-					backup_file_extension="tar.xz"
-					;;
-				lzip)
-					backup_file_extension="tar.lz"
-					;;
-				lzma)
-					backup_file_extension="tar.lzma"
-					;;
-				lzop)
-					backup_file_extension="tar.lzop"
-					;;
-				*)
-					;;
-			esac
-		fi
-
-		backup_base_directory="${backup_destination_path}/${HOSTNAME}/${script_config_name}"
-		backup_filename="${backup_base_directory}/latest/${backup_base_filename}.${backup_file_extension}"
-		backup_encryption_file_extension="aes.${backup_file_extension}"
-		backup_encryption_filename="${backup_filename//${backup_file_extension}/${backup_encryption_file_extension}}"
-
-		rotation_type=
-		rotation_timestamp_base_format="%Y-%m-%d"
-
-		if [ "${backup_encryption_enabled}" -eq "1" ]
-		then
-			file_extension="${backup_encryption_file_extension}"
-		else
-			file_extension="${backup_file_extension}"
-		fi
+		file_extension="${backup_encryption_file_extension}"
+	else
+		file_extension="${backup_file_extension}"
 	fi
 
 	encryption_successful="0"
@@ -1066,7 +1061,7 @@ checkCliOptions()
 			exit
 		fi
 	else
-		logHandler "Mandatory argument: '-c' (Config file) missing, exiting.\\n"
+		logHandler "Mandatory argument: '-c' (config file) missing, exiting.\\n"
 		printUsage
 
 		script_bypass_exit_routines="1"
@@ -2054,12 +2049,13 @@ executePostBackupScript()
 	fi
 }
 
-main()
+_main()
 {
 	checkCliOptions
 	setDefaultConfig
-	setCommonVars
+	buildScriptPaths
 	includeConfig
+	setCommonVars
 	checkRequiredBinaries
 	logHandlerSetConfig
 	checkLogHandlerRequirements
@@ -2164,7 +2160,7 @@ then
 	# Jump into main function:
 	#-------------------------
 
-	main "${@}"
+	_main "${@}"
 	exit
 else
 	logHandler "\\nThis is NOT a bash library. Execute it directly!\\n\\n"
