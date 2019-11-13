@@ -346,8 +346,6 @@ setRequiredBashOptions()
 
 printUsage()
 {
-	script_print_usage="1"
-
 	buildScriptPaths
 
 	printf "Usage: %s OPTIONS\\n\\n" "${script_name}"
@@ -2108,7 +2106,6 @@ then
 	script_shutdown_in_progress="0"
 	script_log_file_truncated="0"
 	script_config_file_included="0"
-	script_print_usage="0"
 	script_log_requirements_ok="0"
 
 
