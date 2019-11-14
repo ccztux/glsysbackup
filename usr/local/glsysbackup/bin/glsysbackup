@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-11-13
+#						2019-11-14
 #
 #  Version				2.0.0-beta4
 #
@@ -346,7 +346,7 @@ setRequiredBashOptions()
 
 printUsage()
 {
-	buildScriptPaths
+	setRequiredVariables
 
 	printf "Usage: %s OPTIONS\\n\\n" "${script_name}"
 	printf "Author:\\t\\t\\t%s\\n" "${script_author}"
@@ -983,23 +983,21 @@ setDefaultConfig()
 	post_backup_exit_when_unsuccessful="1"
 }
 
-buildScriptPaths()
+setRequiredVariables()
 {
 	script_base_path="/usr/local/${script_name}"
 	script_bin_directory="${script_base_path}/bin"
 	script_lock_directory="${script_base_path}/var/lock"
 	script_log_directory="${script_base_path}/var/log"
-}
-
-setCommonVars()
-{
 	script_config_name="${script_config_file##*/}"
 	script_config_name="${script_config_name//.conf/}"
 	script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
 	script_log_file="${script_log_directory}/${script_name}.${script_config_name}.log"
-
 	installed_packages_filename="${installed_packages_directory}/${script_name}.${script_config_name}.installed_packges.txt"
+}
 
+setConfigurationVariables()
+{
 	if [ "${backup_compression_enabled}" -eq "1" ]
 	then
 		case "${backup_compression_type}" in
@@ -2051,9 +2049,9 @@ _main()
 {
 	checkCliOptions
 	setDefaultConfig
-	buildScriptPaths
+	setRequiredVariables
 	includeConfig
-	setCommonVars
+	setConfigurationVariables
 	checkRequiredBinaries
 	logHandlerSetConfig
 	checkLogHandlerRequirements
@@ -2096,7 +2094,7 @@ then
 	script_author="Christian Zettel (ccztux)"
 	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 	script_project_website="https://github.com/ccztux/glsysbackup"
-	script_last_modification_date="2019-08-29"
+	script_last_modification_date="2019-11-14"
 	script_minimal_required_bash_version="3"
 	script_license="GNU GPLv3"
 	script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
