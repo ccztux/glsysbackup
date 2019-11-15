@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-11-14
+#						2019-11-15
 #
 #  Version				2.0.0-beta4
 #
@@ -2079,6 +2079,10 @@ _main()
 
 if [ "${BASH_SOURCE[0]}" == "${0}" ]
 then
+	#-------------------------------------
+	# Set required bash and shell options:
+	#-------------------------------------
+
 	setRequiredShellOptions
 	setRequiredBashOptions
 
@@ -2094,7 +2098,7 @@ then
 	script_author="Christian Zettel (ccztux)"
 	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 	script_project_website="https://github.com/ccztux/glsysbackup"
-	script_last_modification_date="2019-11-14"
+	script_last_modification_date="2019-11-15"
 	script_minimal_required_bash_version="3"
 	script_license="GNU GPLv3"
 	script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
@@ -2151,13 +2155,22 @@ then
 
 
 
-	#-------------------------
-	# Jump into main function:
-	#-------------------------
+	#-----------------------------------------------------
+	# In case of direct execution jump into main function:
+	#-----------------------------------------------------
 
 	_main "${@}"
 	exit
 else
-	logHandler "\\nThis is NOT a bash library. Execute it directly!\\n\\n"
-	exit 1
+	#------------------------------------------------------
+	# In case of an include attempt, write output and exit:
+	#------------------------------------------------------
+
+	trap - ERR
+	trap - EXIT
+
+	script_log_requirements_ok="0"
+	logHandler "\\n${BASH_SOURCE[0]##*/} is NOT a bash library. Execute it directly!\\n"
+
+	return 250
 fi
