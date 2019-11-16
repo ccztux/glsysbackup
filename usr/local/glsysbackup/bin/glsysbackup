@@ -1129,25 +1129,30 @@ checkBashVersion()
 
 checkAlreadyRunningInstance()
 {
-	local running_script_pids=
+	local pid=
+	local running_script_pids=()
 
 	# shellcheck disable=SC2154
-	running_script_pids="$(${pgrep_bin} -d " " -f "^bash(.*)${script_bin_directory}/${script_name}(.*)${script_config_file}(.*)$")"
-	running_script_pids="${running_script_pids//${script_pid}/}"
-	running_script_pids="${running_script_pids//\ /\,\ }"
+	running_script_pids=($(${pgrep_bin} -d " " -f "^bash(.*)${script_bin_directory}/${script_name}(.*)${script_config_file}(.*)$"))
+
+	for pid in "${!running_script_pids[@]}"
+	do
+		if [ "${running_script_pids[${pid}]}" == "${script_pid}" ]
+		then
+			unset "running_script_pids[${pid}]"
+		fi
+	done
 
 	logHandler "Check if another instance of: '${script_name}' is already running..."
 
 	if checkLock
 	then
-		if [ -z "${running_script_pids:-}" ]
+		if [ "${#running_script_pids[@]:-}" -eq "0" ]
 		then
 			logHandler "Old, leftover lockfile: '${script_lock_file}', but no running processes detected. Maybe ${script_name} was terminated abnormally."
 			removeLeftoverLock
 		else
-			running_script_pids="${running_script_pids:0:-2}"
-
-			logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' and the following, running processes: '${running_script_pids}' detected)."
+			logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' and the following, running processes: '${running_script_pids[*]}' detected)."
 
 			script_another_instance_is_running="1"
 			script_bypass_exit_routines="1"
@@ -1155,14 +1160,12 @@ checkAlreadyRunningInstance()
 			exit
 		fi
 	else
-		if [ -z "${running_script_pids:-}" ]
+		if [ "${#running_script_pids[@]:-}" -eq "0" ]
 		then
 			logHandler "No other instance of: '${script_name}' is currently running (Neither lockfile: '${script_lock_file}' nor running processes detected)."
 			setLock
 		else
-			running_script_pids="${running_script_pids:0:-2}"
-
-			logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist, but the following, running processes: '${running_script_pids}' detected)."
+			logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist, but the following, running processes: '${running_script_pids[*]}' detected)."
 			setLock
 		fi
 	fi
