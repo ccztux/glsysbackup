@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-11-15
+#						2019-11-17
 #
 #  Version				2.0.0-beta4
 #
@@ -989,11 +989,15 @@ setRequiredVariables()
 	script_bin_directory="${script_base_path}/bin"
 	script_lock_directory="${script_base_path}/var/lock"
 	script_log_directory="${script_base_path}/var/log"
-	script_config_name="${script_config_file##*/}"
-	script_config_name="${script_config_name//.conf/}"
-	script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
-	script_log_file="${script_log_directory}/${script_name}.${script_config_name}.log"
-	installed_packages_filename="${installed_packages_directory}/${script_name}.${script_config_name}.installed_packges.txt"
+
+	if [ -n "${script_config_file:-}" ]
+	then
+		script_config_name="${script_config_file##*/}"
+		script_config_name="${script_config_name//.conf/}"
+		script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
+		script_log_file="${script_log_directory}/${script_name}.${script_config_name}.log"
+		installed_packages_filename="${installed_packages_directory}/${script_name}.${script_config_name}.installed_packges.txt"
+	fi
 }
 
 setConfigurationVariables()
@@ -2080,6 +2084,30 @@ _main()
 # Start:
 #-------
 
+#-----------------------
+# Script info variables:
+#-----------------------
+
+script_pid="${BASHPID}"
+script_name="${0##*/}"
+script_version="2.0.0-beta4"
+script_author="Christian Zettel (ccztux)"
+script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
+script_project_website="https://github.com/ccztux/glsysbackup"
+script_last_modification_date="2019-11-17"
+script_minimal_required_bash_version="3"
+script_license="GNU GPLv3"
+script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
+script_exit_code="255"
+script_another_instance_is_running="0"
+script_bypass_exit_routines="0"
+script_shutdown_in_progress="0"
+script_log_file_truncated="0"
+script_config_file_included="0"
+script_log_requirements_ok="0"
+
+
+
 if [ "${BASH_SOURCE[0]}" == "${0}" ]
 then
 	#-------------------------------------
@@ -2088,30 +2116,6 @@ then
 
 	setRequiredShellOptions
 	setRequiredBashOptions
-
-
-
-	#-----------------------
-	# Script info variables:
-	#-----------------------
-
-	script_pid="${BASHPID}"
-	script_name="${0##*/}"
-	script_version="2.0.0-beta4"
-	script_author="Christian Zettel (ccztux)"
-	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
-	script_project_website="https://github.com/ccztux/glsysbackup"
-	script_last_modification_date="2019-11-15"
-	script_minimal_required_bash_version="3"
-	script_license="GNU GPLv3"
-	script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
-	script_exit_code="255"
-	script_another_instance_is_running="0"
-	script_bypass_exit_routines="0"
-	script_shutdown_in_progress="0"
-	script_log_file_truncated="0"
-	script_config_file_included="0"
-	script_log_requirements_ok="0"
 
 
 
@@ -2165,15 +2169,11 @@ then
 	_main "${@}"
 	exit
 else
-	#------------------------------------------------------
-	# In case of an include attempt, write output and exit:
-	#------------------------------------------------------
+	#--------------------------------------------------------
+	# In case of an include attempt, write output and return:
+	#--------------------------------------------------------
 
 	trap - ERR
-	trap - EXIT
-
-	script_log_requirements_ok="0"
 	logHandler "\\n${BASH_SOURCE[0]##*/} is NOT a bash library. Execute it directly!\\n"
-
-	return 250
+	return 1
 fi
