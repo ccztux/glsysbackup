@@ -47,7 +47,7 @@
 
 
 ## It requires the following binaries:
-- **bash** (Version 3 || 4)
+- **bash** (Version >= 3)
 - **pgrep** to check if an instance of glsysbackup is already running
 - **whoami** to check the user who executes glsysbackup
 - **date** for logging purposes (Only required if bash version < 4.2. Else printf bash builtin will be used.)
@@ -61,7 +61,7 @@
 
 ## Optionally used binaries:
 - **logger** to log to the system log
-- **systmd-cat** to log to the system journal
+- **systemd-cat** to log to the system journal
 - **rpm** || **dpkg** || **pacman** || **equery** || **pkgutil** to create a file with installed packages
 - **openssl** to encrypt the backup file
 - **renice** to renice glsysbackup and all child processes
