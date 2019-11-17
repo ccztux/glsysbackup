@@ -532,7 +532,7 @@ calculateFunctionNameLength()
 	local function=
 	local function_names=()
 	function_names_max_length="0"
-	IFS=$'\n' read -d "" -ra function_names < <(declare -F)
+	IFS=$'\n' read -d "" -r -a function_names <<< "$(declare -F)"
 
 	for function in "${function_names[@]//declare -f /}"
 	do
@@ -1133,7 +1133,7 @@ checkAlreadyRunningInstance()
 	local running_script_pids=()
 
 	# shellcheck disable=SC2154
-	running_script_pids=($(${pgrep_bin} -d " " -f "^bash(.*)${script_bin_directory}/${script_name}(.*)${script_config_file}(.*)$"))
+	IFS=" " read -r -a running_script_pids <<< "$(${pgrep_bin} -d " " -f "^bash(.*)${script_bin_directory}/${script_name}(.*)${script_config_file}(.*)$")"
 
 	for pid in "${!running_script_pids[@]}"
 	do
