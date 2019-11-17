@@ -113,12 +113,11 @@ Start glsysbackup:
 
 ## Example help output:
 ```
-15:11:58 [pi@wurlitzer]:~$ sudo /usr/local/glsysbackup/bin/glsysbackup -h
 Usage: glsysbackup OPTIONS
 
 Author:				Christian Zettel (ccztux)
-Last modification:	2019-03-19
-Version:			2.0.0-beta3
+Last modification:	2019-11-17
+Version:			2.0.0-beta4
 
 Description:		glsysbackup (Generic Linux System Backup) is an advanced backup tool written in bash.
 
