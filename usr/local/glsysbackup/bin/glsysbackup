@@ -1151,7 +1151,7 @@ checkAlreadyRunningInstance()
 
 	if checkLock
 	then
-		if [ "${#running_script_pids[@]:-}" -eq "0" ]
+		if [ "${#running_script_pids[@]}" -eq "0" ]
 		then
 			logHandler "Old, leftover lockfile: '${script_lock_file}', but no running processes detected. Maybe ${script_name} was terminated abnormally."
 			removeLeftoverLock
@@ -1164,7 +1164,7 @@ checkAlreadyRunningInstance()
 			exit
 		fi
 	else
-		if [ "${#running_script_pids[@]:-}" -eq "0" ]
+		if [ "${#running_script_pids[@]}" -eq "0" ]
 		then
 			logHandler "No other instance of: '${script_name}' is currently running (Neither lockfile: '${script_lock_file}' nor running processes detected)."
 			setLock
