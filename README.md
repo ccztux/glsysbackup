@@ -1,8 +1,8 @@
-[![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/master.svg?label=shellcheck%20%28master%29)](https://travis-ci.org/ccztux/glsysbackup)
-[![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/devel.svg?label=shellcheck%20%28devel%29)](https://travis-ci.org/ccztux/glsysbackup)
-[![Latest Release](https://img.shields.io/github/release/ccztux/glsysbackup.svg?label=latest%20release)](https://github.com/ccztux/glsysbackup/releases/latest)
-[![Latest Pre-release](https://img.shields.io/badge/latest%20pre--release-v2.0.0--beta4-orange.svg)](https://github.com/ccztux/glsysbackup/releases/tag/2.0.0-beta4)
-[![GitHub license](https://img.shields.io/badge/license-AGPL-blue.svg)](https://github.com/ccztux/glsysbackup/blob/master/LICENSE)
+[![Travis (.org) branch](https://img.shields.io/travis/ccztux/glsysbackup/master?label=shellcheck%28master%29)](https://travis-ci.org/ccztux/glsysbackup)
+[![Travis (.org) branch](https://img.shields.io/travis/ccztux/glsysbackup/devel?label=shellcheck%28devel%29)](https://travis-ci.org/ccztux/glsysbackup)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ccztux/glsysbackup?label=latest%20release)](https://github.com/ccztux/glsysbackup/releases/latest)
+[![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/glsysbackup?include_prereleases&label=latest%20pre-release)](https://github.com/ccztux/glsysbackup/releases/tag/2.0.0-beta4)
+[![GitHub](https://img.shields.io/github/license/ccztux/glsysbackup)](https://github.com/ccztux/glsysbackup/blob/master/LICENSE)
 
 
 
