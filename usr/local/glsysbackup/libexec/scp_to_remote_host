@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #===================================================================================================
 #
 #  Author:				Christian Zettel (ccztux)
@@ -33,12 +35,29 @@
 #===================================================================================================
 
 
-/usr/local/glsysbackup/var/log/*.log
-{
-	weekly
-	rotate 6
-	missingok
-	notifempty
-	sharedscripts
-	compress
-}
+#------------------
+# Global variables:
+#------------------
+
+remote_user="pi"
+remote_host="wurlitzer"
+remote_path="/home/${remote_user}"
+ssh_private_key="/home/${remote_user}/.ssh/id_ed25519"
+backup_file="/var/backups/tux01/systembackup/latest/systembackup.tar.gz"
+
+
+
+#-------
+# Start:
+#-------
+
+printf "Start copying backup to remote host...\\n"
+
+if scp -i "${ssh_private_key}" "${backup_file}" "${remote_user}@${remote_host}:${remote_path}"
+then
+	printf "Copying backup to remote host was successful...\\n"
+	exit 0
+else
+	printf "Copying backup to remote host was NOT successful...\\n"
+	exit 1
+fi
