@@ -44,11 +44,11 @@ makeAutomysqlbackup()
 	local rc="0"
 	local file=
 	local CONFIG_backup_dir=
-	local conf_dir="/etc/automysqlbackup/conf.d/"
+	local conf_dir="/etc/automysqlbackup/conf.d"
 
 	printf "Starting automysqlbackup...\\n"
 
-	for file in ${conf_dir}*.conf
+	for file in "${conf_dir}"/*.conf
 	do
 		if [ -f "${file}" ] && [ -s "${file}" ]
 		then
