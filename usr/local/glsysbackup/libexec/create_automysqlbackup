@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #===================================================================================================
 #
 #  Author:				Christian Zettel (ccztux)
@@ -33,12 +35,57 @@
 #===================================================================================================
 
 
-/usr/local/glsysbackup/var/log/*.log
+#-----------
+# Functions:
+#-----------
+
+makeAutomysqlbackup()
 {
-	weekly
-	rotate 6
-	missingok
-	notifempty
-	sharedscripts
-	compress
+	local rc="0"
+	local file=
+	local CONFIG_backup_dir=
+	local conf_dir="/etc/automysqlbackup/conf.d/"
+
+	printf "Starting automysqlbackup...\\n"
+
+	for file in "${conf_dir}*.conf"
+	do
+		if [ -f "${file}" ] && [ -s "${file}" ]
+		then
+			source "${file}"
+		else
+			continue
+		fi
+
+		if [ ! -d "${CONFIG_backup_dir}" ]
+		then
+			mkdir -p "${CONFIG_backup_dir}"
+		fi
+
+		if ! /usr/local/bin/automysqlbackup -b -c "${file}"
+		then
+			rc="1"
+		fi
+
+		#chown -R root:root ${CONFIG_backup_dir}*
+		#find ${CONFIG_backup_dir}* -type f -exec chmod 600 {} \;
+		#find ${CONFIG_backup_dir}* -type d -exec chmod 700 {} \;
+	done
+
+	return "${rc}"
 }
+
+
+
+#-------
+# Start:
+#-------
+
+if makeAutomysqlbackup
+then
+	printf "automysqlbackup was successful...\\n"
+	exit 0
+else
+	printf "automysqlbackup was NOT successful...\\n"
+	exit 1
+fi
