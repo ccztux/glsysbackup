@@ -48,10 +48,11 @@ makeAutomysqlbackup()
 
 	printf "Starting automysqlbackup...\\n"
 
-	for file in "${conf_dir}*.conf"
+	for file in ${conf_dir}*.conf
 	do
 		if [ -f "${file}" ] && [ -s "${file}" ]
 		then
+			# shellcheck disable=SC1090
 			source "${file}"
 		else
 			continue
