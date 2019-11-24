@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-11-23
+#						2019-11-24
 #
 #  Version				2.0.0-rc1
 #
@@ -35,9 +35,21 @@
 #===================================================================================================
 
 
-#-----------
-# Functions:
-#-----------
+#--------------------------------------------------------
+# In case of an include attempt, write output and return:
+#--------------------------------------------------------
+
+if [ "${BASH_SOURCE[0]}" != "${0}" ]
+then
+	printf "\\n%s is NOT a bash library. Execute it directly!\\n\\n" "${BASH_SOURCE[0]##*/}"
+	return 1
+fi
+
+
+
+#----------
+# Function:
+#----------
 
 makeAutomysqlbackup()
 {
