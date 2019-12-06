@@ -391,7 +391,7 @@ checkRequiredBinaries()
 	local required_binaries=()
 	local binaries_not_found=()
 	local binaries_not_found_helper=
-	local supported_syspackage_managers=("rpm" "dpkg" "pacman" "equery" "pkgutil")
+	local supported_syspackage_managers=("rpm" "dpkg" "pacman" "equery" "pkgutil" "cygcheck")
 
 	if [ "${log_to_syslog}" -eq "1" ]
 	then
@@ -1848,6 +1848,9 @@ createInstalledPackagesFile()
 				;;
 			pkgutil)
 				create_installed_packages_cmd="${syspackage_manager} --pkgs >${installed_packages_filename}"
+				;;
+			cygcheck)
+				create_installed_packages_cmd="${syspackage_manager} --check-setup --dump-only >${installed_packages_filename}"
 				;;
 			*)
 				logHandler "Unsupported syspackage manager used in function: '${FUNCNAME[0]}'. :( Exiting."
