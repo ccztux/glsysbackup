@@ -2,7 +2,7 @@
 [![Travis (.org) branch](https://img.shields.io/travis/ccztux/glsysbackup/devel?label=shellcheck%28devel%29)](https://travis-ci.org/ccztux/glsysbackup)
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ccztux/glsysbackup?label=latest%20release)](https://github.com/ccztux/glsysbackup/releases/latest)
 [![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/glsysbackup?include_prereleases&label=latest%20pre-release)](https://github.com/ccztux/glsysbackup/releases/tag/2.0.0-beta4)
-[![GitHub](https://img.shields.io/github/license/ccztux/glsysbackup?color=blue)](https://github.com/ccztux/glsysbackup/blob/master/LICENSE)
+[![GitHub](https://img.shields.io/github/license/ccztux/glsysbackup?color=yellowgreen)](https://github.com/ccztux/glsysbackup/blob/master/LICENSE)
 
 
 
