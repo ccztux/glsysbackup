@@ -14,8 +14,8 @@
 - Lock functionality. Only one instance is possible to run. (Lock file and check with pgrep)
 - Verbose logging to stdout and/or system logfile and/or system journal and/or individual logfile.
 - Excluding of files
-- Backupfile rotation (daily|weekly|monthly)
-- Creates a file with installed packages (rpm|dpkg|pacman|equery|pkgutil|cygcheck)
+- Backupfile rotation (daily | weekly | monthly)
+- Creates a file with installed packages (rpm | dpkg | pacman | equery | pkgutil | cygcheck)
 - Encryption with openssl
 - CLI options and arguments
 - Renicing
@@ -62,7 +62,7 @@
 ## Optionally used binaries:
 - **logger** to log to the system log
 - **systemd-cat** to log to the system journal
-- **rpm**|**dpkg**|**pacman**|**equery**|**pkgutil**|**cygcheck** to create a file with installed packages
+- **rpm | dpkg | pacman | equery | pkgutil | cygcheck** to create a file with installed packages
 - **openssl** to encrypt the backup file
 - **renice** to renice glsysbackup and all child processes
 - **ionice** to re-ionice glsysbackup and all child processes
