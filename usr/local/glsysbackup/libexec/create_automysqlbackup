@@ -92,9 +92,9 @@ makeAutomysqlbackup()
 
 if makeAutomysqlbackup
 then
-	printf "automysqlbackup was successful...\\n"
+	printf "automysqlbackup was successful.\\n"
 	exit 0
 else
-	printf "automysqlbackup was NOT successful...\\n"
+	printf "automysqlbackup was not successful.\\n"
 	exit 1
 fi

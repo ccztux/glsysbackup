@@ -74,9 +74,9 @@ copyToRemoteHost()
 
 if copyToRemoteHost
 then
-	printf "Copying backup to remote host was successful...\\n"
+	printf "Copying backup to remote host was successful.\\n"
 	exit 0
 else
-	printf "Copying backup to remote host was NOT successful...\\n"
+	printf "Copying backup to remote host was not successful.\\n"
 	exit 1
 fi
