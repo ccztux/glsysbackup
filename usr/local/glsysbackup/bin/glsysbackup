@@ -975,11 +975,11 @@ setDefaultConfig()
 	backup_exlude_items=("")
 	backup_encryption_enabled="0"
 	backup_encryption_password="test1234"
-	pre_backup_script_enabled="0"
-	pre_backup_scripts=("${script_base_path}/libexec/create_automysqlbackup")
+	pre_backup_commands_enabled="0"
+	pre_backup_commands=("${script_base_path}/libexec/create_automysqlbackup")
 	pre_backup_exit_when_unsuccessful="1"
-	post_backup_script_enabled="0"
-	post_backup_scripts=("${script_base_path}/libexec/scp_to_remote_host")
+	post_backup_commands_enabled="0"
+	post_backup_commands=("${script_base_path}/libexec/scp_to_remote_host")
 	post_backup_exit_when_unsuccessful="1"
 }
 
@@ -1278,13 +1278,13 @@ reIONice()
 	fi
 }
 
-executePreBackupScript()
+executePreBackupCommands()
 {
 	local rc=
 
 	logHandler "Check if pre backup script functionality is enabled..."
 
-	if [ "${pre_backup_script_enabled}" -eq "1" ]
+	if [ "${pre_backup_commands_enabled}" -eq "1" ]
 	then
 		logHandler "Pre backup script functionality is enabled."
 		logHandler "Check if pre backup script (${pre_backup_script}) exists and if it is executeable..."
@@ -2004,13 +2004,13 @@ encryptBackup()
 	fi
 }
 
-executePostBackupScript()
+executePostBackupCommands()
 {
 	local rc=
 
 	logHandler "Check if post backup script functionality is enabled..."
 
-	if [ "${post_backup_script_enabled}" -eq "1" ]
+	if [ "${post_backup_commands_enabled}" -eq "1" ]
 	then
 		logHandler "Post backup script functionality is enabled."
 		logHandler "Check if post backup script (${post_backup_script}) exists and if it is executeable..."
@@ -2069,13 +2069,13 @@ _main()
 	reNice
 	reIONice
 	checkBackupDirStructure
-	executePreBackupScript
+	executePreBackupCommands
 	createInstalledPackagesFile
 	buildExcludeOpts
 	buildBackupCmd
 	makeBackup
 	encryptBackup
-	executePostBackupScript
+	executePostBackupCommands
 }
 
 
