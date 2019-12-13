@@ -196,9 +196,16 @@ signalHandler()
 				if [ "${script_exit_code}" -eq "0" ]
 				then
 					logHandler "We did a great job. :)"
+
+					if [ "${notification_notify_all_backup_jobs}" -eq "1" ]
+					then
+						executeNotificationCommands
+					fi
 				else
 					logHandler "Ooops!!! Something went wrong. :("
 					logHandler "Read the log or output to determine what exactly went wrong."
+
+					executeNotificationCommands
 				fi
 
 				logHandler "${script_name} (${script_version}) was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
@@ -1299,7 +1306,7 @@ executePreBackupCommands()
 			then
 				logHandler "Execution of pre backup command: '${cmd}' was successful. rc: '${cmd_rc}'."
 			else
-				logHandler "Execution of pre backup commnd: '${cmd}' was unsuccessful. rc: '${cmd_rc}'."
+				logHandler "Execution of pre backup command: '${cmd}' was unsuccessful. rc: '${cmd_rc}'."
 
 				if [ "${pre_backup_paranoia_mode}" -eq "1" ]
 				then
@@ -2028,7 +2035,7 @@ executePostBackupCommands()
 			then
 				logHandler "Execution of post backup command: '${cmd}' was successful. rc: '${cmd_rc}'."
 			else
-				logHandler "Execution of post backup commnd: '${cmd}' was unsuccessful. rc: '${cmd_rc}'."
+				logHandler "Execution of post backup command: '${cmd}' was unsuccessful. rc: '${cmd_rc}'."
 
 				if [ "${post_backup_paranoia_mode}" -eq "1" ]
 				then
@@ -2052,6 +2059,34 @@ executePostBackupCommands()
 		fi
 	else
 		logHandler "Post backup commands functionality is not enabled."
+	fi
+}
+
+executeNotificationCommands()
+{
+	local rc=
+	local cmd=
+
+	logHandler "Check if notification commands functionality is enabled..."
+
+	if [ "${notification_commands_enabled}" -eq "1" ]
+	then
+		logHandler "Notification commands functionality is enabled."
+
+		for cmd in "${notification_commands[@]}"
+		do
+			eval "${cmd} 2>&1" | logHandler
+			rc="${?}"
+
+			if [ "${rc}" -eq "0" ]
+			then
+				logHandler "Execution of notification command: '${cmd}' was successful. rc: '${rc}'."
+			else
+				logHandler "Execution of notification command: '${cmd}' was unsuccessful. rc: '${rc}'."
+			fi
+		done
+	else
+		logHandler "Notification commands functionality is not enabled."
 	fi
 }
 
