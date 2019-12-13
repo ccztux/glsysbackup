@@ -326,41 +326,74 @@ backup_exlude_items=(
 backup_encryption_enabled="0"
 
 # set password for encryption
-backup_encryption_password="test1234"
+backup_encryption_password="change_me"
 
 
 
-#-------------------
-# Pre backup script:
-#-------------------
+#---------------------
+# Pre backup commands:
+#---------------------
 
-# enable pre backup script functionality
+# enable pre backup commands functionality
 # (valid values: 1|0)
-pre_backup_script_enabled="0"
+pre_backup_commands_enabled="0"
 
-# path to pre backup script
-pre_backup_script="/home/pi/pre.sh"
+# define your pre backup commands
+pre_backup_commands=(
+"${script_base_path}/libexec/create_automysqlbackup"
+"df -ahHT ${backup_base_path}"
+)
 
-# exit glsysbackup in case execution of pre backup script was not successful
+# exit glsysbackup in case execution of pre backup commands was not successful
 # (valid values: 1|0)
 pre_backup_exit_when_unsuccessful="1"
 
-
-
-#--------------------
-# Post backup script:
-#--------------------
-
-# enable post backup script functionality
+# exit glsysbckup at the very first pre backup command, which was not successful
 # (valid values: 1|0)
-post_backup_script_enabled="0"
+pre_backup_paranoia_mode="0"
 
-# path to post backup script
-post_backup_script="/home/pi/post.sh"
 
-# exit glsysbackup in case execution of post backup script was not successful
+
+#----------------------
+# Post backup commands:
+#----------------------
+
+# enable post backup commands functionality
+# (valid values: 1|0)
+post_backup_commands_enabled="0"
+
+# define your post backup commands
+post_backup_commands=(
+"df -ahHT ${backup_base_path}"
+"${script_base_path}/libexec/scp_to_remote_host"
+)
+
+# exit glsysbackup in case execution of post backup commands was not successful
 # (valid values: 1|0)
 post_backup_exit_when_unsuccessful="1"
+
+# exit glsysbckup at the very first post backup command, which was not successful
+# (valid values: 1|0)
+post_backup_paranoia_mode="0"
+
+
+
+#-----------------------
+# Notification commands:
+#-----------------------
+
+# enable notification commands functionality
+# (valid values: 1|0)
+notification_commands_enabled="0"
+
+# define your notification commands
+notification_commands=(
+"/usr/local/bin/sendEmail.pl -f from@mydomain.com -t to@mydomain.com -u \"${script_name} (${script_version}) - Backup job: ${script_config_name} ready\" -m body"
+)
+
+# notify all backup cycles or only unsuccessful ones
+# (valid values: 1|0)
+notification_notify_all_backup_jobs="0"
 ```
 
 

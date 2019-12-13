@@ -981,13 +981,26 @@ setDefaultConfig()
 	backup_items=("")
 	backup_exlude_items=("")
 	backup_encryption_enabled="0"
-	backup_encryption_password="test1234"
+	backup_encryption_password="change_me"
 	pre_backup_commands_enabled="0"
-	pre_backup_commands=("${script_base_path}/libexec/create_automysqlbackup")
+	pre_backup_commands=(
+	"${script_base_path}/libexec/create_automysqlbackup"
+	"df -ahHT ${backup_base_path}"
+	)
 	pre_backup_exit_when_unsuccessful="1"
+	pre_backup_paranoia_mode="0"
 	post_backup_commands_enabled="0"
-	post_backup_commands=("${script_base_path}/libexec/scp_to_remote_host")
+	post_backup_commands=(
+	"df -ahHT ${backup_base_path}"
+	"${script_base_path}/libexec/scp_to_remote_host"
+	)
 	post_backup_exit_when_unsuccessful="1"
+	post_backup_paranoia_mode="0"
+	notification_commands_enabled="0"
+	notification_commands=(
+	"/usr/local/bin/sendEmail.pl -f from@mydomain.com -t to@mydomain.com -u \"${script_name} (${script_version}) - Backup job: ${script_config_name} ready\" -m body"
+	)
+	notification_notify_all_backup_jobs="0"
 }
 
 setRequiredVariables()
