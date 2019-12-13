@@ -969,7 +969,7 @@ setDefaultConfig()
 	backup_rotation_monthly_max_backups="6"
 	installed_packages_enabled="1"
 	installed_packages_forced_manager=""
-	installed_packages_directory="/root"
+	installed_packages_directory="/tmp"
 	backup_successful_tar_rc="1"
 	backup_compression_enabled="1"
 	backup_compression_type="gzip"
