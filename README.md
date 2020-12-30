@@ -6,6 +6,18 @@
 [![GitHub](https://img.shields.io/github/license/ccztux/glsysbackup?color=yellowgreen)](https://github.com/ccztux/glsysbackup/blob/master/LICENSE)
 
 
+* [glsysbackup](#glsysbackup)
+   * [Features:](#features)
+   * [Description:](#description)
+   * [It requires the following binaries:](#it-requires-the-following-binaries)
+   * [Optionally used binaries:](#optionally-used-binaries)
+   * [Installation:](#installation)
+   * [Example help output:](#example-help-output)
+   * [Configuration variables (default):](#configuration-variables-default)
+   * [Example job output:](#example-job-output)
+   * [Backupfile structure with enabled backup rotation:](#backupfile-structure-with-enabled-backup-rotation)
+
+
 
 # glsysbackup
 (**g**eneric **l**inux **sys**tem **backup**) is an advanced backup tool written in bash.
