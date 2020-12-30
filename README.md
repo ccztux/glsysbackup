@@ -6,6 +6,8 @@
 [![GitHub](https://img.shields.io/github/license/ccztux/glsysbackup?color=yellowgreen)](https://github.com/ccztux/glsysbackup/blob/master/LICENSE)
 
 
+
+# Table of contents
 * [glsysbackup](#glsysbackup)
    * [Features:](#features)
    * [Description:](#description)
@@ -16,6 +18,7 @@
    * [Configuration variables (default):](#configuration-variables-default)
    * [Example job output:](#example-job-output)
    * [Backupfile structure with enabled backup rotation:](#backupfile-structure-with-enabled-backup-rotation)
+
 
 
 
