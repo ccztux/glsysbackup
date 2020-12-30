@@ -10,8 +10,7 @@ before_install:
 
 script:
   - docker run koalaman/shellcheck:stable --version
-  - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always --external-sources /scripts/usr/local/glsysbackup/bin/glsysbackup
-  - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always /scripts/usr/local/glsysbackup/etc/glsysbackup.conf
+  - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always --check-sourced --external-sources /scripts/usr/local/glsysbackup/bin/glsysbackup
   - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always /scripts/usr/local/glsysbackup/libexec/create_automysqlbackup
   - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always /scripts/usr/local/glsysbackup/libexec/scp_to_remote_host
 
