@@ -5,9 +5,10 @@ run-name: Shellcheck tests
 on: [push]
 
 jobs:
-    runs-on: koalaman/shellcheck
-    run: |
-      shellcheck --version
-      shellcheck --color=always --check-sourced --external-sources /usr/local/glsysbackup/bin/glsysbackup
-      shellcheck --color=always /usr/local/glsysbackup/libexec/create_automysqlbackup
-      shellcheck --color=always /usr/local/glsysbackup/libexec/scp_to_remote_host
+  shellcheck:
+    name: Shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
