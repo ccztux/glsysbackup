@@ -377,6 +377,11 @@ printScriptInfos()
 	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
 }
 
+lTrim()
+{
+	printf "%s" "${1#"${1%%[!${2:-[:space:]}]*}"}"
+}
+
 checkBin()
 {
 	local binary="${1:-}"
@@ -1511,7 +1516,8 @@ isLeapYear()
 getDaysOfMonth()
 {
 	local year="${1}"
-	local month="${2##*0}"
+	local month="${2}"
+	month="$(lTrim "${month}" "0")"
 	local days_of_month="$(( 30 + ( month + month / 8 ) % 2 ))"
 
 	if [ "${month}" -eq "2" ]
