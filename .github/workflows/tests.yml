@@ -5,7 +5,7 @@ run-name: Shellcheck tests
 on: [push]
 
 jobs:
-    runs-on: koalaman/shellcheck:stable
+    runs-on: koalaman/shellcheck
     run: |
       shellcheck --version
       shellcheck --color=always --check-sourced --external-sources /usr/local/glsysbackup/bin/glsysbackup
