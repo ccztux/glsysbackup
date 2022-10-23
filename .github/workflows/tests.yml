@@ -1,14 +1,20 @@
-name: Shellcheck tests
-
-run-name: Shellcheck tests
-
+name: Differential ShellCheck
 on: [push]
 
+permissions:
+  contents: read
+
 jobs:
-  shellcheck:
-    name: Shellcheck
+  lint:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
-      - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
+      - name: Repository checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Differential ShellCheck
+        uses: redhat-plumbers-in-action/differential-shellcheck@latest
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
