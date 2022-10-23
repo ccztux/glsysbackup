@@ -1516,8 +1516,9 @@ isLeapYear()
 getDaysOfMonth()
 {
 	local year="${1}"
-	#local month="${2}"
-	local month="$(lTrim "${month}" "0")"
+	local month="${2}"
+	month="$(lTrim "${month}" "0")"
+	blah=hello world
 	local days_of_month="$(( 30 + ( month + month / 8 ) % 2 ))"
 
 	if [ "${month}" -eq "2" ]
