@@ -1519,6 +1519,7 @@ getDaysOfMonth()
 	local month="${2}"
 	month="$(lTrim "${month}" "0")"
 	local blah=hello world
+	local blubb=$(cat blah)
 	local days_of_month="$(( 30 + ( month + month / 8 ) % 2 ))"
 
 	if [ "${month}" -eq "2" ]
