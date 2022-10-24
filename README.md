@@ -1,5 +1,9 @@
+<!--
 [![Travis (.org) branch](https://img.shields.io/travis/ccztux/glsysbackup/master?label=shellcheck%20%28master%29)](https://travis-ci.org/ccztux/glsysbackup)
 [![Travis (.org) branch](https://img.shields.io/travis/ccztux/glsysbackup/devel?label=shellcheck%20%28devel%29)](https://travis-ci.org/ccztux/glsysbackup)
+-->
+![Shellcheck (master)](https://github.com/ccztux/glsysbackup/actions/workflows/differential-shellcheck.yml/badge.svg?branch=master)
+![Shellcheck (devel)](https://github.com/ccztux/glsysbackup/actions/workflows/differential-shellcheck.yml/badge.svg?branch=devel)
 [![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/glsysbackup?include_prereleases&label=latest%20%28pre-%29release)](https://github.com/ccztux/glsysbackup/releases)
 [![GitHub milestones](https://img.shields.io/github/milestones/open/ccztux/glsysbackup)](https://github.com/ccztux/glsysbackup/milestones)
 [![GitHub issues](https://img.shields.io/github/issues-raw/ccztux/glsysbackup)](https://github.com/ccztux/glsysbackup/issues)
