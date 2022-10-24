@@ -1,5 +1,6 @@
 name: Differential ShellCheck
-on: [push]
+on:
+  pull_request:
 
 permissions:
   contents: read
