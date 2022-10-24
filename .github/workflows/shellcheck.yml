@@ -1,4 +1,4 @@
-name: Differential ShellCheck
+name: shellcheck
 on:
   pull_request:
 
@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Differential ShellCheck
+      - name: shellcheck
         uses: redhat-plumbers-in-action/differential-shellcheck@latest
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
