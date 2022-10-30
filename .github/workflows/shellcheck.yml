@@ -9,7 +9,7 @@ jobs:
   container-job:
     runs-on: ubuntu-latest
     container:
-      image: koalaman/shellcheck:stable
+      image: docker://koalaman/shellcheck:stable
 
     steps:
       - name: Show versions
