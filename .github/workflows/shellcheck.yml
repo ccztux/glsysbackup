@@ -10,23 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Show versions
+      - name: Get the stabel ShellCheck container
         run: |
-          sudo apt-get update
-          sudo apt-get upgrade
           sudo docker pull koalaman/shellcheck:stable
+
+      - name: Show ShellCheck version
+        run: |
           docker run koalaman/shellcheck:stable --version
-          bash --version
-          shellcheck --version
 
       - name: Repository checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: ShellCheck
+      - name: ShellCheck our scripts
         run: |
-          shellcheck --color=always --check-sourced --external-sources ./usr/local/glsysbackup/bin/glsysbackup
-          shellcheck --color=always ./usr/local/glsysbackup/libexec/create_automysqlbackup
-          shellcheck --color=always ./usr/local/glsysbackup/libexec/scp_to_remote_host
-        working-directory: ./
+          - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always --check-sourced --external-sources /scripts/usr/local/glsysbackup/bin/glsysbackup
+          - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always /scripts/usr/local/glsysbackup/libexec/create_automysqlbackup
+          - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always /scripts/usr/local/glsysbackup/libexec/scp_to_remote_host
