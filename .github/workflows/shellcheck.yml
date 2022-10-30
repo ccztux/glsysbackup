@@ -10,11 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Get ShellCheck container
+        run: |
+          container:
+            image: koalaman/shellcheck:stable
+
       - name: Show versions
         run: |
-          apt-get update
-          apt-get upgrade
-          lsb_release -a
           bash --version
           shellcheck --version
 
@@ -23,7 +25,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Shellcheck
+      - name: ShellCheck
         run: |
           shellcheck --color=always --check-sourced --external-sources ./usr/local/glsysbackup/bin/glsysbackup
           shellcheck --color=always ./usr/local/glsysbackup/libexec/create_automysqlbackup
