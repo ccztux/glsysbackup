@@ -11,13 +11,11 @@ jobs:
 
     steps:
       - name: Show versions
-        uses: actions/checkout@v3
         run: |
           bash --version
           shellcheck --version
 
       - name: Shellcheck
-        uses: actions/checkout@v3
         run: |
           shellcheck --color=always --check-sourced --external-sources /usr/local/glsysbackup/bin/glsysbackup
           shellcheck --color=always /usr/local/glsysbackup/libexec/create_automysqlbackup
