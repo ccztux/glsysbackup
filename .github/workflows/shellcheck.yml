@@ -1,7 +1,8 @@
 name: ShellCheck Master
 on:
   push:
-    branches: - master
+    branches:
+      - master
 
 permissions:
   contents: read
@@ -35,7 +36,8 @@ jobs:
 name: ShellCheck Devel
 on:
   push:
-    branches: - devel
+    branches:
+      - devel
 
 permissions:
   contents: read
