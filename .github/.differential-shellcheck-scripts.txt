@@ -1,5 +1,0 @@
-# Shell scripts tracker. Following scripts will be explicitly lint by differential-shellcheck.
-# Avoid spaces in the list since they are counted as a comment
-/usr/local/glsysbackup/bin/glsysbackup
-/usr/local/glsysbackup/libexec/create_automysqlbackup
-/usr/local/glsysbackup/libexec/scp_to_remote_host
