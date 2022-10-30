@@ -10,9 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: docker://koalaman/shellcheck:stable
       - name: Show versions
         run: |
+          sudo apt-get update
+          sudo apt-get upgrade
+          sudo docker pull koalaman/shellcheck:stable
           docker run koalaman/shellcheck:stable --version
           bash --version
           shellcheck --version
