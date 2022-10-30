@@ -18,4 +18,5 @@ jobs:
       - name: Differential ShellCheck
         uses: redhat-plumbers-in-action/differential-shellcheck@latest
         with:
+          shell-scripts: .differential-shellcheck-scripts.txt
           token: ${{ secrets.GITHUB_TOKEN }}
