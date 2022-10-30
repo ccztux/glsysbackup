@@ -8,12 +8,8 @@ permissions:
 jobs:
   lint:
     runs-on: ubuntu-latest
-
-    steps:
-      - name: Get ShellCheck container
-        run: |
-          container:
-            image: koalaman/shellcheck:stable
+      container:
+        image: koalaman/shellcheck:stable
 
       - name: Show versions
         run: |
