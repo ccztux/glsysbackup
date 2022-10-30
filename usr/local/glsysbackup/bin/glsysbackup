@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/glsysbackup
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2019-12-13
+#						2019-11-17
 #
-#  Version				2.0.0-rc1
+#  Version				2.0.0-beta4
 #
 #  Description:			Generic Linux System Backup is an advanced backup tool written in bash.
 #
@@ -196,16 +196,9 @@ signalHandler()
 				if [ "${script_exit_code}" -eq "0" ]
 				then
 					logHandler "We did a great job. :)"
-
-					if [ "${notification_notify_all_backup_jobs}" -eq "1" ]
-					then
-						executeNotificationCommands
-					fi
 				else
 					logHandler "Ooops!!! Something went wrong. :("
 					logHandler "Read the log or output to determine what exactly went wrong."
-
-					executeNotificationCommands
 				fi
 
 				logHandler "${script_name} (${script_version}) was running: '${SECONDS}' seconds, script_exit_code: '${script_exit_code}'."
@@ -377,12 +370,6 @@ printScriptInfos()
 	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
 }
 
-lTrim()
-{
-	# shellcheck disable=SC2295
-	printf "%s" "${1#"${1%%[!${2:-[:space:]}]*}"}"
-}
-
 checkBin()
 {
 	local binary="${1:-}"
@@ -404,7 +391,7 @@ checkRequiredBinaries()
 	local required_binaries=()
 	local binaries_not_found=()
 	local binaries_not_found_helper=
-	local supported_syspackage_managers=("rpm" "dpkg" "pacman" "equery" "pkgutil" "cygcheck")
+	local supported_syspackage_managers=("rpm" "dpkg" "pacman" "equery" "pkgutil")
 
 	if [ "${log_to_syslog}" -eq "1" ]
 	then
@@ -975,7 +962,7 @@ setDefaultConfig()
 	backup_rotation_monthly_max_backups="6"
 	installed_packages_enabled="1"
 	installed_packages_forced_manager=""
-	installed_packages_directory="/tmp"
+	installed_packages_directory="/root"
 	backup_successful_tar_rc="1"
 	backup_compression_enabled="1"
 	backup_compression_type="gzip"
@@ -987,26 +974,13 @@ setDefaultConfig()
 	backup_items=("")
 	backup_exlude_items=("")
 	backup_encryption_enabled="0"
-	backup_encryption_password="change_me"
-	pre_backup_commands_enabled="0"
-	pre_backup_commands=(
-	"${script_base_path}/libexec/create_automysqlbackup"
-	"df -ahHT ${backup_base_path}"
-	)
+	backup_encryption_password="test1234"
+	pre_backup_script_enabled="0"
+	pre_backup_script="/home/pi/pre.sh"
 	pre_backup_exit_when_unsuccessful="1"
-	pre_backup_paranoia_mode="0"
-	post_backup_commands_enabled="0"
-	post_backup_commands=(
-	"df -ahHT ${backup_base_path}"
-	"${script_base_path}/libexec/scp_to_remote_host"
-	)
+	post_backup_script_enabled="0"
+	post_backup_script="/home/pi/post.sh"
 	post_backup_exit_when_unsuccessful="1"
-	post_backup_paranoia_mode="0"
-	notification_commands_enabled="0"
-	notification_commands=(
-	"/usr/local/bin/sendEmail.pl -f from@mydomain.com -t to@mydomain.com -u \"${script_name} (${script_version}) - Backup job: ${script_config_name} ready\" -m body"
-	)
-	notification_notify_all_backup_jobs="0"
 }
 
 setRequiredVariables()
@@ -1304,51 +1278,51 @@ reIONice()
 	fi
 }
 
-executePreBackupCommands()
+executePreBackupScript()
 {
-	local rc="0"
-	local cmd=
-	local cmd_rc=
+	local rc=
 
-	logHandler "Check if pre backup commands functionality is enabled..."
+	logHandler "Check if pre backup script functionality is enabled..."
 
-	if [ "${pre_backup_commands_enabled}" -eq "1" ]
+	if [ "${pre_backup_script_enabled}" -eq "1" ]
 	then
-		logHandler "Pre backup commands functionality is enabled."
+		logHandler "Pre backup script functionality is enabled."
+		logHandler "Check if pre backup script (${pre_backup_script}) exists and if it is executeable..."
 
-		for cmd in "${pre_backup_commands[@]}"
-		do
-			eval "${cmd} 2>&1" | logHandler
-			cmd_rc="${?}"
+		checkFileParameters "${pre_backup_script}"
 
-			if [ "${cmd_rc}" -eq "0" ]
-			then
-				logHandler "Execution of pre backup command: '${cmd}' was successful. rc: '${cmd_rc}'."
-			else
-				logHandler "Execution of pre backup command: '${cmd}' was unsuccessful. rc: '${cmd_rc}'."
-
-				if [ "${pre_backup_paranoia_mode}" -eq "1" ]
-				then
-					logHandler "Pre backup paranoia mode is enabled, breaking."
-					script_exit_code="130"
-					exit
-				else
-					if [ "${cmd_rc}" -gt "${rc}" ]
-					then
-						rc="${cmd_rc}"
-					fi
-				fi
-			fi
-		done
-
-		if [ "${pre_backup_exit_when_unsuccessful}" -eq "1" ] && [ "${rc}" -ne "0" ]
+		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
 		then
-			logHandler "Breaking, because execution of pre backup commands was unsuccessful und you want it."
+			logHandler "Pre backup script exists and it is executeable, so we execute it..."
+		elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
+		then
+			logHandler "Pre backup script doesnt exist, nothing to do."
+			script_exit_code="130"
+			exit
+		else
+			logHandler "Pre backup script exists, but it is not executeable, nothing to do."
 			script_exit_code="131"
 			exit
 		fi
+
+		eval "${pre_backup_script} 2>&1" | logHandler
+		rc="${?}"
+
+		if [ "${rc}" -eq "0" ]
+		then
+			logHandler "Execution of pre backup script was successful. rc: '${rc}'."
+		else
+			logHandler "Execution of pre backup script was unsuccessful. rc: '${rc}'."
+
+			if [ "${pre_backup_exit_when_unsuccessful}" -eq "1" ]
+			then
+				logHandler "Breaking, because execution of pre backup script was unsuccessful und you want it."
+				script_exit_code="132"
+				exit
+			fi
+		fi
 	else
-		logHandler "Pre backup commands functionality is not enabled."
+		logHandler "Pre backup script functionality is not enabled."
 	fi
 }
 
@@ -1504,6 +1478,7 @@ bubbleSort()
 isLeapYear()
 {
 	local year="${1}"
+	local month="${2}"
 
 	if { [ "$(( year % 4 ))" -eq "0" ] && [ "$(( year % 100 ))" -ne "0" ]; } || [ "$(( year % 400))" -eq "0" ]
 	then
@@ -1516,15 +1491,14 @@ isLeapYear()
 getDaysOfMonth()
 {
 	local year="${1}"
-	local month="${2}"
-	month="$(lTrim "${month}" "0")"
+	local month="${2##*0}"
 	local days_of_month="$(( 30 + ( month + month / 8 ) % 2 ))"
 
 	if [ "${month}" -eq "2" ]
 	then
 		days_of_month="$(( days_of_month - 2 ))"
 
-		if isLeapYear "${year}"
+		if isLeapYear "${year}" "${month}"
 		then
 			days_of_month="$(( days_of_month + 1 ))"
 		fi
@@ -1875,9 +1849,6 @@ createInstalledPackagesFile()
 			pkgutil)
 				create_installed_packages_cmd="${syspackage_manager} --pkgs >${installed_packages_filename}"
 				;;
-			cygcheck)
-				create_installed_packages_cmd="${syspackage_manager} --check-setup --dump-only >${installed_packages_filename}"
-				;;
 			*)
 				logHandler "Unsupported syspackage manager used in function: '${FUNCNAME[0]}'. :( Exiting."
 				script_exit_code="182"
@@ -2033,79 +2004,51 @@ encryptBackup()
 	fi
 }
 
-executePostBackupCommands()
-{
-	local rc="0"
-	local cmd=
-	local cmd_rc=
-
-	logHandler "Check if post backup commands functionality is enabled..."
-
-	if [ "${post_backup_commands_enabled}" -eq "1" ]
-	then
-		logHandler "Post backup commands functionality is enabled."
-
-		for cmd in "${post_backup_commands[@]}"
-		do
-			eval "${cmd} 2>&1" | logHandler
-			cmd_rc="${?}"
-
-			if [ "${cmd_rc}" -eq "0" ]
-			then
-				logHandler "Execution of post backup command: '${cmd}' was successful. rc: '${cmd_rc}'."
-			else
-				logHandler "Execution of post backup command: '${cmd}' was unsuccessful. rc: '${cmd_rc}'."
-
-				if [ "${post_backup_paranoia_mode}" -eq "1" ]
-				then
-					logHandler "Post backup paranoia mode is enabled, breaking."
-					script_exit_code="220"
-					exit
-				else
-					if [ "${cmd_rc}" -gt "${rc}" ]
-					then
-						rc="${cmd_rc}"
-					fi
-				fi
-			fi
-		done
-
-		if [ "${post_backup_exit_when_unsuccessful}" -eq "1" ] && [ "${rc}" -ne "0" ]
-		then
-			logHandler "Breaking, because execution of post backup commands was unsuccessful und you want it."
-			script_exit_code="221"
-			exit
-		fi
-	else
-		logHandler "Post backup commands functionality is not enabled."
-	fi
-}
-
-executeNotificationCommands()
+executePostBackupScript()
 {
 	local rc=
-	local cmd=
 
-	logHandler "Check if notification commands functionality is enabled..."
+	logHandler "Check if post backup script functionality is enabled..."
 
-	if [ "${notification_commands_enabled}" -eq "1" ]
+	if [ "${post_backup_script_enabled}" -eq "1" ]
 	then
-		logHandler "Notification commands functionality is enabled."
+		logHandler "Post backup script functionality is enabled."
+		logHandler "Check if post backup script (${post_backup_script}) exists and if it is executeable..."
 
-		for cmd in "${notification_commands[@]}"
-		do
-			eval "${cmd} 2>&1" | logHandler
-			rc="${?}"
+		checkFileParameters "${post_backup_script}"
 
-			if [ "${rc}" -eq "0" ]
+		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
+		then
+			logHandler "Post backup script exists and it is executeable, so we execute it..."
+		elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
+		then
+			logHandler "Post backup script doesnt exist, nothing to do."
+			script_exit_code="230"
+			exit
+		else
+			logHandler "Post backup script exists, but it is not executeable, nothing to do."
+			script_exit_code="231"
+			exit
+		fi
+
+		eval "${post_backup_script} 2>&1" | logHandler
+		rc="${?}"
+
+		if [ "${rc}" -eq "0" ]
+		then
+			logHandler "Execution of post backup script was successful. rc: '${rc}'."
+		else
+			logHandler "Execution of post backup script was unsuccessful. rc: '${rc}'."
+
+			if [ "${post_backup_exit_when_unsuccessful}" -eq "1" ]
 			then
-				logHandler "Execution of notification command: '${cmd}' was successful. rc: '${rc}'."
-			else
-				logHandler "Execution of notification command: '${cmd}' was unsuccessful. rc: '${rc}'."
+				logHandler "Breaking, because execution of post backup script was unsuccessful und you want it."
+				script_exit_code="232"
+				exit
 			fi
-		done
+		fi
 	else
-		logHandler "Notification commands functionality is not enabled."
+		logHandler "Post backup script functionality is not enabled."
 	fi
 }
 
@@ -2126,13 +2069,13 @@ _main()
 	reNice
 	reIONice
 	checkBackupDirStructure
-	executePreBackupCommands
+	executePreBackupScript
 	createInstalledPackagesFile
 	buildExcludeOpts
 	buildBackupCmd
 	makeBackup
 	encryptBackup
-	executePostBackupCommands
+	executePostBackupScript
 }
 
 
@@ -2147,11 +2090,11 @@ _main()
 
 script_pid="${BASHPID}"
 script_name="${0##*/}"
-script_version="2.0.0-rc1"
+script_version="2.0.0-beta4"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/glsysbackup"
-script_last_modification_date="2019-12-13"
+script_last_modification_date="2019-11-17"
 script_minimal_required_bash_version="3"
 script_license="GNU GPLv3"
 script_description="${script_name} (Generic Linux System Backup) is an advanced backup tool written in bash."
