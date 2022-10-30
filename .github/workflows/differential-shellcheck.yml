@@ -19,7 +19,4 @@ jobs:
         uses: redhat-plumbers-in-action/differential-shellcheck@latest
         with:
           shell-scripts:
-            /usr/local/glsysbackup/bin/glsysbackup
-            /usr/local/glsysbackup/libexec/create_automysqlbackup
-            /usr/local/glsysbackup/libexec/scp_to_remote_host
           token: ${{ secrets.GITHUB_TOKEN }}
