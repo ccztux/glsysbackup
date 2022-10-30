@@ -1,0 +1,24 @@
+name: ShellCheck
+on:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: koalaman-shellcheck:stable --version
+
+    steps:
+      - name: Show versions
+        uses: actions/checkout@v3
+        run: |
+          bash --version
+          shellcheck --version
+
+      - name: Shellcheck
+        uses: actions/checkout@v3
+        run: |
+          shellcheck --color=always --check-sourced --external-sources /usr/local/glsysbackup/bin/glsysbackup
+          shellcheck --color=always /usr/local/glsysbackup/libexec/create_automysqlbackup
+          shellcheck --color=always /usr/local/glsysbackup/libexec/scp_to_remote_host
