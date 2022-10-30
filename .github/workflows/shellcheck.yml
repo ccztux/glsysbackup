@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Show versions
         run: |
+          apt-get update
+          apt-get upgrade
+          lsb_release -a
           bash --version
           shellcheck --version
 
