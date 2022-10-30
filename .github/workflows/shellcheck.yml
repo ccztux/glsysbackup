@@ -8,7 +8,6 @@ permissions:
 jobs:
   container-job:
     runs-on: ubuntu-latest
-    container: centos-latest
 
     services:
       shellcheck:
