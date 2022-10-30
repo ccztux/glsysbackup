@@ -1,6 +1,41 @@
-name: ShellCheck
+name: ShellCheck Master
 on:
   push:
+    branches: - master
+
+permissions:
+  contents: read
+
+jobs:
+  container-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get the stable ShellCheck container
+        run: |
+          sudo docker pull koalaman/shellcheck:stable
+
+      - name: Show ShellCheck version
+        run: |
+          docker run koalaman/shellcheck:stable --version
+
+      - name: Repository checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: ShellCheck our scripts
+        run: |
+          docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always --check-sourced --external-sources /scripts/usr/local/glsysbackup/bin/glsysbackup
+          docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always /scripts/usr/local/glsysbackup/libexec/create_automysqlbackup
+          docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always /scripts/usr/local/glsysbackup/libexec/scp_to_remote_host
+
+
+
+name: ShellCheck Devel
+on:
+  push:
+    branches: - devel
 
 permissions:
   contents: read
