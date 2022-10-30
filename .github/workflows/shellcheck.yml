@@ -6,10 +6,13 @@ permissions:
   contents: read
 
 jobs:
-  lint:
+  container-job:
     runs-on: ubuntu-latest
-    container:
-      image: koalaman/shellcheck:stable
+    container: ubuntu-latest
+
+    services:
+      shellcheck:
+        image: koalaman/shellcheck:stable
 
       - name: Show versions
         run: |
