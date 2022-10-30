@@ -13,7 +13,7 @@ jobs:
       - name: Show versions
         run: |
           bash --version
-          shellcheck --color=always --version
+          shellcheck --version
 
       - name: Repository checkout
         uses: actions/checkout@v3
@@ -22,6 +22,7 @@ jobs:
 
       - name: Shellcheck
         run: |
-          shellcheck --color=always --check-sourced --external-sources /usr/local/glsysbackup/bin/glsysbackup
-          shellcheck --color=always /usr/local/glsysbackup/libexec/create_automysqlbackup
-          shellcheck --color=always /usr/local/glsysbackup/libexec/scp_to_remote_host
+          shellcheck --color=always --check-sourced --external-sources ./usr/local/glsysbackup/bin/glsysbackup
+          shellcheck --color=always ./usr/local/glsysbackup/libexec/create_automysqlbackup
+          shellcheck --color=always ./usr/local/glsysbackup/libexec/scp_to_remote_host
+        working-directory: ./
