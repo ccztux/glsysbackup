@@ -379,6 +379,7 @@ printScriptInfos()
 
 lTrim()
 {
+	# shellcheck disable=SC2295
 	printf "%s" "${1#"${1%%[!${2:-[:space:]}]*}"}"
 }
 
