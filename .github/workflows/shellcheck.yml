@@ -8,12 +8,12 @@ permissions:
 jobs:
   container-job:
     runs-on: ubuntu-latest
-    container:
-      image: docker://koalaman/shellcheck:stable
 
     steps:
+      - uses: docker://koalaman/shellcheck:stable
       - name: Show versions
         run: |
+          docker run koalaman/shellcheck:stable --version
           bash --version
           shellcheck --version
 
