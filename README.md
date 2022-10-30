@@ -1,8 +1,24 @@
-[![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/master.svg?label=shellcheck%20%28master%29)](https://travis-ci.org/ccztux/glsysbackup)
-[![Travis branch](https://img.shields.io/travis/ccztux/glsysbackup/devel.svg?label=shellcheck%20%28devel%29)](https://travis-ci.org/ccztux/glsysbackup)
-[![Latest Release](https://img.shields.io/github/release/ccztux/glsysbackup.svg?label=latest%20release)](https://github.com/ccztux/glsysbackup/releases/latest)
-[![Latest Pre-release](https://img.shields.io/badge/latest%20pre--release-v2.0.0--beta4-orange.svg)](https://github.com/ccztux/glsysbackup/releases/tag/2.0.0-beta4)
-[![GitHub license](https://img.shields.io/badge/license-AGPL-blue.svg)](https://github.com/ccztux/glsysbackup/blob/master/LICENSE)
+![ShellCheck (master)](https://github.com/ccztux/glsysbackup/actions/workflows/shellcheck.yml/badge.svg?branch=master)
+![ShellCheck (devel)](https://github.com/ccztux/glsysbackup/actions/workflows/shellcheck.yml/badge.svg?branch=devel)
+[![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/glsysbackup?include_prereleases&label=latest%20%28pre-%29release)](https://github.com/ccztux/glsysbackup/releases)
+[![GitHub milestones](https://img.shields.io/github/milestones/open/ccztux/glsysbackup)](https://github.com/ccztux/glsysbackup/milestones)
+[![GitHub issues](https://img.shields.io/github/issues-raw/ccztux/glsysbackup)](https://github.com/ccztux/glsysbackup/issues)
+[![GitHub](https://img.shields.io/github/license/ccztux/glsysbackup?color=yellowgreen)](https://github.com/ccztux/glsysbackup/blob/master/LICENSE)
+
+
+
+# Table of contents
+* [glsysbackup](#glsysbackup)
+   * [Features:](#features)
+   * [Description:](#description)
+   * [It requires the following binaries:](#it-requires-the-following-binaries)
+   * [Optionally used binaries:](#optionally-used-binaries)
+   * [Installation:](#installation)
+   * [Example help output:](#example-help-output)
+   * [Configuration variables (default):](#configuration-variables-default)
+   * [Example job output:](#example-job-output)
+   * [Backupfile structure with enabled backup rotation:](#backupfile-structure-with-enabled-backup-rotation)
+
 
 
 
@@ -14,8 +30,8 @@
 - Lock functionality. Only one instance is possible to run. (Lock file and check with pgrep)
 - Verbose logging to stdout and/or system logfile and/or system journal and/or individual logfile.
 - Excluding of files
-- Backupfile rotation (daily || weekly || monthly)
-- Creates a file with installed packages (rpm || dpkg || pacman || equery || pkgutil)
+- Backupfile rotation (daily | weekly | monthly)
+- Creates a file with installed packages (rpm | dpkg | pacman | equery | pkgutil | cygcheck)
 - Encryption with openssl
 - CLI options and arguments
 - Renicing
@@ -62,7 +78,7 @@
 ## Optionally used binaries:
 - **logger** to log to the system log
 - **systemd-cat** to log to the system journal
-- **rpm** || **dpkg** || **pacman** || **equery** || **pkgutil** to create a file with installed packages
+- **rpm | dpkg | pacman | equery | pkgutil | cygcheck** to create a file with installed packages
 - **openssl** to encrypt the backup file
 - **renice** to renice glsysbackup and all child processes
 - **ionice** to re-ionice glsysbackup and all child processes
@@ -136,19 +152,19 @@ OPTIONS:
 #---------
 
 # enable log to file
-# (possible values: 1|0)
+# (valid values: 1|0)
 log_to_file="1"
 
 # enable log to stdout
-# (possible values: 1|0)
+# (valid values: 1|0)
 log_to_stdout="1"
 
 # enable log to system logfile
-# (possible values: 1|0)
+# (valid values: 1|0)
 log_to_syslog="0"
 
 # enable log to system journal
-# (possible values: 1|0)
+# (valid values: 1|0)
 log_to_journal="0"
 
 # timestamp format for log messages
@@ -156,7 +172,7 @@ log_to_journal="0"
 log_timestamp_format="%Y-%m-%d %H:%M:%S"
 
 # truncate logfile at each backup cycle
-# (possible values: 1|0)
+# (valid values: 1|0)
 log_to_file_truncate="0"
 
 
@@ -166,7 +182,7 @@ log_to_file_truncate="0"
 #------------
 
 # enable this to check if glsysbackup is running with root privileges
-# (possible values: 1|0)
+# (valid values: 1|0)
 root_privileges_required="1"
 
 
@@ -176,11 +192,11 @@ root_privileges_required="1"
 #--------
 
 # enable reniceing of glsysbackup and child procs
-# (possible values: 1|0)
+# (valid values: 1|0)
 re_nice_enabled="0"
 
 # set renice priority
-# (possible values: -20...19)
+# (valid values: -20...19)
 # (HINT: have a look at: 'man renice')
 re_nice_priority="19"
 
@@ -191,16 +207,16 @@ re_nice_priority="19"
 #-----------
 
 # enable re-ioniceing of glsysbackup and child procs
-# (possible values: 1|0)
+# (valid values: 1|0)
 re_ionice_enabled="0"
 
 # set re-ionice scheduling class
-# (possible values: 0|1|2|3)
+# (valid values: 0|1|2|3)
 # (HINT: have a look at: 'man ionice')
 re_ionice_scheduling_class="2"
 
 # set re-ionice priority
-# (possible values: 0...7)
+# (valid values: 0...7)
 # (HINT: have a look at: 'man ionice')
 re_ionice_priority="7"
 
@@ -214,29 +230,29 @@ re_ionice_priority="7"
 backup_rotation_one_backup_per_day_only="1"
 
 # enable daily backup rotation
-# (possible values: 1|0)
+# (valid values: 1|0)
 backup_rotation_daily_enabled="1"
 
 # number of backup files to keep of daily backups
 backup_rotation_daily_max_backups="10"
 
 # enable weekly backup rotation
-# (possible values: 1|0)
+# (valid values: 1|0)
 backup_rotation_weekly_enabled="1"
 
 # rotation weekday for weekly rotation (1 is monday)
-# (possible values: 1|2|3|4|5|6|7)
+# (valid values: 1|2|3|4|5|6|7)
 backup_rotation_weekly_weekday="1"
 
 # number of backup files to keep of weekly backups
 backup_rotation_weekly_max_backups="8"
 
 # enable monthly backup rotation
-# (possible values: 1|0)
+# (valid values: 1|0)
 backup_rotation_monthly_enabled="1"
 
 # rotation day of month for monthly rotation (1 is monday)
-# (possible values: 1|2|3|...|last day of month)
+# (valid values: 1|2|3|...|last day of month)
 backup_rotation_monthly_day_of_month="1"
 
 # number of backup files to keep of monthly backups
@@ -249,16 +265,16 @@ backup_rotation_monthly_max_backups="6"
 #--------------------
 
 # enable the creation of installed packages file
-# (possible values: 1|0)
+# (valid values: 1|0)
 installed_packages_enabled="1"
 
 # force this package manager to create installed packages file, if you have more than one package
 # manager installed
-# (possible values: rpm|dpkg|pacman|equery|pkgutil)
+# (valid values: rpm|dpkg|pacman|equery|pkgutil|cygcheck)
 installed_packages_forced_manager=""
 
 # path where installed packages file should be created
-installed_packages_directory="/root"
+installed_packages_directory="/tmp"
 
 
 
@@ -268,23 +284,23 @@ installed_packages_directory="/root"
 
 # if this value is less equal than the tar rc, the backup job will be interpreted
 # as 'backup successful'
-# (possible values: 0|1|2)
+# (valid values: 0|1|2)
 # (HINT: have a look at: 'man tar' section: 'RETURN VALUE')
 backup_successful_tar_rc="1"
 
 # enable backup compression
-# (possible values: 1|0)
+# (valid values: 1|0)
 backup_compression_enabled="1"
 
 # backup compression type
-# (possible values: gzip|bzip2|xz|lzip|lzma|lzop)
+# (valid values: gzip|bzip2|xz|lzip|lzma|lzop)
 backup_compression_type="gzip"
 
 # enable backup verbose mode
 backup_verbose_mode_enabled="1"
 
 # show backup totals
-# (possible values: 1|0)
+# (valid values: 1|0)
 backup_show_totals="1"
 
 # individual tar options
@@ -322,45 +338,78 @@ backup_exlude_items=(
 #------------
 
 # enable backup encryption with openssl
-# (possible values: 1|0)
+# (valid values: 1|0)
 backup_encryption_enabled="0"
 
 # set password for encryption
-backup_encryption_password="test1234"
+backup_encryption_password="change_me"
 
 
 
-#-------------------
-# Pre backup script:
-#-------------------
+#---------------------
+# Pre backup commands:
+#---------------------
 
-# enable pre backup script functionality
-# (possible values: 1|0)
-pre_backup_script_enabled="0"
+# enable pre backup commands functionality
+# (valid values: 1|0)
+pre_backup_commands_enabled="0"
 
-# path to pre backup script
-pre_backup_script="/home/pi/pre.sh"
+# define your pre backup commands
+pre_backup_commands=(
+"${script_base_path}/libexec/create_automysqlbackup"
+"df -ahHT ${backup_base_path}"
+)
 
-# exit glsysbackup in case execution of pre backup script was not successful
-# (possible values: 1|0)
+# exit glsysbackup in case execution of pre backup commands was not successful
+# (valid values: 1|0)
 pre_backup_exit_when_unsuccessful="1"
 
+# exit glsysbckup at the very first pre backup command, which was not successful
+# (valid values: 1|0)
+pre_backup_paranoia_mode="0"
 
 
-#--------------------
-# Post backup script:
-#--------------------
 
-# enable post backup script functionality
-# (possible values: 1|0)
-post_backup_script_enabled="0"
+#----------------------
+# Post backup commands:
+#----------------------
 
-# path to post backup script
-post_backup_script="/home/pi/post.sh"
+# enable post backup commands functionality
+# (valid values: 1|0)
+post_backup_commands_enabled="0"
 
-# exit glsysbackup in case execution of post backup script was not successful
-# (possible values: 1|0)
+# define your post backup commands
+post_backup_commands=(
+"df -ahHT ${backup_base_path}"
+"${script_base_path}/libexec/scp_to_remote_host"
+)
+
+# exit glsysbackup in case execution of post backup commands was not successful
+# (valid values: 1|0)
 post_backup_exit_when_unsuccessful="1"
+
+# exit glsysbckup at the very first post backup command, which was not successful
+# (valid values: 1|0)
+post_backup_paranoia_mode="0"
+
+
+
+#-----------------------
+# Notification commands:
+#-----------------------
+
+# enable notification commands functionality
+# (valid values: 1|0)
+notification_commands_enabled="0"
+
+# define your notification commands
+notification_commands=(
+"/usr/local/bin/sendEmail.pl -f from@mydomain.com -t to@mydomain.com -u \"${script_name} (${script_version}) - Backup job: ${script_config_name} ready\" -m body"
+)
+
+# notify all backup cycles or only unsuccessful ones
+# (valid values: 1|0)
+notification_notify_all_backup_jobs="0"
 ```
 
 

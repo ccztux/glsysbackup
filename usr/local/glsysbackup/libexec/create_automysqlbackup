@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #===================================================================================================
 #
 #  Author:				Christian Zettel (ccztux)
@@ -33,12 +35,66 @@
 #===================================================================================================
 
 
-/usr/local/glsysbackup/var/log/*.log
+#--------------------------------------------------------
+# In case of an include attempt, write output and return:
+#--------------------------------------------------------
+
+if [ "${BASH_SOURCE[0]}" != "${0}" ]
+then
+	printf "\\n%s is NOT a bash library. Execute it directly!\\n\\n" "${BASH_SOURCE[0]##*/}"
+	return 1
+fi
+
+
+
+#----------
+# Function:
+#----------
+
+makeAutomysqlbackup()
 {
-	weekly
-	rotate 6
-	missingok
-	notifempty
-	sharedscripts
-	compress
+	local rc="0"
+	local file=
+	local CONFIG_backup_dir=
+	local conf_dir="/etc/automysqlbackup/conf.d"
+
+	printf "Starting automysqlbackup...\\n"
+
+	for file in "${conf_dir}"/*.conf
+	do
+		if [ -f "${file}" ] && [ -s "${file}" ]
+		then
+			# shellcheck disable=SC1090
+			source "${file}"
+		else
+			continue
+		fi
+
+		if [ ! -d "${CONFIG_backup_dir}" ]
+		then
+			mkdir -p "${CONFIG_backup_dir}"
+		fi
+
+		if ! /usr/local/bin/automysqlbackup -b -c "${file}"
+		then
+			rc="1"
+		fi
+	done
+
+	return "${rc}"
 }
+
+
+
+#-------
+# Start:
+#-------
+
+if makeAutomysqlbackup
+then
+	printf "automysqlbackup was successful.\\n"
+	exit 0
+else
+	printf "automysqlbackup was not successful.\\n"
+	exit 1
+fi
