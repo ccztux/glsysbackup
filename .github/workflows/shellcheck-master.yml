@@ -1,6 +1,8 @@
-name: ShellCheck
+name: ShellCheck (master)
 on:
   push:
+    branches:
+      - master
 
 permissions:
   contents: read
